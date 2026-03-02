@@ -1,0 +1,32 @@
+{
+    "name": "casino-opnet",
+    "version": "1.0.0",
+    "description": "4-game Bitcoin casino on OPNet (CoinFlip, Dice, Roulette, Slots)",
+    "type": "module",
+    "scripts": {
+        "postinstall": "node scripts/patch-noble-hashes.mjs",
+        "build": "asc src/index.ts --target casino --measure --uncheckedBehavior never",
+        "test": "tsx tests/Casino.spec.ts",
+        "format": "prettier --write .",
+        "lint": "eslint . --fix"
+    },
+    "dependencies": {
+        "@btc-vision/as-bignum": "^0.0.6",
+        "@btc-vision/btc-runtime": "^1.10.8",
+        "@btc-vision/opnet-transform": "^0.1.12"
+    },
+    "devDependencies": {
+        "@btc-vision/assemblyscript": "^0.29.2",
+        "@btc-vision/unit-test-framework": "^0.4.10",
+        "@eslint/js": "^10.0.1",
+        "eslint": "^10.0.0",
+        "prettier": "^3.7.4",
+        "tsx": "^4.21.0",
+        "typescript-eslint": "^8.56.0"
+    },
+    "overrides": {
+        "@btc-vision/bitcoin": {
+            "@noble/hashes": "2.0.1"
+        }
+    }
+}

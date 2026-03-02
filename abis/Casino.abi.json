@@ -1,0 +1,265 @@
+{
+    "functions": [
+        {
+            "name": "deposit",
+            "type": "Function",
+            "inputs": [
+                {
+                    "name": "amount",
+                    "type": "UINT256"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "addHouseFunds",
+            "type": "Function",
+            "inputs": [
+                {
+                    "name": "amount",
+                    "type": "UINT256"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "placeBet",
+            "type": "Function",
+            "inputs": [
+                {
+                    "name": "gameType",
+                    "type": "UINT8"
+                },
+                {
+                    "name": "betParam",
+                    "type": "UINT64"
+                },
+                {
+                    "name": "commitHash",
+                    "type": "UINT256"
+                },
+                {
+                    "name": "amount",
+                    "type": "UINT256"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "revealBet",
+            "type": "Function",
+            "inputs": [
+                {
+                    "name": "betId",
+                    "type": "UINT256"
+                },
+                {
+                    "name": "secret",
+                    "type": "UINT256"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "requestWithdrawal",
+            "type": "Function",
+            "inputs": [
+                {
+                    "name": "amount",
+                    "type": "UINT256"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "confirmWithdrawal",
+            "type": "Function",
+            "inputs": [
+                {
+                    "name": "withdrawalId",
+                    "type": "UINT256"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "forfeitExpiredBet",
+            "type": "Function",
+            "inputs": [
+                {
+                    "name": "betId",
+                    "type": "UINT256"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "setPaused",
+            "type": "Function",
+            "inputs": [
+                {
+                    "name": "paused",
+                    "type": "BOOL"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "getBalance",
+            "type": "Function",
+            "inputs": [
+                {
+                    "name": "player",
+                    "type": "ADDRESS"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "balance",
+                    "type": "UINT256"
+                }
+            ]
+        },
+        {
+            "name": "getHouseBalance",
+            "type": "Function",
+            "inputs": [],
+            "outputs": [
+                {
+                    "name": "balance",
+                    "type": "UINT256"
+                }
+            ]
+        }
+    ],
+    "events": [
+        {
+            "name": "Deposited",
+            "values": [
+                {
+                    "name": "player",
+                    "type": "ADDRESS"
+                },
+                {
+                    "name": "amount",
+                    "type": "UINT256"
+                }
+            ],
+            "type": "Event"
+        },
+        {
+            "name": "HouseFunded",
+            "values": [
+                {
+                    "name": "operator",
+                    "type": "ADDRESS"
+                },
+                {
+                    "name": "amount",
+                    "type": "UINT256"
+                }
+            ],
+            "type": "Event"
+        },
+        {
+            "name": "BetPlaced",
+            "values": [
+                {
+                    "name": "player",
+                    "type": "ADDRESS"
+                },
+                {
+                    "name": "betId",
+                    "type": "UINT256"
+                },
+                {
+                    "name": "gameType",
+                    "type": "UINT8"
+                },
+                {
+                    "name": "betParam",
+                    "type": "UINT64"
+                },
+                {
+                    "name": "amount",
+                    "type": "UINT256"
+                },
+                {
+                    "name": "commitBlock",
+                    "type": "UINT64"
+                }
+            ],
+            "type": "Event"
+        },
+        {
+            "name": "BetResolved",
+            "values": [
+                {
+                    "name": "betId",
+                    "type": "UINT256"
+                },
+                {
+                    "name": "player",
+                    "type": "ADDRESS"
+                },
+                {
+                    "name": "outcome",
+                    "type": "UINT8"
+                },
+                {
+                    "name": "payout",
+                    "type": "UINT256"
+                }
+            ],
+            "type": "Event"
+        },
+        {
+            "name": "WithdrawalRequested",
+            "values": [
+                {
+                    "name": "player",
+                    "type": "ADDRESS"
+                },
+                {
+                    "name": "withdrawalId",
+                    "type": "UINT256"
+                },
+                {
+                    "name": "amount",
+                    "type": "UINT256"
+                }
+            ],
+            "type": "Event"
+        },
+        {
+            "name": "WithdrawalConfirmed",
+            "values": [
+                {
+                    "name": "withdrawalId",
+                    "type": "UINT256"
+                }
+            ],
+            "type": "Event"
+        },
+        {
+            "name": "BetForfeited",
+            "values": [
+                {
+                    "name": "betId",
+                    "type": "UINT256"
+                }
+            ],
+            "type": "Event"
+        },
+        {
+            "name": "Paused",
+            "values": [
+                {
+                    "name": "paused",
+                    "type": "BOOL"
+                }
+            ],
+            "type": "Event"
+        }
+    ]
+}

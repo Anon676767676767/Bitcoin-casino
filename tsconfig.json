@@ -1,0 +1,27 @@
+{
+    "compilerOptions": {
+        "module": "esnext",
+        "target": "esnext",
+        "noImplicitAny": true,
+        "removeComments": true,
+        "preserveConstEnums": true,
+        "resolveJsonModule": true,
+        "skipLibCheck": false,
+        "sourceMap": false,
+        "moduleDetection": "force",
+        "experimentalDecorators": true,
+        "lib": ["es2022"],
+        "strict": true,
+        "strictNullChecks": true,
+        "strictFunctionTypes": true,
+        "strictBindCallApply": true,
+        "strictPropertyInitialization": true,
+        "alwaysStrict": true,
+        "moduleResolution": "node",
+        "allowJs": false,
+        "incremental": true,
+        "allowSyntheticDefaultImports": true,
+        "outDir": "build"
+    },
+    "include": ["./tests/*.ts", "./tests/**/*.ts"]
+}

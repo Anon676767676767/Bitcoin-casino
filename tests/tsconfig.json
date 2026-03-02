@@ -1,0 +1,16 @@
+{
+    "compilerOptions": {
+        "module": "ESNext",
+        "target": "ESNext",
+        "strict": true,
+        "skipLibCheck": true,
+        "moduleResolution": "bundler",
+        "allowSyntheticDefaultImports": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "noImplicitReturns": true,
+        "lib": ["ESNext"]
+    },
+    "include": ["./**/*.ts"],
+    "exclude": ["../node_modules"]
+}

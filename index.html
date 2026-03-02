@@ -1,0 +1,549 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BitOPNet Casino</title><style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0b0f;--sb:#0e0f1a;--card:#131420;--c2:#181927;--hl:#1e1f30;--or:#f7931a;--or2:#e8830a;--yel:#fbbf24;--grn:#10b981;--red:#ef4444;--cyn:#06b6d4;--txt:#e5e7eb;--mut:#6b7280;--bdr:#1e1f30}
+html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--txt);overflow:hidden}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--bdr);border-radius:2px}
+/* TOP */
+#top{height:52px;background:var(--sb);border-bottom:1px solid var(--bdr);display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;z-index:100}
+.logo{font-size:20px;font-weight:800;background:linear-gradient(135deg,#f7931a,#fbbf24);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-right:4px;white-space:nowrap}
+.nt{padding:6px 12px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;color:var(--mut);border:none;background:none;transition:.15s}
+.nt:hover,.nt.on{background:rgba(247,147,26,.15);color:var(--or)}
+.pxs{display:flex;gap:14px;font-size:12px;flex:1;justify-content:flex-end}
+.px{display:flex;align-items:center;gap:4px;white-space:nowrap}
+.up{color:var(--grn)}.dn{color:var(--red)}
+.bal{display:flex;align-items:center;gap:7px;background:var(--c2);border:1px solid rgba(247,147,26,.3);border-radius:8px;padding:5px 11px;font-size:12px}
+.bsat{font-weight:800;color:var(--or);font-size:13px}
+.bbtc{color:var(--mut);font-size:10px}
+.dbtn{background:linear-gradient(135deg,var(--or),var(--or2));color:#fff;border:none;padding:7px 14px;border-radius:7px;cursor:pointer;font-weight:700;font-size:13px;white-space:nowrap;transition:.15s}
+.dbtn:hover{opacity:.88}
+/* FEED */
+#feed{height:26px;background:rgba(247,147,26,.06);border-bottom:1px solid var(--bdr);display:flex;align-items:center;font-size:11px;overflow:hidden;flex-shrink:0}
+.fl{padding:0 10px;background:var(--or);color:#000;font-weight:900;font-size:10px;height:100%;display:flex;align-items:center;white-space:nowrap}
+.ft{flex:1;overflow:hidden;position:relative;height:100%}
+.fi{position:absolute;white-space:nowrap;animation:tick 24s linear infinite;display:flex;align-items:center;height:100%;gap:18px;padding:0 16px}
+@keyframes tick{0%{transform:translateX(100vw)}100%{transform:translateX(-100%)}}
+/* LAYOUT */
+#body{display:flex;height:calc(100vh - 78px)}
+#sb{width:186px;background:var(--sb);border-right:1px solid var(--bdr);overflow-y:auto;flex-shrink:0;padding-bottom:16px}
+#main{flex:1;overflow-y:auto}
+#slip{width:254px;background:var(--sb);border-left:1px solid var(--bdr);display:flex;flex-direction:column;flex-shrink:0}
+/* SIDEBAR */
+.ss{padding:10px 8px 3px;font-size:9px;font-weight:700;color:var(--mut);letter-spacing:.1em;text-transform:uppercase}
+.si{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;margin:1px 4px;cursor:pointer;font-size:12px;font-weight:500;color:var(--mut);transition:.12s}
+.si:hover{background:var(--hl);color:var(--txt)}
+.si.on{background:rgba(247,147,26,.12);color:var(--or);border-left:2px solid var(--or);margin-left:2px}
+/* PAGES */
+.pg{display:none}.pg.on{display:block}
+/* GAMES GRID */
+.gtit{font-size:11px;font-weight:700;color:var(--mut);letter-spacing:.1em;text-transform:uppercase;padding:12px 12px 6px}
+.gg{display:grid;grid-template-columns:repeat(auto-fill,minmax(138px,1fr));gap:7px;padding:0 10px 12px}
+.gc{border-radius:11px;overflow:hidden;cursor:pointer;transition:.2s;position:relative;aspect-ratio:.74;display:flex;flex-direction:column;justify-content:flex-end}
+.gc:hover{transform:scale(1.04);z-index:5}
+.gc:hover .gov{opacity:1}
+.gbg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:50px;border-radius:11px}
+.bg0{background:linear-gradient(135deg,#2d1a00,#5c3800)}
+.bg1{background:linear-gradient(135deg,#1c2437,#0f172a)}
+.bg2{background:linear-gradient(135deg,#052e16,#065f46)}
+.bg3{background:linear-gradient(135deg,#4a1a00,#7c2d12)}
+.bg4{background:linear-gradient(135deg,#3b0764,#6b21a8)}
+.bg5{background:linear-gradient(135deg,#0c4a6e,#075985)}
+.bg6{background:linear-gradient(135deg,#134e4a,#0f766e)}
+.bg7{background:linear-gradient(135deg,#2d0e00,#92400e)}
+.gov{position:absolute;inset:0;background:rgba(0,0,0,.75);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;opacity:0;transition:.2s;border-radius:11px}
+.pbtn{background:var(--or);color:#000;border:none;padding:6px 18px;border-radius:5px;font-weight:800;font-size:12px;cursor:pointer}
+.gi{position:relative;padding:6px 8px;background:linear-gradient(transparent,rgba(0,0,0,.9))}
+.gn{font-size:11px;font-weight:700}.gpr{font-size:9px;color:var(--mut)}
+.gbdg{position:absolute;font-size:8px;font-weight:800;padding:2px 5px;border-radius:3px}
+.hot{background:#ef4444;color:#fff;top:7px;left:7px}
+.new{background:#10b981;color:#fff;top:7px;left:7px}
+.rtp{background:rgba(0,0,0,.65);color:var(--or);top:7px;right:7px;border:1px solid rgba(247,147,26,.3)}
+/* GAME PANEL */
+.gpw{padding:2px 10px 14px}
+.gp{background:var(--card);border:1px solid var(--bdr);border-radius:13px;padding:18px;display:none}
+.gp.on{display:block}
+.gph{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.gpico{font-size:32px}
+.gptit{font-size:16px;font-weight:800}
+.gpsub{font-size:11px;color:var(--mut);margin-top:1px}
+.gpcl{margin-left:auto;background:var(--c2);border:1px solid var(--bdr);color:var(--mut);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px}
+/* CONTROLS */
+.ctrl{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.cg{flex:1;min-width:110px}
+.cl{font-size:10px;font-weight:700;color:var(--mut);letter-spacing:.07em;text-transform:uppercase;margin-bottom:4px}
+.ci{width:100%;background:var(--c2);border:1px solid var(--bdr);color:var(--txt);padding:8px 10px;border-radius:7px;font-size:13px;font-weight:700;outline:none;transition:.15s}
+.ci:focus{border-color:var(--or)}
+.ci.wv{color:var(--grn)}
+.qs{display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap}
+.qb{padding:4px 9px;background:var(--c2);border:1px solid var(--bdr);border-radius:5px;font-size:11px;font-weight:700;cursor:pointer;color:var(--mut);transition:.12s}
+.qb:hover{border-color:var(--or);color:var(--or)}
+.ptbl{background:var(--c2);border-radius:8px;padding:8px 11px;margin-bottom:12px;font-size:11px}
+.ph{font-weight:700;color:var(--mut);margin-bottom:5px;font-size:10px;letter-spacing:.07em;text-transform:uppercase}
+.pr{display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid var(--bdr)}
+.pr:last-child{border:none}
+.pr span:last-child{color:var(--or);font-weight:700}
+.bplay{width:100%;padding:13px;background:linear-gradient(135deg,var(--or),var(--or2));color:#000;border:none;border-radius:9px;font-size:15px;font-weight:900;cursor:pointer;transition:.15s;letter-spacing:.02em}
+.bplay:hover{opacity:.88;transform:translateY(-1px)}
+.bplay:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.res{margin-top:12px;padding:12px;border-radius:9px;font-size:13px;font-weight:700;text-align:center;display:none}
+.res.w{background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.4);color:var(--grn)}
+.res.l{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--red)}
+/* COIN */
+.cscene{perspective:500px;width:100px;height:100px}
+.coin{width:100px;height:100px;transform-style:preserve-3d;position:relative}
+.cf{position:absolute;inset:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:40px;backface-visibility:hidden;border:3px solid rgba(255,255,255,.1)}
+.ch{background:radial-gradient(circle at 40% 35%,#f7931a,#c45e00)}
+.ct{background:radial-gradient(circle at 40% 35%,#9ca3af,#374151);transform:rotateY(180deg)}
+.cpicks{display:flex;gap:8px}
+.cp{flex:1;padding:8px;border-radius:7px;border:2px solid var(--bdr);cursor:pointer;text-align:center;font-size:12px;font-weight:600;background:var(--c2);transition:.15s}
+.cp.on{border-color:var(--or);background:rgba(247,147,26,.12);color:#fff}
+/* BLACKJACK */
+.bjtable{background:radial-gradient(ellipse,#064e3b,#022c22);border-radius:12px;padding:14px;margin-bottom:12px;border:2px solid #065f46;min-height:180px}
+.bjhand{display:flex;gap:5px;min-height:88px;align-items:center;flex-wrap:wrap;margin-bottom:4px}
+.bjlbl{font-size:10px;font-weight:700;color:rgba(255,255,255,.45);margin-bottom:5px;letter-spacing:.08em;display:flex;align-items:center;gap:8px}
+.bjscore{font-size:17px;font-weight:900;color:#fff}
+.card{width:58px;height:84px;background:#fff;border-radius:7px;box-shadow:2px 4px 10px rgba(0,0,0,.5);position:relative;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.card.r{color:#dc2626}.card.b{color:#111827}
+.cr{position:absolute;top:4px;left:5px;font-size:10px;font-weight:800;line-height:1.2}
+.cs{font-size:26px}
+.crb{position:absolute;bottom:4px;right:5px;font-size:10px;font-weight:800;transform:rotate(180deg);line-height:1.2}
+.card.fd{background:repeating-linear-gradient(45deg,#1e3a8a,#1e3a8a 6px,#1e40af 6px,#1e40af 12px)}
+.bjbtns{display:flex;gap:6px;margin-bottom:10px}
+.bjb{flex:1;padding:9px;background:var(--c2);border:1px solid var(--bdr);color:var(--txt);border-radius:7px;cursor:pointer;font-size:12px;font-weight:700;transition:.15s}
+.bjb:hover:not(:disabled){border-color:var(--or);color:var(--or)}
+.bjb:disabled{opacity:.3;cursor:not-allowed}
+/* DICE */
+.dface{width:88px;height:88px;background:linear-gradient(135deg,#1e293b,#0f172a);border-radius:13px;border:2px solid var(--bdr);display:flex;align-items:center;justify-content:center;font-size:58px;box-shadow:0 4px 20px rgba(0,0,0,.5)}
+.dface.r{animation:dr .5s ease}
+@keyframes dr{0%,100%{transform:rotate(0)}25%{transform:rotate(-22deg) scale(.9)}75%{transform:rotate(22deg) scale(.9)}}
+.dbets{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;width:100%}
+.dbt{padding:7px 3px;border-radius:6px;border:1px solid var(--bdr);cursor:pointer;text-align:center;font-size:11px;font-weight:600;background:var(--c2);color:var(--mut);transition:.12s}
+.dbt.on,.dbt:hover{border-color:var(--or);background:rgba(247,147,26,.12);color:var(--or)}
+/* CRASH */
+#crash-wrap{background:#0a0b0f;border:1px solid var(--bdr);border-radius:10px;padding:6px;margin-bottom:10px}
+#crash-cv{display:block;width:100%;border-radius:6px}
+#crash-mult{font-size:46px;font-weight:900;text-align:center;padding:2px 0;transition:.1s;line-height:1.1}
+.crash-hist{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px}
+.chi{padding:3px 9px;border-radius:4px;font-size:11px;font-weight:700}
+.chi.safe{background:rgba(16,185,129,.15);color:var(--grn);border:1px solid rgba(16,185,129,.3)}
+.chi.bust{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.3)}
+/* ═══════════════════════════════════
+   ROULETTE — BEAUTIFUL CANVAS + TABLE
+   ═══════════════════════════════════ */
+.roul-wrap{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+.roul-left{display:flex;flex-direction:column;align-items:center;gap:8px;flex-shrink:0}
+#roul-cv{border-radius:50%;box-shadow:0 0 40px rgba(247,147,26,.25),0 0 80px rgba(247,147,26,.1);display:block}
+.roul-result-box{text-align:center;min-height:44px;font-size:28px;font-weight:900;line-height:1.2}
+.roul-right{flex:1;min-width:260px}
+/* Betting table */
+.rtable{display:flex;flex-direction:column;gap:3px}
+.rtable-nums{display:grid;gap:2px}
+.rrow{display:flex;gap:2px}
+.rtnum{width:28px;height:28px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,.08);transition:.12s;flex-shrink:0}
+.rtnum:hover{filter:brightness(1.6);border-color:var(--or)}
+.rtnum.on{filter:brightness(1.7);border-color:var(--or);box-shadow:0 0 8px rgba(247,147,26,.5)}
+.nr{background:#7f1d1d}.nb{background:#111827}.ng{background:#14532d}
+.rt0{background:#14532d;width:28px;height:90px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;cursor:pointer;border:1px solid rgba(255,255,255,.08);flex-shrink:0;color:#86efac;writing-mode:vertical-lr;text-align:center;letter-spacing:.1em}
+.rt0:hover,.rt0.on{border-color:var(--or);box-shadow:0 0 8px rgba(247,147,26,.5)}
+.rt2to1{background:var(--c2);width:28px;height:28px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:800;cursor:pointer;border:1px solid var(--bdr);color:var(--or);flex-shrink:0;text-align:center;line-height:1.1}
+.rt2to1:hover,.rt2to1.on{border-color:var(--or);background:rgba(247,147,26,.15)}
+.rout-row{display:flex;gap:2px;margin-top:1px}
+.rout{flex:1;padding:5px 2px;background:var(--c2);border:1px solid var(--bdr);border-radius:4px;text-align:center;font-size:10px;font-weight:700;cursor:pointer;transition:.12s;color:var(--mut)}
+.rout:hover,.rout.on{border-color:var(--or);background:rgba(247,147,26,.12);color:var(--or)}
+.rout.red-b{border-color:rgba(185,28,28,.5);color:#fca5a5}
+.rout.red-b.on{background:rgba(185,28,28,.2);border-color:#ef4444}
+.rout.blk-b{border-color:rgba(55,65,81,.8);color:#9ca3af}
+.rout.blk-b.on{background:rgba(55,65,81,.4);border-color:#6b7280}
+/* PLINKO */
+#plinko-wrap{background:#0a0b0f;border:1px solid var(--bdr);border-radius:10px;padding:6px;margin-bottom:10px}
+#pk-cv{display:block;width:100%}
+/* SLOTS */
+.smach{background:linear-gradient(180deg,#1a0050,#0d0020);border:3px solid rgba(247,147,26,.5);border-radius:16px;padding:14px;box-shadow:0 0 30px rgba(247,147,26,.2),inset 0 0 20px rgba(0,0,0,.5);margin-bottom:12px}
+.smtop{text-align:center;font-size:13px;font-weight:900;color:var(--or);letter-spacing:.18em;margin-bottom:10px;text-shadow:0 0 12px rgba(247,147,26,.6)}
+.sreels{display:flex;gap:4px;background:#000;border:3px solid #374151;border-radius:10px;padding:4px;position:relative;justify-content:center}
+.srcol{width:78px;height:234px;overflow:hidden;position:relative;background:#0a0010;border-radius:6px;border:1px solid #2d1a00;flex-shrink:0}
+.srtrack{position:absolute;top:0;left:0;width:100%}
+.ssym{width:78px;height:78px;display:flex;align-items:center;justify-content:center;font-size:42px;border-bottom:1px solid #1a0a2e}
+.spayline{position:absolute;top:50%;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--or),transparent);transform:translateY(-50%);pointer-events:none;opacity:.8}
+.sline{text-align:center;font-size:13px;font-weight:800;color:var(--or);min-height:22px;margin-top:8px;text-shadow:0 0 8px rgba(247,147,26,.5)}
+.scred{text-align:center;font-size:11px;color:var(--mut);margin-top:4px}
+/* MINES */
+.mgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:12px}
+.mtile{aspect-ratio:1;background:var(--c2);border:2px solid var(--bdr);border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:24px;transition:.2s}
+.mtile.hid{color:var(--c2)}
+.mtile.hid:hover{background:var(--hl);border-color:var(--or);color:var(--hl)}
+.mtile.gem{background:rgba(16,185,129,.15);border-color:var(--grn);animation:pop .2s ease}
+.mtile.bomb{background:rgba(239,68,68,.2);border-color:var(--red)}
+@keyframes pop{0%{transform:scale(1.3)}100%{transform:scale(1)}}
+.mmult{text-align:center;font-size:24px;font-weight:900;color:var(--or);margin-bottom:7px;text-shadow:0 0 12px rgba(247,147,26,.4)}
+.minfo{display:flex;justify-content:space-between;font-size:11px;color:var(--mut);margin-bottom:8px}
+.msel{display:flex;gap:5px;margin-bottom:10px;flex-wrap:wrap}
+.msb{padding:5px 10px;background:var(--c2);border:1px solid var(--bdr);border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;color:var(--mut);transition:.12s}
+.msb.on{border-color:var(--or);color:var(--or);background:rgba(247,147,26,.1)}
+/* SPORTS */
+.sptb{display:flex;align-items:center;gap:7px;padding:10px 12px 6px;flex-wrap:wrap}
+.spbtn{padding:5px 12px;border-radius:6px;border:1px solid var(--bdr);background:var(--c2);color:var(--mut);font-size:12px;font-weight:600;cursor:pointer;transition:.12s}
+.spbtn.on{background:var(--or);border-color:var(--or);color:#000}
+.ldot{width:7px;height:7px;background:var(--red);border-radius:50%;animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.evl{padding:0 10px 12px}
+.ev{background:var(--card);border:1px solid var(--bdr);border-radius:9px;padding:10px 12px;margin-bottom:6px;transition:.15s}
+.ev:hover{border-color:rgba(247,147,26,.3)}
+.evh{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--mut);margin-bottom:7px}
+.ltag{background:var(--red);color:#fff;font-size:9px;font-weight:800;padding:1px 5px;border-radius:3px}
+.fttag{background:var(--mut);color:#fff;font-size:9px;font-weight:800;padding:1px 5px;border-radius:3px}
+.evt{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.etm{font-size:13px;font-weight:700}
+.esc{font-size:20px;font-weight:800;color:var(--or);padding:0 10px}
+.evos{display:flex;gap:4px}
+.ob{flex:1;background:var(--c2);border:1px solid var(--bdr);border-radius:6px;padding:6px 4px;cursor:pointer;text-align:center;transition:.12s}
+.ob:hover,.ob.on{border-color:var(--or);background:rgba(247,147,26,.1)}
+.ob.on .ov{color:var(--or)}
+.ol{font-size:10px;color:var(--mut);margin-bottom:1px}
+.ov{font-size:13px;font-weight:800}
+.spload{text-align:center;padding:30px;color:var(--mut);font-size:13px}
+/* SLIP */
+.slhd{padding:12px 14px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.sltt{font-weight:700;font-size:13px}
+.slcnt{background:var(--or);color:#000;font-size:10px;font-weight:800;padding:1px 7px;border-radius:10px}
+.slem{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;color:var(--mut);font-size:12px;padding:24px}
+.slit{background:var(--card);border:1px solid var(--bdr);border-radius:7px;padding:9px 11px;margin:4px 8px}
+.slm{font-size:10px;color:var(--mut)}
+.slsel{font-size:12px;font-weight:700;margin:2px 0}
+.slod{color:var(--or);font-weight:800;font-size:12px}
+.slrm{float:right;background:none;border:none;color:var(--mut);cursor:pointer;font-size:13px;margin-left:6px}
+.slft{border-top:1px solid var(--bdr);padding:10px 12px;flex-shrink:0}
+.slsr{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;font-size:12px}
+.slin{background:var(--c2);border:1px solid var(--bdr);color:var(--txt);padding:6px 9px;border-radius:6px;font-size:13px;font-weight:700;outline:none;width:120px}
+.slin:focus{border-color:var(--or)}
+.slqs{display:flex;gap:3px;margin-bottom:8px}
+.sqb{flex:1;padding:4px;background:var(--c2);border:1px solid var(--bdr);border-radius:4px;font-size:10px;font-weight:700;cursor:pointer;text-align:center;color:var(--mut);transition:.12s}
+.sqb:hover{border-color:var(--or);color:var(--or)}
+.slpay{display:flex;justify-content:space-between;font-size:11px;padding:6px 0;border-top:1px solid var(--bdr);margin-bottom:7px}
+.slpay span:last-child{color:var(--grn);font-weight:800}
+.slpl{width:100%;padding:10px;background:linear-gradient(135deg,var(--or),var(--or2));color:#000;border:none;border-radius:7px;font-size:13px;font-weight:900;cursor:pointer;transition:.15s}
+.slpl:hover{opacity:.88}
+/* WIN */
+.wb{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:600;display:none;align-items:center;justify-content:center}
+.wb.on{display:flex}
+.wbox{background:linear-gradient(135deg,#1a0e00,#0f0a00);border:2px solid var(--or);border-radius:18px;padding:32px 44px;text-align:center;box-shadow:0 0 60px rgba(247,147,26,.3)}
+.wico{font-size:52px;margin-bottom:6px}
+.wtit{font-size:26px;font-weight:900;background:linear-gradient(135deg,#f7931a,#fbbf24);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.wamt{font-size:34px;font-weight:900;color:var(--grn);margin:6px 0}
+.wcol{background:linear-gradient(135deg,var(--or),var(--or2));color:#000;border:none;padding:11px 32px;border-radius:9px;font-size:15px;font-weight:900;cursor:pointer;margin-top:10px}
+/* DEPOSIT */
+.mbg{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;display:none;align-items:center;justify-content:center}
+.mbg.on{display:flex}
+.mbox{background:var(--card);border:1px solid rgba(247,147,26,.3);border-radius:13px;width:330px;padding:22px;position:relative}
+.mx{position:absolute;top:12px;right:12px;background:var(--c2);border:none;color:var(--mut);width:24px;height:24px;border-radius:5px;cursor:pointer;font-size:13px}
+.dams{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:12px 0}
+.da{padding:9px;background:var(--c2);border:1px solid var(--bdr);border-radius:8px;cursor:pointer;text-align:center;transition:.12s}
+.da.on,.da:hover{border-color:var(--or);background:rgba(247,147,26,.1)}
+.das{font-size:13px;font-weight:800;color:var(--or)}
+.dab{font-size:9px;color:var(--mut);margin-top:1px}
+.dcf{width:100%;padding:11px;background:linear-gradient(135deg,var(--or),var(--or2));color:#000;border:none;border-radius:7px;font-size:13px;font-weight:900;cursor:pointer}
+/* TOASTS */
+#toasts{position:fixed;bottom:18px;right:18px;z-index:700;display:flex;flex-direction:column;gap:5px}
+.toast{background:var(--card);border:1px solid var(--bdr);border-radius:7px;padding:9px 13px;font-size:12px;font-weight:600;max-width:260px;animation:sin .2s ease}
+.toast.ok{border-color:var(--grn);background:rgba(16,185,129,.1);color:var(--grn)}
+.toast.er{border-color:var(--red);background:rgba(239,68,68,.1);color:var(--red)}
+@keyframes sin{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
+.cp{position:fixed;border-radius:2px;animation:fall linear forwards;pointer-events:none;z-index:800}
+@keyframes fall{0%{opacity:1;transform:translateY(0) rotate(0)}100%{opacity:0;transform:translateY(100vh) rotate(720deg)}}
+</style></head><body>
+
+<div id="top">
+  <div class="logo">₿ BitOPNet</div>
+  <button class="nt on" onclick="pg('casino')">🎰 Casino</button>
+  <button class="nt" onclick="pg('sports')">⚽ Sports</button>
+  <div class="pxs">
+    <div class="px"><span style="color:var(--mut);font-size:11px">BTC</span>&nbsp;<span id="bp" style="font-weight:700">…</span>&nbsp;<span id="bc" class="up"></span></div>
+    <div class="px"><span style="color:var(--mut);font-size:11px">ETH</span>&nbsp;<span id="ep" style="font-weight:700">…</span>&nbsp;<span id="ec" class="up"></span></div>
+  </div>
+  <div class="bal"><span>🪙</span><div><div class="bsat" id="bsat">1,000,000</div><div class="bbtc" id="bbtc">0.01000 BTC</div></div></div>
+  <button class="dbtn" onclick="odep()">+ Deposit</button>
+</div>
+
+<div id="feed"><div class="fl">🏆 LIVE WINS</div><div class="ft"><div class="fi" id="fi">Loading…</div></div></div>
+
+<div id="body">
+<div id="sb">
+  <div class="ss">Casino Games</div>
+  <div class="si on" onclick="sg('cf');sa(this)">🪙 Coin Flip</div>
+  <div class="si" onclick="sg('bj');sa(this)">♠ Blackjack</div>
+  <div class="si" onclick="sg('dice');sa(this)">🎲 Dice</div>
+  <div class="si" onclick="sg('crash');sa(this)">📈 Crash</div>
+  <div class="si" onclick="sg('roul');sa(this)">🎡 Roulette</div>
+  <div class="si" onclick="sg('plinko');sa(this)">🔵 Plinko</div>
+  <div class="si" onclick="sg('slots');sa(this)">🎰 Slots</div>
+  <div class="si" onclick="sg('mines');sa(this)">💣 Mines</div>
+  <div class="ss">Sports Betting</div>
+  <div class="si" onclick="pg('sports');setSport('soccer');sa(this)">⚽ Football</div>
+  <div class="si" onclick="pg('sports');setSport('nba');sa(this)">🏀 Basketball</div>
+  <div class="si" onclick="pg('sports');setSport('nfl');sa(this)">🏈 NFL</div>
+  <div class="si" onclick="pg('sports');setSport('tennis');sa(this)">🎾 Tennis</div>
+  <div class="ss">Account</div>
+  <div class="si" onclick="odep()">💰 Deposit</div>
+</div>
+
+<div id="main">
+<div id="pg-casino" class="pg on">
+  <div class="gtit">🎮 Click a game to play instantly</div>
+  <div class="gg" id="gg"></div>
+  <div class="gpw" style="display:none">
+
+    <!-- COIN FLIP -->
+    <div class="gp" id="pp-cf">
+      <div class="gph"><span class="gpico">🪙</span><div><div class="gptit">Coin Flip</div><div class="gpsub">50/50 · 1.95× payout · Provably fair</div></div><button class="gpcl" onclick="cp()">✕ Close</button></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:16px">
+        <div class="cscene"><div class="coin" id="cfcoin"><div class="cf ch">₿</div><div class="cf ct">🌙</div></div></div>
+        <div class="cpicks" style="width:200px">
+          <div class="cp on" id="cph" onclick="cfp(0,this)"><span style="font-size:20px">₿</span><br>HEADS</div>
+          <div class="cp" id="cpt" onclick="cfp(1,this)"><span style="font-size:20px">🌙</span><br>TAILS</div>
+        </div>
+      </div>
+      <div class="ctrl"><div class="cg"><div class="cl">Bet (sat)</div><input class="ci" type="number" id="cfa" value="10000" min="1000" oninput="uw('cf')"></div><div class="cg"><div class="cl">Win</div><input class="ci wv" readonly id="cfw" value="19,500 sat"></div></div>
+      <div class="qs"><div class="qb" onclick="sa2('cfa',1000);uw('cf')">1k</div><div class="qb" onclick="sa2('cfa',5000);uw('cf')">5k</div><div class="qb" onclick="sa2('cfa',10000);uw('cf')">10k</div><div class="qb" onclick="sa2('cfa',50000);uw('cf')">50k</div><div class="qb" onclick="sa2('cfa',Math.floor(BAL/2));uw('cf')">½</div><div class="qb" onclick="sa2('cfa',BAL);uw('cf')">MAX</div></div>
+      <div class="ptbl"><div class="ph">PAYOUT</div><div class="pr"><span>✅ Correct pick</span><span>1.95×</span></div><div class="pr"><span>❌ Wrong pick</span><span>0×</span></div></div>
+      <button class="bplay" id="cfbtn" onclick="playCF()">🪙 FLIP COIN</button>
+      <div class="res" id="cfr"></div>
+    </div>
+
+    <!-- BLACKJACK -->
+    <div class="gp" id="pp-bj">
+      <div class="gph"><span class="gpico">♠</span><div><div class="gptit">Blackjack</div><div class="gpsub">Beat the dealer · Blackjack pays 1.5×</div></div><button class="gpcl" onclick="cp()">✕ Close</button></div>
+      <div class="bjtable">
+        <div class="bjlbl">DEALER &nbsp;<span class="bjscore" id="dsc">0</span></div>
+        <div class="bjhand" id="dhand" style="min-height:90px"></div>
+        <div style="border-top:1px solid rgba(255,255,255,.1);margin:10px 0"></div>
+        <div class="bjlbl">YOU &nbsp;<span class="bjscore" id="psc">0</span></div>
+        <div class="bjhand" id="phand" style="min-height:90px"></div>
+      </div>
+      <div class="bjbtns">
+        <button class="bjb" id="bjhit" onclick="bjHit()" disabled>🃏 Hit</button>
+        <button class="bjb" id="bjstand" onclick="bjStand()" disabled>✋ Stand</button>
+        <button class="bjb" id="bjdbl" onclick="bjDouble()" disabled>2× Double</button>
+      </div>
+      <div class="ctrl"><div class="cg"><div class="cl">Bet (sat)</div><input class="ci" type="number" id="bja" value="10000" min="1000" oninput="uw('bj')"></div><div class="cg"><div class="cl">BJ Win (1.5×)</div><input class="ci wv" readonly id="bjw"></div></div>
+      <div class="qs"><div class="qb" onclick="sa2('bja',1000);uw('bj')">1k</div><div class="qb" onclick="sa2('bja',5000);uw('bj')">5k</div><div class="qb" onclick="sa2('bja',10000);uw('bj')">10k</div><div class="qb" onclick="sa2('bja',50000);uw('bj')">50k</div></div>
+      <button class="bplay" id="bjbtn" onclick="bjDeal()">♠ DEAL CARDS</button>
+      <div class="res" id="bjr"></div>
+    </div>
+
+    <!-- DICE -->
+    <div class="gp" id="pp-dice">
+      <div class="gph"><span class="gpico">🎲</span><div><div class="gptit">Bitcoin Dice</div><div class="gpsub">Up to 5.7× · 8 bet types</div></div><button class="gpcl" onclick="cp()">✕ Close</button></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:14px">
+        <div class="dface" id="dface">🎲</div>
+        <div class="dbets" style="width:280px">
+          <div class="dbt on" id="db1" onclick="dp(1,this)">1 ⚀</div><div class="dbt" id="db2" onclick="dp(2,this)">2 ⚁</div>
+          <div class="dbt" id="db3" onclick="dp(3,this)">3 ⚂</div><div class="dbt" id="db4" onclick="dp(4,this)">4 ⚃</div>
+          <div class="dbt" id="db5" onclick="dp(5,this)">5 ⚄</div><div class="dbt" id="db6" onclick="dp(6,this)">6 ⚅</div>
+          <div class="dbt" id="db7" onclick="dp(7,this)">Over 3</div><div class="dbt" id="db8" onclick="dp(8,this)">Under 4</div>
+        </div>
+      </div>
+      <div class="ctrl"><div class="cg"><div class="cl">Bet (sat)</div><input class="ci" type="number" id="dca" value="10000" min="1000" oninput="uw('dice')"></div><div class="cg"><div class="cl">Win</div><input class="ci wv" readonly id="dcw"></div></div>
+      <div class="qs"><div class="qb" onclick="sa2('dca',1000);uw('dice')">1k</div><div class="qb" onclick="sa2('dca',5000);uw('dice')">5k</div><div class="qb" onclick="sa2('dca',10000);uw('dice')">10k</div><div class="qb" onclick="sa2('dca',50000);uw('dice')">50k</div><div class="qb" onclick="sa2('dca',Math.floor(BAL/2));uw('dice')">½</div><div class="qb" onclick="sa2('dca',BAL);uw('dice')">MAX</div></div>
+      <div class="ptbl"><div class="ph">PAYOUT</div><div class="pr"><span>Exact number 1-6</span><span>5.7×</span></div><div class="pr"><span>Over 3 (4,5,6)</span><span>1.9×</span></div><div class="pr"><span>Under 4 (1,2,3)</span><span>1.9×</span></div></div>
+      <button class="bplay" id="dcbtn" onclick="playDice()">🎲 ROLL DICE</button>
+      <div class="res" id="dcr"></div>
+    </div>
+
+    <!-- CRASH -->
+    <div class="gp" id="pp-crash">
+      <div class="gph"><span class="gpico">📈</span><div><div class="gptit">Crash</div><div class="gpsub">Cash out before it crashes!</div></div><button class="gpcl" onclick="cp()">✕ Close</button></div>
+      <div id="crash-wrap"><canvas id="crash-cv" width="460" height="160"></canvas><div id="crash-mult" style="color:var(--grn)">1.00×</div></div>
+      <div class="crash-hist" id="chist"></div>
+      <div class="ctrl">
+        <div class="cg"><div class="cl">Bet (sat)</div><input class="ci" type="number" id="cra" value="10000" min="1000"></div>
+        <div class="cg"><div class="cl">Auto cashout ×</div><input class="ci" type="number" id="crau" value="2.0" min="1.01" step="0.1"></div>
+      </div>
+      <div class="qs"><div class="qb" onclick="sa2('cra',1000)">1k</div><div class="qb" onclick="sa2('cra',5000)">5k</div><div class="qb" onclick="sa2('cra',10000)">10k</div><div class="qb" onclick="sa2('cra',50000)">50k</div></div>
+      <button class="bplay" id="crbtn" onclick="crashAction()">📈 PLACE BET</button>
+      <div class="res" id="crr"></div>
+    </div>
+
+    <!-- ROULETTE -->
+    <div class="gp" id="pp-roul">
+      <div class="gph"><span class="gpico">🎡</span><div><div class="gptit">European Roulette</div><div class="gpsub">37 numbers · Real spinning wheel · Up to 36×</div></div><button class="gpcl" onclick="cp()">✕ Close</button></div>
+      <div class="roul-wrap">
+        <!-- Wheel -->
+        <div class="roul-left">
+          <canvas id="roul-cv" width="240" height="240"></canvas>
+          <div class="roul-result-box" id="roulres" style="color:var(--mut);font-size:14px;font-weight:600">Pick a bet and spin the wheel</div>
+          <div class="ctrl" style="width:240px;margin-bottom:8px"><div class="cg"><div class="cl">Bet (sat)</div><input class="ci" type="number" id="roa" value="10000" min="1000" oninput="uw('roul')"></div><div class="cg"><div class="cl">Win</div><input class="ci wv" readonly id="row"></div></div>
+          <div class="qs" style="width:240px"><div class="qb" onclick="sa2('roa',1000);uw('roul')">1k</div><div class="qb" onclick="sa2('roa',5000);uw('roul')">5k</div><div class="qb" onclick="sa2('roa',10000);uw('roul')">10k</div><div class="qb" onclick="sa2('roa',50000);uw('roul')">50k</div><div class="qb" onclick="sa2('roa',Math.floor(BAL/2));uw('roul')">½</div></div>
+          <button class="bplay" id="robtn" onclick="playRoul()" style="width:240px">🎡 SPIN WHEEL</button>
+          <div class="res" id="ror" style="width:240px"></div>
+        </div>
+        <!-- Betting Table -->
+        <div class="roul-right">
+          <div style="font-size:10px;font-weight:700;color:var(--mut);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px">BETTING TABLE — Click to select</div>
+          <div class="rtable">
+            <!-- Numbers grid: 0 + 3 rows of 12 -->
+            <div style="display:flex;gap:2px">
+              <div class="rt0" id="rb0" onclick="rp(0,this)">0</div>
+              <div>
+                <div style="display:flex;gap:2px;margin-bottom:2px" id="row3"></div>
+                <div style="display:flex;gap:2px;margin-bottom:2px" id="row2"></div>
+                <div style="display:flex;gap:2px" id="row1"></div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:2px">
+                <div class="rt2to1" onclick="rp(46,this)">2:1</div>
+                <div class="rt2to1" onclick="rp(47,this)">2:1</div>
+                <div class="rt2to1" onclick="rp(48,this)">2:1</div>
+              </div>
+            </div>
+            <!-- Dozens -->
+            <div class="rout-row">
+              <div class="rout" onclick="rp(43,this)">1st 12 (1–12)</div>
+              <div class="rout" onclick="rp(44,this)">2nd 12 (13–24)</div>
+              <div class="rout" onclick="rp(45,this)">3rd 12 (25–36)</div>
+            </div>
+            <!-- Even money -->
+            <div class="rout-row">
+              <div class="rout" onclick="rp(41,this)">1–18 (Low)</div>
+              <div class="rout red-b on" id="rb37" onclick="rp(37,this)">🔴 Red</div>
+              <div class="rout" onclick="rp(39,this)">Odd</div>
+              <div class="rout" onclick="rp(40,this)">Even</div>
+              <div class="rout blk-b" id="rb38" onclick="rp(38,this)">⚫ Black</div>
+              <div class="rout" onclick="rp(42,this)">19–36 (High)</div>
+            </div>
+          </div>
+          <div class="ptbl" style="margin-top:10px"><div class="ph">PAYOUTS</div>
+            <div class="pr"><span>Straight number (0–36)</span><span>36×</span></div>
+            <div class="pr"><span>Column (2:1)</span><span>3×</span></div>
+            <div class="pr"><span>Dozen (1-12, 13-24, 25-36)</span><span>3×</span></div>
+            <div class="pr"><span>Red / Black / Odd / Even</span><span>2×</span></div>
+            <div class="pr"><span>Low (1–18) / High (19–36)</span><span>2×</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PLINKO -->
+    <div class="gp" id="pp-plinko">
+      <div class="gph"><span class="gpico">🔵</span><div><div class="gptit">Plinko</div><div class="gpsub">8 rows · Drop the ball · Win up to 13×</div></div><button class="gpcl" onclick="cp()">✕ Close</button></div>
+      <div id="plinko-wrap"><canvas id="pk-cv" width="380" height="320"></canvas></div>
+      <div class="ctrl"><div class="cg"><div class="cl">Bet (sat)</div><input class="ci" type="number" id="pka" value="10000" min="1000"></div><div class="cg"><div class="cl">Risk</div><select class="ci" id="pkrisk" style="cursor:pointer"><option value="low">Low</option><option value="med" selected>Medium</option><option value="high">High</option></select></div></div>
+      <div class="qs"><div class="qb" onclick="sa2('pka',1000)">1k</div><div class="qb" onclick="sa2('pka',5000)">5k</div><div class="qb" onclick="sa2('pka',10000)">10k</div><div class="qb" onclick="sa2('pka',50000)">50k</div></div>
+      <button class="bplay" id="pkbtn" onclick="dropPlinko()">🔵 DROP BALL</button>
+      <div class="res" id="pkr"></div>
+    </div>
+
+    <!-- SLOTS -->
+    <div class="gp" id="pp-slots">
+      <div class="gph"><span class="gpico">🎰</span><div><div class="gptit">Bitcoin Slots</div><div class="gpsub">3 reels · Jackpot 100× · Provably fair</div></div><button class="gpcl" onclick="cp()">✕ Close</button></div>
+      <div class="smach">
+        <div class="smtop">✦ BITCOIN SLOTS ✦</div>
+        <div class="sreels">
+          <div class="srcol"><div class="srtrack" id="sr0"></div></div>
+          <div class="srcol"><div class="srtrack" id="sr1"></div></div>
+          <div class="srcol"><div class="srtrack" id="sr2"></div></div>
+          <div class="spayline"></div>
+        </div>
+        <div class="sline" id="sline"></div>
+        <div class="scred" id="scred"></div>
+      </div>
+      <div class="ctrl"><div class="cg"><div class="cl">Bet (sat)</div><input class="ci" type="number" id="sla" value="10000" min="1000" oninput="uw('slots')"></div><div class="cg"><div class="cl">Max Win (100×)</div><input class="ci wv" readonly id="slw"></div></div>
+      <div class="qs"><div class="qb" onclick="sa2('sla',1000);uw('slots')">1k</div><div class="qb" onclick="sa2('sla',5000);uw('slots')">5k</div><div class="qb" onclick="sa2('sla',10000);uw('slots')">10k</div><div class="qb" onclick="sa2('sla',50000);uw('slots')">50k</div><div class="qb" onclick="sa2('sla',Math.floor(BAL/2));uw('slots')">½</div><div class="qb" onclick="sa2('sla',BAL);uw('slots')">MAX</div></div>
+      <div class="ptbl"><div class="ph">PAYOUT TABLE</div>
+        <div class="pr"><span>7️⃣ 7️⃣ 7️⃣ Jackpot!</span><span>100×</span></div>
+        <div class="pr"><span>💎 💎 💎 Diamond</span><span>50×</span></div>
+        <div class="pr"><span>⭐ ⭐ ⭐ Star</span><span>25×</span></div>
+        <div class="pr"><span>🔔 🔔 🔔 Bell</span><span>10×</span></div>
+        <div class="pr"><span>🍒 🍒 🍒 Cherry</span><span>5×</span></div>
+        <div class="pr"><span>🍋 🍋 🍋 Lemon</span><span>3×</span></div>
+        <div class="pr"><span>7️⃣ 7️⃣ Two Sevens</span><span>5×</span></div>
+        <div class="pr"><span>💎 💎 Two Diamonds</span><span>3×</span></div>
+      </div>
+      <button class="bplay" id="slbtn" onclick="playSlots()">🎰 SPIN REELS</button>
+      <div class="res" id="slr"></div>
+    </div>
+
+    <!-- MINES -->
+    <div class="gp" id="pp-mines">
+      <div class="gph"><span class="gpico">💣</span><div><div class="gptit">Mines</div><div class="gpsub">Find 💎 gems · Avoid 💣 mines · Cash out anytime</div></div><button class="gpcl" onclick="cp()">✕ Close</button></div>
+      <div class="mmult" id="mmult">0.00×</div>
+      <div class="minfo"><span id="minfo1">Select mines count then start</span><span id="minfo2">Profit: 0 sat</span></div>
+      <div class="msel">
+        <div class="msb" onclick="setMines(1,this)">1 💣</div>
+        <div class="msb on" onclick="setMines(3,this)">3 💣</div>
+        <div class="msb" onclick="setMines(5,this)">5 💣</div>
+        <div class="msb" onclick="setMines(8,this)">8 💣</div>
+        <div class="msb" onclick="setMines(12,this)">12 💣</div>
+        <div class="msb" onclick="setMines(20,this)">20 💣</div>
+      </div>
+      <div class="mgrid" id="mgrid"></div>
+      <div class="ctrl"><div class="cg"><div class="cl">Bet (sat)</div><input class="ci" type="number" id="mna" value="10000" min="1000"></div><div class="cg"><div class="cl">Next gem win</div><input class="ci wv" readonly id="mnw"></div></div>
+      <div class="qs"><div class="qb" onclick="sa2('mna',1000)">1k</div><div class="qb" onclick="sa2('mna',5000)">5k</div><div class="qb" onclick="sa2('mna',10000)">10k</div><div class="qb" onclick="sa2('mna',50000)">50k</div></div>
+      <button class="bplay" id="mnbtn" onclick="startMines()">💣 START GAME</button>
+      <button class="bplay" id="mncash" onclick="cashMines()" style="display:none;background:linear-gradient(135deg,var(--grn),#059669);color:#fff;margin-top:6px">💰 CASH OUT NOW</button>
+      <div class="res" id="mnr"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- SPORTS PAGE -->
+<div id="pg-sports" class="pg">
+  <div class="sptb">
+    <div class="ldot"></div><span id="sptit" style="font-weight:700;font-size:13px">⚽ Football</span>
+    <div style="margin-left:auto;display:flex;gap:5px">
+      <button class="spbtn on" id="sb-soccer" onclick="setSport('soccer')">⚽ Football</button>
+      <button class="spbtn" id="sb-nba" onclick="setSport('nba')">🏀 NBA</button>
+      <button class="spbtn" id="sb-nfl" onclick="setSport('nfl')">🏈 NFL</button>
+      <button class="spbtn" id="sb-tennis" onclick="setSport('tennis')">🎾 Tennis</button>
+    </div>
+  </div>
+  <div class="evl" id="evl"><div class="spload">⚡ Loading live events…</div></div>
+</div>
+</div>
+
+<!-- BET SLIP -->
+<div id="slip">
+  <div class="slhd"><div class="sltt">📋 Bet Slip</div><div class="slcnt" id="scnt">0</div></div>
+  <div id="slbody" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+    <div class="slem" id="slem"><div style="font-size:32px;opacity:.2">📋</div><div>Click odds to add bets</div></div>
+    <div style="display:none;flex:1;overflow-y:auto" id="slitems"></div>
+  </div>
+  <div id="slft" style="display:none" class="slft">
+    <div class="slsr"><label style="color:var(--mut);font-weight:600;font-size:12px">Stake (sat)</label><input class="slin" type="number" id="slstk" value="10000" min="1000" oninput="uslip()"></div>
+    <div class="slqs"><div class="sqb" onclick="sss(5000)">5k</div><div class="sqb" onclick="sss(10000)">10k</div><div class="sqb" onclick="sss(50000)">50k</div><div class="sqb" onclick="sss(100000)">100k</div></div>
+    <div class="slpay"><span>Potential Win:</span><span id="slpay">₿ 0.00000</span></div>
+    <button class="slpl" onclick="placeBet()">🎯 Place Bet</button>
+  </div>
+</div>
+</div>
+
+<!-- WIN BANNER -->
+<div class="wb" id="wb" onclick="cwb()">
+  <div class="wbox">
+    <div class="wico">🏆</div><div class="wtit">YOU WIN!</div>
+    <div class="wamt" id="wamt">+0 sat</div>
+    <div style="color:var(--mut);font-size:11px;margin-bottom:4px" id="wgame"></div>
+    <button class="wcol" onclick="cwb()">💰 Collect Winnings</button>
+  </div>
+</div>
+
+<!-- DEPOSIT -->
+<div class="mbg" id="depm" onclick="if(event.target===this)cdep()">
+  <div class="mbox">
+    <button class="mx" onclick="cdep()">✕</button>
+    <h2 style="margin-bottom:5px;color:var(--or)">💰 Add Funds</h2>
+    <p style="font-size:11px;color:var(--mut);margin-bottom:2px">Demo mode — select amount to add</p>
+    <div class="dams">
+      <div class="da on" onclick="sd(this,100000)"><div class="das">100k sat</div><div class="dab">0.001 BTC</div></div>
+      <div class="da" onclick="sd(this,500000)"><div class="das">500k sat</div><div class="dab">0.005 BTC</div></div>
+      <div class="da" onclick="sd(this,1000000)"><div class="das">1M sat</div><div class="dab">0.01 BTC</div></div>
+      <div class="da" onclick="sd(this,5000000)"><div class="das">5M sat</div><div class="dab">0.05 BTC</div></div>
+      <div class="da" onclick="sd(this,10000000)"><div class="das">10M sat</div><div class="dab">0.1 BTC</div></div>
+      <div class="da" onclick="sd(this,50000000)"><div class="das">50M sat</div><div class="dab">0.5 BTC</div></div>
+    </div>
+    <button class="dcf" onclick="cfdep()">✅ Add to Balance</button>
+  </div>
+</div>
+<div id="toasts"></div>
+
+<script src="casino.js"></script>
+</body></html>
