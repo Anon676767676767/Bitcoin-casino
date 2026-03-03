@@ -17,7 +17,10 @@ var PKMULTS={
   12:{low:[10,3,1.6,1.4,1.1,1.0,0.5,1.0,1.1,1.4,1.6,3,10],med:[33,11,4,2,1.1,0.6,0.3,0.6,1.1,2,4,11,33],high:[170,24,8.1,2,0.7,0.2,0.2,0.2,0.7,2,8.1,24,170]},
   16:{low:[16,9,2,1.4,1.4,1.2,1.1,1.0,0.5,1.0,1.1,1.2,1.4,1.4,2,9,16],med:[110,41,10,5,3,1.5,1.0,0.5,0.3,0.5,1.0,1.5,3,5,10,41,110],high:[1000,130,26,9,4,2,0.2,0.2,0.2,0.2,0.2,2,4,9,26,130,1000]}
 };
-var SSYMS=['₿','Ξ','◎','♦','⊙','★'],SCLS=['sc-btc','sc-eth','sc-sol','sc-usd','sc-moto','sc-star'],SPAY=[[10,50,200],[6,25,100],[4,15,50],[3,10,30],[2,6,20],[1,3,10]],slSpinning=false,slAmbId=null;
+var _catSVG='<img src="https://creator-hub-prod.s3.us-east-2.amazonaws.com/ord-motocats_pfp_1754578871657.png" width="58" height="58" style="object-fit:cover;border-radius:8px">';
+var _opSVG='<img src="https://unavatar.io/twitter/opnetbtc" width="58" height="58" style="object-fit:cover;border-radius:8px">';
+var _pillSVG='<img src="https://unavatar.io/twitter/orangepillonbtc" width="58" height="58" style="object-fit:cover;border-radius:8px">';
+var SSYMS=['₿',_catSVG,_opSVG,'♦',_pillSVG,'★'],SNAMES=['₿','🐱','OP','♦','🟠','★'],SCLS=['sc-btc','sc-cat','sc-sol','sc-usd','sc-pill','sc-star'],SPAY=[[10,50,200],[6,25,100],[4,15,50],[3,10,30],[2,6,20],[1,3,10]],slSpinning=false,slAmbId=null;
 var mnActive=false,mnGrid=[],mnMines=3,mnRevealed=0,mnBet=0;
 var bjDeck=[],bjPlayer=[],bjDealer=[],bjBet=0,bjState='idle';
 var dThresh=50,dOver=true;
@@ -142,19 +145,22 @@ s2.textContent='.gg{padding-bottom:6px}'
 +'.smtop{font-size:14px!important;letter-spacing:.25em!important;animation:ledBlink 1.1s step-end infinite;background:linear-gradient(90deg,#f7931a,#fbbf24,#f7931a);background-size:200% 100%;-webkit-background-clip:text;-webkit-text-fill-color:transparent}'
 +'.sreels{background:#000!important;border:3px solid rgba(247,147,26,.8)!important;border-radius:12px!important;padding:6px!important;animation:reelGlow 2.5s ease-in-out infinite!important;display:flex!important;gap:6px!important;position:relative!important}'
 +'.srcol{background:linear-gradient(180deg,#0a000a,#1a0030,#0a000a)!important;border:2px solid rgba(168,85,247,.4)!important;border-radius:8px!important;width:76px!important;height:240px!important;overflow:hidden!important;position:relative!important;flex-shrink:0!important}'
-+'.srtrack{position:absolute!important;top:0;left:0;width:100%!important}'
++'.srtrack{position:absolute!important;top:0;left:0;width:100%!important;display:flex!important;flex-direction:column!important}'
 +'.ssym{width:76px!important;height:72px!important;margin:4px 0!important;display:flex!important;align-items:center!important;justify-content:center!important;font-size:34px!important;font-weight:900!important;border-radius:10px!important;flex-shrink:0!important;box-sizing:border-box!important}'
++'.ssym img{width:52px!important;height:52px!important;object-fit:contain!important;display:block!important;border-radius:6px!important}'
++'.ssym svg{display:block!important}'
 +'.sc-btc{background:radial-gradient(circle at 45% 40%,#f7b733,#f7931a,#c86000)!important;color:#fff!important}'
 +'.sc-eth{background:radial-gradient(circle at 45% 40%,#8ba8f0,#627eea,#2a4ec2)!important;color:#fff!important}'
 +'.sc-sol{background:radial-gradient(circle at 45% 40%,#c27aff,#9945ff,#6015b0)!important;color:#fff!important}'
 +'.sc-usd{background:radial-gradient(circle at 45% 40%,#3ecf9e,#26a17b,#0f6d52)!important;color:#fff!important}'
 +'.sc-moto{background:radial-gradient(circle at 45% 40%,#34d399,#10b981,#047857)!important;color:#fff!important}'
 +'.sc-star{background:radial-gradient(circle at 45% 40%,#ffe97a,#f5c518,#c09a00)!important;color:#5a3e00!important}'
-+'.spl1,.spl2,.spl3{position:absolute;left:0;right:0;height:3px;pointer-events:none;border-radius:2px;transition:opacity .3s}'
-+'.spl1{top:124px;background:rgba(247,147,26,.7);box-shadow:0 0 8px #f7931a}'
-+'.spl2{top:44px;background:rgba(96,165,250,.6);box-shadow:0 0 8px #60a5fa}'
-+'.spl3{top:204px;background:rgba(52,211,153,.6);box-shadow:0 0 8px #34d399}'
-+'.spayline{animation:payFlash 1.2s ease-in-out infinite!important;height:4px!important;background:linear-gradient(90deg,transparent,#f7931a,#fbbf24,#f7931a,transparent)!important;box-shadow:0 0 14px #f7931a,0 0 28px rgba(247,147,26,.5)!important}'
++'.sc-cat{background:radial-gradient(circle at 45% 40%,#fde8b5,#e8c77a,#b89040)!important;color:#5a3e00!important}'
++'.sc-pill{background:radial-gradient(circle at 45% 40%,#1a0a00,#0d0500,#000)!important;color:#fff!important}'
++'.spl-zone{position:absolute;left:0;right:0;top:86px;height:80px;background:linear-gradient(180deg,transparent 0%,rgba(247,147,26,.05) 30%,rgba(247,147,26,.09) 50%,rgba(247,147,26,.05) 70%,transparent 100%);pointer-events:none;border-radius:4px;z-index:4}'
++'.spl1{position:absolute;left:-3px;right:-3px;top:126px;height:2px;background:linear-gradient(90deg,transparent 0%,rgba(247,147,26,.5) 6%,#f7931a 22%,#ffd060 50%,#f7931a 78%,rgba(247,147,26,.5) 94%,transparent 100%);box-shadow:0 0 5px rgba(247,147,26,.9),0 0 14px rgba(247,147,26,.6),0 0 30px rgba(247,147,26,.25);pointer-events:none;border-radius:1px;z-index:7;animation:plGlow 2.8s ease-in-out infinite}'
++'@keyframes plGlow{0%,100%{opacity:.75;box-shadow:0 0 5px rgba(247,147,26,.8),0 0 14px rgba(247,147,26,.5),0 0 28px rgba(247,147,26,.2)}50%{opacity:1;box-shadow:0 0 7px rgba(255,208,96,.95),0 0 20px rgba(247,147,26,.75),0 0 42px rgba(247,147,26,.35)}}'
++'.spl1.spayline{animation:payFlash 0.7s ease-in-out infinite!important;height:3px!important;background:linear-gradient(90deg,transparent,#ffd060 10%,#fff 50%,#ffd060 90%,transparent)!important;box-shadow:0 0 10px #ffd060,0 0 24px #f7931a,0 0 48px rgba(247,147,26,.55)!important}'
 +'.sline{font-size:15px!important;font-weight:900!important;text-align:center!important;letter-spacing:.06em;text-shadow:0 0 12px rgba(247,147,26,.6);padding:6px 0!important}'
 +'.scred{text-align:center;font-size:11px;color:rgba(247,147,26,.6);letter-spacing:.12em;font-weight:700}'
 +'.sl-machine-row{display:flex;align-items:center;gap:0}'
@@ -1227,26 +1233,41 @@ function slPullSound(){
 function slAmbientStart(){
   try{
     if(!rAudioCtx){rAudioCtx=new(window.AudioContext||window.webkitAudioContext)();}
-    if(slAmbId){try{slAmbId.osc.stop();}catch(e){}slAmbId=null;}
-    // Low machine hum
-    var osc=rAudioCtx.createOscillator();
+    if(slAmbId){slAmbId.oscs.forEach(function(o){try{o.stop();}catch(e){}});slAmbId=null;}
+    // Rich layered machine hum: fundamental + 2 harmonics through shared filter
     var flt=rAudioCtx.createBiquadFilter();
-    var gain=rAudioCtx.createGain();
-    osc.type='sawtooth';osc.frequency.value=48;
-    flt.type='lowpass';flt.frequency.value=160;
-    gain.gain.value=0.035;
-    osc.connect(flt);flt.connect(gain);gain.connect(rAudioCtx.destination);
-    osc.start();
-    slAmbId={osc:osc,gain:gain};
-    // Welcome jingle: 3 quick ascending notes
-    [440,550,660].forEach(function(freq,i){
-      var o2=rAudioCtx.createOscillator(),g2=rAudioCtx.createGain();
-      o2.connect(g2);g2.connect(rAudioCtx.destination);
-      o2.type='sine';o2.frequency.value=freq;
-      var t=rAudioCtx.currentTime+i*0.13+0.05;
-      g2.gain.setValueAtTime(0,t);g2.gain.linearRampToValueAtTime(0.22,t+0.04);
-      g2.gain.exponentialRampToValueAtTime(0.001,t+0.42);
-      o2.start(t);o2.stop(t+0.45);
+    var masterGain=rAudioCtx.createGain();
+    flt.type='lowpass';flt.frequency.value=280;
+    masterGain.gain.value=1;
+    flt.connect(masterGain);masterGain.connect(rAudioCtx.destination);
+    var humSpecs=[[55,0.04],[110,0.018],[164.8,0.008]];
+    var oscs=humSpecs.map(function(spec){
+      var o=rAudioCtx.createOscillator(),g=rAudioCtx.createGain();
+      o.type='triangle';o.frequency.value=spec[0];g.gain.value=spec[1];
+      o.connect(g);g.connect(flt);o.start();return o;
+    });
+    slAmbId={oscs:oscs,gain:masterGain};
+    // Casino fanfare: 8-note C major arpeggio (C4→E4→G4→C5→E5→G5→C6→E6)
+    var fanfare=[261.6,329.6,392,523.2,659.3,784,1046.5,1318.5];
+    fanfare.forEach(function(freq,i){
+      var o=rAudioCtx.createOscillator(),g=rAudioCtx.createGain();
+      o.connect(g);g.connect(rAudioCtx.destination);
+      o.type='sine';o.frequency.value=freq;
+      var peak=i>=6?0.28:0.2;
+      var t=rAudioCtx.currentTime+0.05+i*0.09;
+      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+0.03);
+      g.gain.exponentialRampToValueAtTime(0.001,t+0.38);
+      o.start(t);o.stop(t+0.42);
+    });
+    // Soft chord accent on last beat (C6+E6+G6 together, delayed)
+    [1046.5,1318.5,1568].forEach(function(freq){
+      var o=rAudioCtx.createOscillator(),g=rAudioCtx.createGain();
+      o.connect(g);g.connect(rAudioCtx.destination);
+      o.type='sine';o.frequency.value=freq;
+      var t=rAudioCtx.currentTime+0.05+7*0.09+0.12;
+      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.14,t+0.04);
+      g.gain.exponentialRampToValueAtTime(0.001,t+0.6);
+      o.start(t);o.stop(t+0.65);
     });
   }catch(e){}
 }
@@ -1254,27 +1275,71 @@ function slAmbientStop(){
   if(!slAmbId)return;
   try{
     var g=slAmbId.gain;
-    if(rAudioCtx)g.gain.linearRampToValueAtTime(0,rAudioCtx.currentTime+0.3);
-    var osc=slAmbId.osc;
-    setTimeout(function(){try{osc.stop();}catch(e){}},350);
+    if(rAudioCtx)g.gain.linearRampToValueAtTime(0,rAudioCtx.currentTime+0.35);
+    var oscs=slAmbId.oscs;
+    setTimeout(function(){oscs.forEach(function(o){try{o.stop();}catch(e){}});},400);
     slAmbId=null;
   }catch(e){slAmbId=null;}
 }
 function slWinSound(total){
   try{
     if(!rAudioCtx){rAudioCtx=new(window.AudioContext||window.webkitAudioContext)();}
-    var base=total>=100?523:total>=30?392:330;
-    var seq=[base,base*5/4,base*3/2,base*2,base*5/2];
-    var n=Math.min(5,Math.max(3,Math.round(Math.log2(total+2))));
-    seq.slice(0,n).forEach(function(f,i){
+    var now=rAudioCtx.currentTime;
+    // Shimmer on every win (crystal high note)
+    var shimFreqs=total>=100?[2093,4186]:[2093];
+    shimFreqs.forEach(function(freq,i){
       var o=rAudioCtx.createOscillator(),g=rAudioCtx.createGain();
       o.connect(g);g.connect(rAudioCtx.destination);
-      o.type='sine';o.frequency.value=f;
-      var t=rAudioCtx.currentTime+i*0.14;
-      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.3,t+0.04);
-      g.gain.exponentialRampToValueAtTime(0.001,t+0.55);
-      o.start(t);o.stop(t+0.6);
+      o.type='triangle';o.frequency.value=freq;
+      var t=now+i*0.08;
+      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.06,t+0.02);
+      g.gain.exponentialRampToValueAtTime(0.001,t+0.6);
+      o.start(t);o.stop(t+0.65);
     });
+    if(total>=100){
+      // Big win: C major triad chord hits together, then soaring peak
+      [[523.2,0],[659.3,0],[784,0],[1046.5,0.22],[1318.5,0.38]].forEach(function(spec){
+        var o=rAudioCtx.createOscillator(),g=rAudioCtx.createGain();
+        o.connect(g);g.connect(rAudioCtx.destination);
+        o.type=spec[1]>0.3?'triangle':'sine';o.frequency.value=spec[0];
+        var t=now+spec[1];
+        g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.32,t+0.04);
+        g.gain.exponentialRampToValueAtTime(0.001,t+0.65);
+        o.start(t);o.stop(t+0.7);
+      });
+      // Final triumphant chord E6+G6 together
+      [1318.5,1568].forEach(function(f){
+        var o=rAudioCtx.createOscillator(),g=rAudioCtx.createGain();
+        o.connect(g);g.connect(rAudioCtx.destination);
+        o.type='sine';o.frequency.value=f;
+        var t=now+0.55;
+        g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.22,t+0.05);
+        g.gain.exponentialRampToValueAtTime(0.001,t+0.7);
+        o.start(t);o.stop(t+0.8);
+      });
+    }else if(total>=30){
+      // Medium win: warm 5-note arpeggio with triangle wave
+      [523.2,659.3,784,1046.5,1318.5].forEach(function(f,i){
+        var o=rAudioCtx.createOscillator(),g=rAudioCtx.createGain();
+        o.connect(g);g.connect(rAudioCtx.destination);
+        o.type='triangle';o.frequency.value=f;
+        var t=now+i*0.11;
+        g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.26,t+0.03);
+        g.gain.exponentialRampToValueAtTime(0.001,t+0.5);
+        o.start(t);o.stop(t+0.55);
+      });
+    }else{
+      // Small win: crisp 3-note ping (E5→G5→C6)
+      [659.3,784,1046.5].forEach(function(f,i){
+        var o=rAudioCtx.createOscillator(),g=rAudioCtx.createGain();
+        o.connect(g);g.connect(rAudioCtx.destination);
+        o.type='sine';o.frequency.value=f;
+        var t=now+i*0.12;
+        g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.24,t+0.03);
+        g.gain.exponentialRampToValueAtTime(0.001,t+0.45);
+        o.start(t);o.stop(t+0.5);
+      });
+    }
   }catch(e){}
 }
 function slSpawnParticles(){
@@ -1312,16 +1377,10 @@ function openSlots(){
     +REEL+'2"></div></div>'
     +REEL+'3"></div></div>'
     +REEL+'4"></div></div>'
+    +'<div class="spl-zone"></div>'
     +'<div class="spl1" id="spl1"></div>'
-    +'<div class="spl2" id="spl2"></div>'
-    +'<div class="spl3" id="spl3"></div>'
     +'<div class="sl-glass"></div>'
     +'<div id="slpcont" style="position:absolute;inset:0;overflow:visible;pointer-events:none;z-index:15"></div>'
-    +'</div>'
-    +'<div style="display:flex;gap:14px;justify-content:center;padding:6px 0;font-size:10px;font-weight:800;letter-spacing:.1em">'
-    +'<span style="color:rgba(96,165,250,.85)">▬ TOP</span>'
-    +'<span style="color:rgba(247,147,26,.95)">▬ MIDDLE</span>'
-    +'<span style="color:rgba(52,211,153,.85)">▬ BOTTOM</span>'
     +'</div>'
     +'<div class="sline" id="sline" style="min-height:22px"></div>'
     +'<div class="scred" id="scred"></div>'
@@ -1339,19 +1398,19 @@ function openSlots(){
     +'<input class="ci" type="number" id="sla" value="10000" min="1000" oninput="uw(\'slots\')" style="width:100%">'
     +'<div class="qs"><div class="qb" onclick="sa2(\'sla\',1000);uw(\'slots\')">1k</div><div class="qb" onclick="sa2(\'sla\',5000);uw(\'slots\')">5k</div><div class="qb" onclick="sa2(\'sla\',10000);uw(\'slots\')">10k</div><div class="qb" onclick="sa2(\'sla\',50000);uw(\'slots\')">50k</div><div class="qb" onclick="sa2(\'sla\',Math.floor(BAL/2));uw(\'slots\')">½</div><div class="qb" onclick="sa2(\'sla\',BAL);uw(\'slots\')">MAX</div></div>'
     +'<div class="cl">Max Win (200×)</div><input class="ci wv" readonly id="slw" style="width:100%">'
-    +'<div class="cl" style="font-size:10px;color:rgba(255,255,255,.4)">3 PAYLINES · 5 REELS · 3+ TO WIN</div>'
+    +'<div class="cl" style="font-size:10px;color:rgba(255,255,255,.4)">1 PAYLINE · 5 REELS · 3+ TO WIN</div>'
     +'<div class="ptbl"><div class="ph">PAYOUT TABLE</div>'
     +'<div class="pr"><span>₿ × 5</span><span style="color:#f7931a">200×</span></div>'
     +'<div class="pr"><span>₿ × 4</span><span style="color:#f7931a">50×</span></div>'
     +'<div class="pr"><span>₿ × 3</span><span style="color:#f7931a">10×</span></div>'
-    +'<div class="pr"><span>Ξ × 5</span><span style="color:#627eea">100×</span></div>'
-    +'<div class="pr"><span>Ξ × 3</span><span style="color:#627eea">6×</span></div>'
-    +'<div class="pr"><span>◎ × 5</span><span style="color:#9945ff">50×</span></div>'
-    +'<div class="pr"><span>◎ × 3</span><span style="color:#9945ff">4×</span></div>'
+    +'<div class="pr"><span>🐱 CAT × 5</span><span style="color:#e8c77a">100×</span></div>'
+    +'<div class="pr"><span>🐱 CAT × 3</span><span style="color:#e8c77a">6×</span></div>'
+    +'<div class="pr"><span>OP × 5</span><span style="color:#9945ff">50×</span></div>'
+    +'<div class="pr"><span>OP × 3</span><span style="color:#9945ff">4×</span></div>'
     +'<div class="pr"><span>♦ × 5</span><span style="color:#26a17b">30×</span></div>'
     +'<div class="pr"><span>♦ × 3</span><span style="color:#26a17b">3×</span></div>'
-    +'<div class="pr"><span>⊙ × 5</span><span style="color:#10b981">20×</span></div>'
-    +'<div class="pr"><span>⊙ × 3</span><span style="color:#10b981">2×</span></div>'
+    +'<div class="pr"><span>🟠 PILL × 5</span><span style="color:#f7931a">20×</span></div>'
+    +'<div class="pr"><span>🟠 PILL × 3</span><span style="color:#f7931a">2×</span></div>'
     +'<div class="pr"><span>★ × 3</span><span style="color:#f5c518">1×</span></div>'
     +'</div>'
     +'<button class="bplay" id="slbtn" onclick="slPullHandle()" style="margin-top:auto">🎰 PULL TO SPIN</button>'
@@ -1363,19 +1422,16 @@ function initSlots(){
     var tr=document.getElementById('sr'+r);if(!tr)return;
     var h='';
     for(var i=0;i<15;i++){var s=Math.floor(Math.random()*6);h+='<div class="ssym '+SCLS[s]+'">'+SSYMS[s]+'</div>';}
-    tr.innerHTML=h;tr.style.transition='none';tr.style.top='-4px'; // hide top margin gap
+    tr.innerHTML=h;tr.style.transition='none';tr.style.top='0';
   }
   var cr=document.getElementById('scred');if(cr)cr.textContent='Credits: '+BAL.toLocaleString()+' sat';
   uw('slots');
 }
 function wSlots5(grid){
-  var rows=[1,0,2],total=0,wins=[];
-  rows.forEach(function(row,pi){
-    var base=grid[0][row],count=1;
-    for(var r=1;r<5;r++){if(grid[r][row]===base)count++;else break;}
-    if(count>=3){var m=SPAY[base][count-3];total+=m;wins.push({pl:pi+1,sym:base,count:count,mult:m});}
-  });
-  return{total:total,wins:wins};
+  var base=grid[0][1],count=1;
+  for(var r=1;r<5;r++){if(grid[r][1]===base)count++;else break;}
+  if(count>=3){var m=SPAY[base][count-3];return{total:m,wins:[{pl:1,sym:base,count:count,mult:m}]};}
+  return{total:0,wins:[]};
 }
 function playSlots(){
   var amt=iv('sla');if(!chk(amt)||slSpinning)return;
@@ -1383,7 +1439,7 @@ function playSlots(){
   var btn=document.getElementById('slbtn');if(btn)btn.disabled=true;
   var res=document.getElementById('slr');if(res)res.style.display='none';
   var sl=document.getElementById('sline');if(sl)sl.textContent='';
-  [1,2,3].forEach(function(n){var p=document.getElementById('spl'+n);if(p)p.classList.remove('spayline');});
+  var sp=document.getElementById('spl1');if(sp)sp.classList.remove('spayline');
   var mach=document.getElementById('sl-machine');if(mach)mach.classList.remove('sl-win');
   // grid[reel][row]: 0=top,1=mid,2=bot
   // Track: 24 random + 3 finals + 3 trailing random = 30 symbols (no visible end)
@@ -1402,7 +1458,7 @@ function playSlots(){
     syms.push(grid[ri][0]);syms.push(grid[ri][1]);syms.push(grid[ri][2]);
     for(var j=0;j<3;j++)syms.push(Math.floor(Math.random()*6)); // trailing: no visible end
     tr.innerHTML=syms.map(function(s){return '<div class="ssym '+SCLS[s]+'">'+SSYMS[s]+'</div>';}).join('');
-    tr.style.transition='none';tr.style.top='-4px'; // hide top margin gap
+    tr.style.transition='none';tr.style.top='0';
     // Dramatic left-to-right stagger: each reel starts, spins, and lands later than previous
     var p1d=P1_DUR+ri*80;   // 720→1040ms per reel
     var p2d=P2_DUR+ri*140;  // 950→1510ms: rightmost reel lands slowest
@@ -1433,14 +1489,14 @@ function playSlots(){
       var p=Math.floor(amt*result.total);BAL+=p;updBal();
       var mach2=document.getElementById('sl-machine');if(mach2)mach2.classList.add('sl-win');
       result.wins.forEach(function(w){var pd=document.getElementById('spl'+w.pl);if(pd)pd.classList.add('spayline');});
-      var wdesc=result.wins.map(function(w){return SSYMS[w.sym]+'×'+w.count+' ('+w.mult+'×)';}).join(' + ');
+      var wdesc=result.wins.map(function(w){return SNAMES[w.sym]+'×'+w.count+' ('+w.mult+'×)';}).join(' + ');
       if(sl2)sl2.textContent='🏆 '+result.total+'× WIN! +'+p.toLocaleString()+' sat!';
       slWinSound(result.total);
       slSpawnParticles();
       showRes('slr',true,p-amt,wdesc);showWin(p,'Slots');
     }else{
       if(sl2)sl2.textContent='No match — try again!';
-      var sym5=grid.map(function(rr){return SSYMS[rr[1]];}).join(' ');
+      var sym5=grid.map(function(rr){return SNAMES[rr[1]];}).join(' ');
       showRes('slr',false,0,sym5+' — no win');toast('❌ -'+amt.toLocaleString()+' sat','er');
     }
     var cr=document.getElementById('scred');if(cr)cr.textContent='Credits: '+BAL.toLocaleString()+' sat';
