@@ -28,7 +28,7 @@ var slStreak=[],slSessW=0,slSessL=0,slSessBW=0;
 var mnActive=false,mnGrid=[],mnMines=3,mnRevealed=0,mnBet=0,mnAmbId=null;
 var mnStreak=[],mnSessRounds=0,mnSessBW=0;
 var bjDeck=[],bjPlayer=[],bjDealer=[],bjBet=0,bjState='idle';
-var dPick=1,dHistory=[];
+var dPick=1,dBetType='exact',dHistory=[];
 
 // ─── FULLSCREEN OVERLAY ───────────────────────────────────────────────────────
 (function(){
@@ -137,8 +137,8 @@ var s=document.createElement('style');s.textContent=css;document.head.appendChil
 var s2=document.createElement('style');
 s2.textContent='.gg{padding-bottom:6px}'
 +'.gc{box-shadow:0 4px 20px rgba(0,0,0,.4)}'
-+'.gbg{font-size:56px!important;transition:transform .3s}'
-+'.gc:hover .gbg{transform:scale(1.15)}'
++'.gbg{font-size:28px!important;transition:transform .3s}'
++'.gc:hover .gbg{transform:scale(1.1)}'
 +'.gtit{font-size:13px;font-weight:800;background:linear-gradient(90deg,#f7931a,#fbbf24);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:.08em;text-transform:uppercase}'
 +'@keyframes hotBadge{0%,100%{background:#ef4444}50%{background:#dc2626;box-shadow:0 0 10px rgba(239,68,68,.5)}}'
 +'.hot{animation:hotBadge 1.8s ease-in-out infinite}'
@@ -541,8 +541,8 @@ var GAMES=[
   {id:'cf',n:'Coin Flip',ico:'🪙',bg:'bg0',badge:'hot',rtp:'97.5'},
   {id:'bj',n:'Blackjack',ico:'♠',bg:'bg2',badge:'hot',rtp:'99.5'},
   {id:'dice',n:'Bitcoin Dice',ico:'🎲',bg:'bg1',badge:'',rtp:'98.0'},
-  {id:'crash',n:'Crash',ico:'📈',bg:'bg5',badge:'new',rtp:'97.0'},
-  {id:'roul',n:'Roulette',ico:'🎡',bg:'bg3',badge:'hot',rtp:'97.3'},
+  {id:'crash',n:'Crash',ico:'<svg width="54" height="54" viewBox="0 0 54 54" fill="none"><ellipse cx="27" cy="43" rx="7" ry="9" fill="#ef4444" opacity=".8"/><ellipse cx="27" cy="45" rx="5" ry="6" fill="#fb923c" opacity=".9"/><ellipse cx="27" cy="47" rx="3" ry="4" fill="#fbbf24"/><ellipse cx="27" cy="48.5" rx="1.5" ry="2.5" fill="white" opacity=".8"/><path d="M20 34L11 45L20 41Z" fill="#f7931a"/><path d="M34 34L43 45L34 41Z" fill="#f7931a"/><path d="M27 5C21 5 16 11 15 26L20 34L34 34L39 26C38 11 33 5 27 5Z" fill="#e2e8f0"/><path d="M27 5C21 5 18 10 17 18L37 18C36 10 33 5 27 5Z" fill="#f7931a" opacity=".85"/><circle cx="27" cy="23" r="6.5" fill="#38bdf8" stroke="#0ea5e9" stroke-width="1.5"/><circle cx="25" cy="21" r="2" fill="white" opacity=".6"/></svg>',bg:'bg5',badge:'new',rtp:'97.0'},
+  {id:'roul',n:'Roulette',ico:'<svg width="54" height="54" viewBox="0 0 54 54" fill="none"><path d="M27 27L27 5A22 22 0 0 1 42.6 11.4Z" fill="#dc2626"/><path d="M27 27L42.6 11.4A22 22 0 0 1 49 27Z" fill="#1a1a1a"/><path d="M27 27L49 27A22 22 0 0 1 42.6 42.6Z" fill="#dc2626"/><path d="M27 27L42.6 42.6A22 22 0 0 1 27 49Z" fill="#1a1a1a"/><path d="M27 27L27 49A22 22 0 0 1 11.4 42.6Z" fill="#dc2626"/><path d="M27 27L11.4 42.6A22 22 0 0 1 5 27Z" fill="#1a1a1a"/><path d="M27 27L5 27A22 22 0 0 1 11.4 11.4Z" fill="#059669"/><path d="M27 27L11.4 11.4A22 22 0 0 1 27 5Z" fill="#1a1a1a"/><circle cx="27" cy="27" r="22" stroke="#f7931a" stroke-width="2.5" fill="none"/><circle cx="27" cy="27" r="10" fill="rgba(0,0,0,.65)" stroke="rgba(255,255,255,.18)" stroke-width="1.5"/><circle cx="27" cy="27" r="5" fill="#f7931a"/><circle cx="27" cy="27" r="2.5" fill="white" opacity=".9"/></svg>',bg:'bg3',badge:'hot',rtp:'97.3'},
   {id:'plinko',n:'Plinko',ico:'🔵',bg:'bg6',badge:'new',rtp:'97.0'},
   {id:'slots',n:'Slots',ico:'🎰',bg:'bg4',badge:'',rtp:'96.5'},
   {id:'mines',n:'Mines',ico:'💣',bg:'bg7',badge:'new',rtp:'97.0'},
@@ -633,6 +633,101 @@ function toast(msg,type){
   setTimeout(function(){el.remove();},3800);
 }
 
+// ─── SHARED GAME SOUNDS ───────────────────────────────────────────────────────
+// Real card sounds loaded from CDN — cached as Audio elements
+var _cardAudio=null,_shuffleAudio=null;
+function sndCard(){
+  try{
+    if(!_cardAudio){_cardAudio=new Audio('https://notification-sounds.com/soundsfiles/Card-flip-sound-effect.mp3');}
+    var a=_cardAudio.cloneNode();a.volume=0.8;a.play().catch(function(){});
+  }catch(e){}
+}
+function sndShuffle(){
+  try{
+    if(!_shuffleAudio){_shuffleAudio=new Audio('https://www.soundjay.com/misc_c2026/shuffling-cards-1.mp3');}
+    var a=_shuffleAudio.cloneNode();a.volume=0.65;a.play().catch(function(){});
+  }catch(e){}
+}
+function sndWin(){
+  try{
+    if(!rAudioCtx){rAudioCtx=new(window.AudioContext||window.webkitAudioContext)();}
+    var ctx=rAudioCtx,now=ctx.currentTime;
+    [523,659,784,1047].forEach(function(f,i){
+      var o=ctx.createOscillator();o.type='sine';o.frequency.value=f;
+      var g=ctx.createGain();g.gain.setValueAtTime(0,now+i*.08);g.gain.linearRampToValueAtTime(.38,now+i*.08+.02);g.gain.exponentialRampToValueAtTime(.001,now+i*.08+.38);
+      o.connect(g);g.connect(ctx.destination);o.start(now+i*.08);o.stop(now+i*.08+.44);
+    });
+  }catch(e){}
+}
+function sndLose(){
+  try{
+    if(!rAudioCtx){rAudioCtx=new(window.AudioContext||window.webkitAudioContext)();}
+    var ctx=rAudioCtx,now=ctx.currentTime;
+    var o=ctx.createOscillator();o.type='sine';o.frequency.setValueAtTime(220,now);o.frequency.exponentialRampToValueAtTime(80,now+.28);
+    var g=ctx.createGain();g.gain.setValueAtTime(.55,now);g.gain.exponentialRampToValueAtTime(.001,now+.32);
+    o.connect(g);g.connect(ctx.destination);o.start(now);o.stop(now+.36);
+  }catch(e){}
+}
+function sndCoin(){
+  try{
+    if(!rAudioCtx){rAudioCtx=new(window.AudioContext||window.webkitAudioContext)();}
+    var ctx=rAudioCtx,now=ctx.currentTime;
+    // Sharp launch ping
+    var ping=ctx.createOscillator();ping.type='triangle';
+    ping.frequency.setValueAtTime(3400,now);ping.frequency.exponentialRampToValueAtTime(750,now+.1);
+    var pg=ctx.createGain();pg.gain.setValueAtTime(.58,now);pg.gain.exponentialRampToValueAtTime(.001,now+.13);
+    ping.connect(pg);pg.connect(ctx.destination);ping.start(now);ping.stop(now+.14);
+    // Spinning metallic tings — start fast, slow down as coin settles
+    var t=0.07,interval=0.033;
+    while(t<1.05){
+      (function(st){
+        var o=ctx.createOscillator();o.type='sine';
+        var f=2000+Math.random()*1200;
+        o.frequency.setValueAtTime(f,now+st);o.frequency.exponentialRampToValueAtTime(f*.62,now+st+.045);
+        var gn=ctx.createGain();var vol=Math.max(.015,.2*(1-st/1.1));
+        gn.gain.setValueAtTime(vol,now+st);gn.gain.exponentialRampToValueAtTime(.001,now+st+.055);
+        o.connect(gn);gn.connect(ctx.destination);o.start(now+st);o.stop(now+st+.06);
+      })(t);
+      t+=interval;interval*=1.2;
+    }
+  }catch(e){}
+}
+var pkLastPegSnd=0;
+function sndPeg(vel){
+  try{
+    var now2=performance.now();if(now2-pkLastPegSnd<55)return;pkLastPegSnd=now2;
+    if(!rAudioCtx){rAudioCtx=new(window.AudioContext||window.webkitAudioContext)();}
+    var ctx=rAudioCtx,t=ctx.currentTime;
+    var freq=700+Math.random()*700,vol=Math.min(0.12+Math.abs(vel||2)*.04,0.32);
+    var o=ctx.createOscillator();o.type='sine';o.frequency.setValueAtTime(freq,t);o.frequency.exponentialRampToValueAtTime(freq*.55,t+.05);
+    var g=ctx.createGain();g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+.06);
+    o.connect(g);g.connect(ctx.destination);o.start(t);o.stop(t+.07);
+    // Tiny echo 30ms later
+    var o2=ctx.createOscillator();o2.type='sine';o2.frequency.value=freq*.82;
+    var g2=ctx.createGain();g2.gain.setValueAtTime(vol*.35,t+.03);g2.gain.exponentialRampToValueAtTime(.001,t+.08);
+    o2.connect(g2);g2.connect(ctx.destination);o2.start(t+.03);o2.stop(t+.09);
+  }catch(e){}
+}
+function sndPkWin(mult){
+  try{
+    if(!rAudioCtx){rAudioCtx=new(window.AudioContext||window.webkitAudioContext)();}
+    var ctx=rAudioCtx,now=ctx.currentTime,vol=Math.min(.25+Math.log(Math.max(mult,1))*.12,.85);
+    var notes=mult>=5?[523,659,784,1047,1319]:[523,659,784,1047];
+    notes.forEach(function(f,i){
+      var o=ctx.createOscillator();o.type='sine';o.frequency.value=f;
+      var g=ctx.createGain();g.gain.setValueAtTime(0,now+i*.07);g.gain.linearRampToValueAtTime(vol,now+i*.07+.02);g.gain.exponentialRampToValueAtTime(.001,now+i*.07+.4);
+      o.connect(g);g.connect(ctx.destination);o.start(now+i*.07);o.stop(now+i*.07+.45);
+    });
+    // Coin tings scale with mult
+    var coins=Math.min(2+Math.floor(mult),10);
+    for(var c=0;c<coins;c++){(function(dl){
+      var o=ctx.createOscillator();o.type='sine';o.frequency.value=1600+Math.random()*1600;
+      var g=ctx.createGain();g.gain.setValueAtTime(vol*.3,now+dl);g.gain.exponentialRampToValueAtTime(.001,now+dl+.18);
+      o.connect(g);g.connect(ctx.destination);o.start(now+dl);o.stop(now+dl+.22);
+    })(0.05+Math.random()*.6);}
+  }catch(e){}
+}
+
 // ─── COIN FLIP ────────────────────────────────────────────────────────────────
 function openCF(){
   cfSel=0;
@@ -664,13 +759,14 @@ function playCF(){
   var coin=document.getElementById('cfcoin');
   coin.style.transition='transform 1.1s cubic-bezier(.4,0,.2,1)';
   coin.style.transform='rotateY(1800deg)';
+  sndCoin();
   setTimeout(function(){
     SPIN=false;document.getElementById('cfbtn').disabled=false;
     var result=Math.random()<.5?0:1;
     coin.style.transition='none';coin.style.transform='rotateY('+(result===0?0:180)+'deg)';
     var won=result===cfSel;
-    if(won){var p=Math.floor(amt*1.95);BAL+=p-amt;clampBal();updBal();showRes('cfr',true,p-amt,result===0?'Heads ₿':'Tails 🌙');showWin(p,'Coin Flip');}
-    else{BAL-=amt;clampBal();updBal();showRes('cfr',false,0,(result===0?'Heads':'Tails')+' — wrong pick');toast('❌ -'+amt.toLocaleString()+' sat','er');}
+    if(won){sndWin();var p=Math.floor(amt*1.95);BAL+=p-amt;clampBal();updBal();showRes('cfr',true,p-amt,result===0?'Heads ₿':'Tails 🌙');showWin(p,'Coin Flip');}
+    else{sndLose();BAL-=amt;clampBal();updBal();showRes('cfr',false,0,(result===0?'Heads':'Tails')+' — wrong pick');toast('❌ -'+amt.toLocaleString()+' sat','er');}
   },1200);
 }
 
@@ -735,15 +831,24 @@ function bjDeal(){
   var amt=iv('bja');if(!chk(amt))return;
   bjBet=amt;BAL-=amt;updBal();
   bjDeck=makeDeck();bjPlayer=[];bjDealer=[];
-  bjPlayer.push(bjDeck.pop(),bjDeck.pop());bjDealer.push(bjDeck.pop(),bjDeck.pop());
-  bjState='player';renderBJ();
-  ['bjhit','bjstand'].forEach(function(b){var e=document.getElementById(b);if(e)e.disabled=false;});
-  var dbl=document.getElementById('bjdbl');if(dbl)dbl.disabled=false;
+  bjState='player';
   var btn=document.getElementById('bjbtn');if(btn)btn.disabled=true;
   var res=document.getElementById('bjr');if(res)res.style.display='none';
-  if(handVal(bjPlayer)===21)bjStand();
+  // Deal one card at a time — sound fires the instant each card appears
+  var steps=[
+    function(){bjPlayer.push(bjDeck.pop());sndCard();renderBJ();},
+    function(){bjDealer.push(bjDeck.pop());sndCard();renderBJ();},
+    function(){bjPlayer.push(bjDeck.pop());sndCard();renderBJ();},
+    function(){
+      bjDealer.push(bjDeck.pop());sndCard();renderBJ();
+      ['bjhit','bjstand'].forEach(function(b){var e=document.getElementById(b);if(e)e.disabled=false;});
+      var dbl=document.getElementById('bjdbl');if(dbl)dbl.disabled=false;
+      if(handVal(bjPlayer)===21)bjStand();
+    }
+  ];
+  steps.forEach(function(fn,i){setTimeout(fn,i*140);});
 }
-function bjHit(){bjPlayer.push(bjDeck.pop());renderBJ();var dbl=document.getElementById('bjdbl');if(dbl)dbl.disabled=true;if(handVal(bjPlayer)>21)bjEnd('bust');}
+function bjHit(){bjPlayer.push(bjDeck.pop());sndCard();renderBJ();var dbl=document.getElementById('bjdbl');if(dbl)dbl.disabled=true;if(handVal(bjPlayer)>21)bjEnd('bust');}
 function bjDouble(){
   if(BAL<bjBet){toast('Not enough for double','er');return;}
   BAL-=bjBet;bjBet*=2;updBal();bjPlayer.push(bjDeck.pop());renderBJ();
@@ -751,7 +856,7 @@ function bjDouble(){
 }
 function bjStand(){
   bjState='dealer';['bjhit','bjstand','bjdbl'].forEach(function(b){var e=document.getElementById(b);if(e)e.disabled=true;});
-  var tid=setInterval(function(){if(handVal(bjDealer)<17){bjDealer.push(bjDeck.pop());renderBJ();}else{clearInterval(tid);bjEnd('stand');}},550);
+  var tid=setInterval(function(){if(handVal(bjDealer)<17){bjDealer.push(bjDeck.pop());sndCard();renderBJ();}else{clearInterval(tid);bjEnd('stand');}},550);
 }
 function bjEnd(reason){
   bjState='done';renderBJ();
@@ -763,12 +868,14 @@ function bjEnd(reason){
   else if(pv===dv){msg='Push — '+pv;push=true;}
   else msg='Dealer wins: '+dv+' vs '+pv;
   if(won){
+    sndWin();
     var nat=bjPlayer.length===2&&pv===21;
     var pay=nat?Math.floor(bjBet*2.5):bjBet*2;
     BAL+=pay;updBal();showRes('bjr',true,pay-bjBet,msg+(nat?' 🃏 Blackjack!':''));showWin(pay,'Blackjack');
   } else if(push){BAL+=bjBet;updBal();showRes('bjr',true,0,msg);}
-  else{showRes('bjr',false,0,msg);toast('❌ -'+bjBet.toLocaleString()+' sat','er');}
+  else{sndLose();showRes('bjr',false,0,msg);toast('❌ -'+bjBet.toLocaleString()+' sat','er');}
   var btn=document.getElementById('bjbtn');if(btn){btn.disabled=false;btn.textContent='♠ NEW HAND';}
+  setTimeout(sndShuffle,700);
 }
 
 // ─── DICE ─────────────────────────────────────────────────────────────────────
@@ -873,61 +980,117 @@ function dcLoseSound(){
 }
 function dcSetPick(n){
   dPick=n;
-  for(var i=1;i<=6;i++){var e=document.getElementById('dcpb'+i);if(e)e.classList.toggle('on',i===n);}
-  var d=['⚀','⚁','⚂','⚃','⚄','⚅'];
-  var sd=document.getElementById('dcSelDie');if(sd)sd.textContent=d[n-1];
+  if(dBetType==='exact'){
+    for(var i=1;i<=6;i++){var e=document.getElementById('dcpb'+i);if(e)e.classList.toggle('on',i===n);}
+    var sd=document.getElementById('dcSelDie');if(sd)sd.textContent=['⚀','⚁','⚂','⚃','⚄','⚅'][n-1];
+  }else if(dBetType==='hilo'){
+    ['low','high'].forEach(function(k){var e=document.getElementById('dchl-'+k);if(e)e.classList.toggle('on',k===n);});
+    var sd=document.getElementById('dcSelDie');if(sd)sd.textContent=n==='low'?'▼ LOW':'▲ HIGH';
+  }else{
+    ['odd','even'].forEach(function(k){var e=document.getElementById('dcoe-'+k);if(e)e.classList.toggle('on',k===n);});
+    var sd=document.getElementById('dcSelDie');if(sd)sd.textContent=n==='odd'?'ODD':'EVEN';
+  }
+  dcUpdPot();
+}
+function dcSetBetType(type){
+  dBetType=type;
+  ['exact','hilo','oe'].forEach(function(t){var e=document.getElementById('dctab-'+t);if(e)e.classList.toggle('on',t===type);});
+  var area=document.getElementById('dcPickArea');if(!area)return;
+  if(type==='exact'){
+    dPick=1;
+    area.innerHTML='<div class="dc-picks">'
+      +[1,2,3,4,5,6].map(function(i){return '<div class="dc-pb'+(i===1?' on':'')+'" id="dcpb'+i+'" onclick="dcSetPick('+i+')">'+i+'</div>';}).join('')
+      +'</div>';
+    var sd=document.getElementById('dcSelDie');if(sd)sd.textContent='⚀';
+  }else if(type==='hilo'){
+    dPick='low';
+    area.innerHTML='<div class="dc-hilo">'
+      +'<div class="dc-hl-btn on" id="dchl-low" onclick="dcSetPick(\'low\')">▼ LOW<span>1 · 2 · 3</span></div>'
+      +'<div class="dc-hl-btn" id="dchl-high" onclick="dcSetPick(\'high\')">▲ HIGH<span>4 · 5 · 6</span></div>'
+      +'</div>';
+    var sd=document.getElementById('dcSelDie');if(sd)sd.textContent='▼ LOW';
+  }else{
+    dPick='odd';
+    area.innerHTML='<div class="dc-hilo">'
+      +'<div class="dc-hl-btn on" id="dcoe-odd" onclick="dcSetPick(\'odd\')">ODD<span>1 · 3 · 5</span></div>'
+      +'<div class="dc-hl-btn" id="dcoe-even" onclick="dcSetPick(\'even\')">EVEN<span>2 · 4 · 6</span></div>'
+      +'</div>';
+    var sd=document.getElementById('dcSelDie');if(sd)sd.textContent='ODD';
+  }
   dcUpdPot();
 }
 function dcUpdPot(){
   var bet=iv('dca')||10000;
-  var el=document.getElementById('dcPot');if(el)el.textContent=(Math.floor(bet*5)-bet).toLocaleString()+' sat';
+  var mult=dBetType==='exact'?5:1.9;
+  var el=document.getElementById('dcPot');if(el)el.textContent=(Math.floor(bet*mult)-bet).toLocaleString()+' sat';
+  var ml=document.getElementById('dcMul');if(ml)ml.textContent=mult+'×';
+  var wc=document.getElementById('dcWch');if(wc)wc.textContent=dBetType==='exact'?'16.67%':'50.00%';
 }
 function openDice(){
-  dPick=1;
-  var DFACE=['⚀','⚁','⚂','⚃','⚄','⚅'];
-  var picks=DFACE.map(function(_,i){
-    return '<div class="dc-pb'+(i===0?' on':'')+'" id="dcpb'+(i+1)+'" onclick="dcSetPick('+(i+1)+')">'+(i+1)+'</div>';
+  dPick=1;dBetType='exact';
+  var picks=[1,2,3,4,5,6].map(function(i){
+    return '<div class="dc-pb'+(i===1?' on':'')+'" id="dcpb'+i+'" onclick="dcSetPick('+i+')">'+i+'</div>';
   }).join('');
   var mH='<div class="dc-wrap">'
     +'<div class="dc-hist" id="dcHist"></div>'
     +'<div class="dc-table">'
-    +'<div class="dc-table-title">♦ ROLL THE DICE ♦</div>'
+    +'<div class="dc-table-title">♦ THROW THE DICE ♦</div>'
     +'<div class="dc-canvas-wrap" id="dcCanvasWrap"><canvas class="dc-canvas" id="dcCanvas" width="260" height="260"></canvas></div>'
-    +'<div style="font-size:9px;font-weight:900;letter-spacing:.32em;color:rgba(167,139,250,.55);text-transform:uppercase;margin-top:2px">PICK YOUR NUMBER</div>'
-    +'<div class="dc-picks">'+picks+'</div>'
+    +'<div class="dc-tabs">'
+    +'<div class="dc-tab on" id="dctab-exact" onclick="dcSetBetType(\'exact\')">EXACT</div>'
+    +'<div class="dc-tab" id="dctab-hilo" onclick="dcSetBetType(\'hilo\')">HIGH / LOW</div>'
+    +'<div class="dc-tab" id="dctab-oe" onclick="dcSetBetType(\'oe\')">ODD / EVEN</div>'
+    +'</div>'
+    +'<div id="dcPickArea"><div class="dc-picks">'+picks+'</div></div>'
     +'<div class="res" id="dcr" style="width:100%;text-align:center;margin-top:4px"></div>'
     +'</div></div>';
   var cH='<div class="dc-fsC">'
     +'<div class="dc-sb-card"><div class="dc-sb-hdr">BET AMOUNT</div>'
     +'<input class="dc-inp" type="number" id="dca" value="10000" min="1000" oninput="dcUpdPot()">'
     +'<div class="dc-qrow">'
-    +'<div class="dc-qb" onclick="sa2(\'dca\',1000);dcUpdPot()">1k</div>'
-    +'<div class="dc-qb" onclick="sa2(\'dca\',5000);dcUpdPot()">5k</div>'
     +'<div class="dc-qb" onclick="sa2(\'dca\',10000);dcUpdPot()">10k</div>'
     +'<div class="dc-qb" onclick="sa2(\'dca\',50000);dcUpdPot()">50k</div>'
+    +'<div class="dc-qb" onclick="sa2(\'dca\',100000);dcUpdPot()">100k</div>'
+    +'<div class="dc-qb" onclick="sa2(\'dca\',500000);dcUpdPot()">500k</div>'
     +'<div class="dc-qb" onclick="sa2(\'dca\',Math.floor(BAL/2));dcUpdPot()">½</div>'
     +'<div class="dc-qb" onclick="sa2(\'dca\',BAL);dcUpdPot()">MAX</div>'
     +'</div></div>'
-    +'<div class="dc-sb-card">'
-    +'<div class="dc-sb-hdr">YOUR BET</div>'
-    +'<div id="dcSelDie" style="font-size:60px;text-align:center;line-height:1.1;filter:drop-shadow(0 0 14px rgba(139,92,246,.8))">⚀</div>'
-    +'<div class="dc-stat-row" style="margin-top:8px"><span>Win Chance</span><span style="color:#10b981">16.67%</span></div>'
-    +'<div class="dc-stat-row"><span>Multiplier</span><span style="color:#f7931a">5×</span></div>'
+    +'<div class="dc-sb-card"><div class="dc-sb-hdr">YOUR BET</div>'
+    +'<div id="dcSelDie" style="font-size:52px;text-align:center;line-height:1.2;font-weight:900;filter:drop-shadow(0 0 14px rgba(139,92,246,.8))">⚀</div>'
+    +'<div class="dc-stat-row" style="margin-top:8px"><span>Win Chance</span><span id="dcWch" style="color:#10b981">16.67%</span></div>'
+    +'<div class="dc-stat-row"><span>Multiplier</span><span id="dcMul" style="color:#f7931a">5×</span></div>'
     +'<div class="dc-stat-row"><span>Profit on Win</span><span id="dcPot" style="color:#34d399">40,000 sat</span></div>'
     +'</div>'
-    +'<button class="bplay" id="dcbtn" onclick="playDice()" style="margin-top:auto">🎲 ROLL DICE</button>'
+    +'<button class="bplay" id="dcbtn" onclick="playDice()" style="margin-top:auto">🎲 THROW DICE</button>'
     +'</div>';
   openFSOv('🎲','Bitcoin Dice',mH,cH,function(){
     dcRender(1,null);dcUpdPot();
-    // Inject pick-button CSS once
-    if(!window._dcPbCss){window._dcPbCss=1;
+    if(!window._dcExCss){window._dcExCss=1;
       var s=document.createElement('style');
-      s.textContent='.dc-picks{display:flex;gap:10px;justify-content:center;margin-top:6px}'
-        +'.dc-pb{width:50px;height:50px;border-radius:12px;font-size:22px;font-weight:900;display:flex;align-items:center;justify-content:center;cursor:pointer;background:rgba(139,92,246,.1);border:2px solid rgba(139,92,246,.22);color:rgba(255,255,255,.65);transition:.15s;user-select:none}'
-        +'.dc-pb:hover{background:rgba(139,92,246,.28);border-color:#8b5cf6;color:#fff;transform:scale(1.1);box-shadow:0 0 18px rgba(139,92,246,.55)}'
-        +'.dc-pb.on{background:rgba(139,92,246,.38);border-color:#a78bfa;color:#fff;box-shadow:0 0 22px rgba(139,92,246,.7);transform:scale(1.12)}'
-        +'@keyframes dcPbPulse{0%,100%{box-shadow:0 0 18px rgba(139,92,246,.6)}50%{box-shadow:0 0 38px rgba(139,92,246,1),0 0 75px rgba(139,92,246,.3)}}'
-        +'.dc-pb.on{animation:dcPbPulse 1.8s ease-in-out infinite}';
+      s.textContent='@keyframes dcThrow{'
+        +'0%{transform:perspective(500px) translateY(110px) translateX(-35px) scale(0.1) rotateZ(-210deg);opacity:0}'
+        +'10%{opacity:1}'
+        +'48%{transform:perspective(500px) translateY(-28px) translateX(10px) scale(1.12) rotateZ(22deg)}'
+        +'68%{transform:perspective(500px) translateY(12px) translateX(-5px) scale(0.94) rotateZ(-9deg)}'
+        +'82%{transform:perspective(500px) translateY(-6px) scale(1.03) rotateZ(4deg)}'
+        +'92%{transform:perspective(500px) translateY(3px) scale(0.98) rotateZ(-1deg)}'
+        +'100%{transform:perspective(500px) translateY(0) scale(1) rotateZ(0)}}'
+        +'.dc-canvas-wrap.dc-throwing{animation:dcThrow .95s cubic-bezier(.22,.61,.36,1) forwards}'
+        +'.dc-picks{display:flex;gap:10px;justify-content:center;margin-top:6px}'
+        +'.dc-pb{width:46px;height:46px;border-radius:11px;font-size:20px;font-weight:900;display:flex;align-items:center;justify-content:center;cursor:pointer;background:rgba(139,92,246,.1);border:2px solid rgba(139,92,246,.22);color:rgba(255,255,255,.65);transition:.15s;user-select:none}'
+        +'.dc-pb:hover{background:rgba(139,92,246,.28);border-color:#8b5cf6;color:#fff;transform:scale(1.1);box-shadow:0 0 16px rgba(139,92,246,.5)}'
+        +'.dc-pb.on{background:rgba(139,92,246,.38);border-color:#a78bfa;color:#fff;box-shadow:0 0 20px rgba(139,92,246,.7);transform:scale(1.12)}'
+        +'@keyframes dcPbPulse{0%,100%{box-shadow:0 0 16px rgba(139,92,246,.6)}50%{box-shadow:0 0 36px rgba(139,92,246,1),0 0 70px rgba(139,92,246,.3)}}'
+        +'.dc-pb.on{animation:dcPbPulse 1.8s ease-in-out infinite}'
+        +'.dc-tabs{display:flex;border-radius:9px;border:1px solid rgba(139,92,246,.28);overflow:hidden;margin:8px 0 2px;width:100%}'
+        +'.dc-tab{flex:1;padding:8px 2px;text-align:center;font-size:10px;font-weight:900;color:rgba(255,255,255,.38);background:rgba(0,0,0,.3);cursor:pointer;transition:.14s;user-select:none;letter-spacing:.04em}'
+        +'.dc-tab:hover{background:rgba(139,92,246,.18);color:rgba(255,255,255,.7)}'
+        +'.dc-tab.on{background:rgba(139,92,246,.28);color:#a78bfa}'
+        +'.dc-hilo{display:flex;gap:10px;justify-content:center;margin-top:6px;width:100%}'
+        +'.dc-hl-btn{flex:1;padding:14px 8px;border-radius:12px;text-align:center;cursor:pointer;font-weight:900;font-size:17px;background:rgba(139,92,246,.1);border:2px solid rgba(139,92,246,.22);color:rgba(255,255,255,.6);transition:.15s;user-select:none;line-height:1.4}'
+        +'.dc-hl-btn span{font-size:10px;color:rgba(255,255,255,.35);display:block;font-weight:700;letter-spacing:.06em;margin-top:3px}'
+        +'.dc-hl-btn:hover{background:rgba(139,92,246,.25);border-color:#8b5cf6;color:#fff}'
+        +'.dc-hl-btn.on{background:rgba(139,92,246,.35);border-color:#a78bfa;color:#fff;box-shadow:0 0 22px rgba(139,92,246,.65);animation:dcPbPulse 1.8s ease-in-out infinite}';
       document.head.appendChild(s);
     }
   });
@@ -935,37 +1098,46 @@ function openDice(){
 function playDice(){
   var amt=iv('dca');if(!chk(amt)||SPIN)return;
   SPIN=true;
-  var btn=document.getElementById('dcbtn');if(btn){btn.disabled=true;btn.textContent='🎲 ROLLING...';}
+  var btn=document.getElementById('dcbtn');if(btn){btn.disabled=true;btn.textContent='🎲 THROWING...';}
   var result=Math.floor(Math.random()*6)+1;
-  var won=(result===dPick);
+  var won,mult,desc;
+  if(dBetType==='exact'){
+    won=(result===dPick);mult=5;
+    desc='Rolled '+result+' — picked '+dPick+(won?' ✓':' ✗')+' (5×)';
+  }else if(dBetType==='hilo'){
+    won=(dPick==='low'?result<=3:result>=4);mult=1.9;
+    desc='Rolled '+result+' — '+(dPick==='low'?'LOW(1-3)':'HIGH(4-6)')+(won?' ✓':' ✗')+' (1.9×)';
+  }else{
+    won=(dPick==='odd'?result%2!==0:result%2===0);mult=1.9;
+    desc='Rolled '+result+' — '+(dPick==='odd'?'ODD':'EVEN')+(won?' ✓':' ✗')+' (1.9×)';
+  }
   var wrap=document.getElementById('dcCanvasWrap');
-  if(wrap)wrap.classList.add('dc-rolling');
+  if(wrap){wrap.classList.remove('dc-throwing');void wrap.offsetWidth;wrap.classList.add('dc-throwing');}
   dcRollSound();
+  var DFACE=['⚀','⚁','⚂','⚃','⚄','⚅'];
   var t=0,iv2=setInterval(function(){
-    t+=85;
+    t+=80;
     dcRender(Math.floor(Math.random()*6)+1,null);
-    if(t>=900){
+    if(t>=950){
       clearInterval(iv2);
-      if(wrap)wrap.classList.remove('dc-rolling');
       dcRender(result,won);
-      SPIN=false;if(btn){btn.disabled=false;btn.textContent='🎲 ROLL DICE';}
+      SPIN=false;if(btn){btn.disabled=false;btn.textContent='🎲 THROW DICE';}
       if(won){
         dcWinSound();
-        var p=Math.floor(amt*5);BAL+=p-amt;updBal();
-        showRes('dcr',true,p-amt,'Rolled '+result+' — you picked '+dPick+'! 5×');showWin(p,'Dice');
+        var p=Math.floor(amt*mult);BAL+=p-amt;updBal();
+        showRes('dcr',true,p-amt,desc);showWin(p,'Dice');
       }else{
         dcLoseSound();
         BAL-=amt;updBal();
-        showRes('dcr',false,0,'Rolled '+result+' — you picked '+dPick);toast('❌ -'+amt.toLocaleString()+' sat','er');
+        showRes('dcr',false,0,desc);toast('❌ -'+amt.toLocaleString()+' sat','er');
       }
       dHistory.unshift({r:result,w:won});if(dHistory.length>8)dHistory.pop();
       var hEl=document.getElementById('dcHist');
-      var DFACE=['⚀','⚁','⚂','⚃','⚄','⚅'];
       if(hEl)hEl.innerHTML=dHistory.map(function(h){
         return '<span class="dc-hb '+(h.w?'dc-hb-w':'dc-hb-l')+'">'+DFACE[h.r-1]+'</span>';
       }).join('');
     }
-  },85);
+  },80);
 }
 
 // ─── CRASH SOUNDS ─────────────────────────────────────────────────────────────
@@ -1444,6 +1616,7 @@ function pkHitPeg(ball,peg){
       ball.vx-=tang*tx*0.11;ball.vy-=tang*ty*0.11;
       // slight random kick — simulates imperfect pin surface
       ball.vx+=(Math.random()-0.5)*1.5;
+      sndPeg(Math.sqrt(ball.vx*ball.vx+ball.vy*ball.vy));
     }
     ball.fp[peg.r+','+peg.c]=9;// flash for 9 frames
   }
@@ -1527,6 +1700,7 @@ function pkFrame(){
     if(b.done&&!b.paid){
       b.paid=true;
       var m=mults[b.bucket]||0.2,p=Math.floor(b.amt*m);BAL+=p;updBal();
+      if(m>=1)sndPkWin(m);else sndLose();
       pkDropProfit+=p;
       pkDropPending=Math.max(0,pkDropPending-1);
       if(pkDropPending<=0){
@@ -2625,72 +2799,204 @@ function cashMines(){
 }
 
 // ─── SPORTS ───────────────────────────────────────────────────────────────────
+var SOCCER_LEAGUES=[
+  {id:'eng.1',name:'🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League'},
+  {id:'esp.1',name:'🇪🇸 La Liga'},
+  {id:'ger.1',name:'🇩🇪 Bundesliga'},
+  {id:'ita.1',name:'🇮🇹 Serie A'},
+  {id:'fra.1',name:'🇫🇷 Ligue 1'}
+];
+var curLeague='eng.1';
 function setSport(s){
-  curSport=s;document.querySelectorAll('.spbtn').forEach(function(b){b.classList.remove('on');});
+  curSport=s;
+  document.querySelectorAll('.spbtn').forEach(function(b){b.classList.remove('on');});
   var el=document.getElementById('sb-'+s);if(el)el.classList.add('on');
-  var tit=document.getElementById('sptit');
-  if(tit)tit.textContent=s==='soccer'?'⚽ Football':s==='nba'?'🏀 NBA':s==='nfl'?'🏈 NFL':'🎾 Tennis';
+  var lgtb=document.getElementById('lgtb');
+  if(lgtb)lgtb.style.display=s==='soccer'?'flex':'none';
   loadSport(s);
+}
+function setLeague(id){
+  curLeague=id;
+  document.querySelectorAll('.lgbtn').forEach(function(b){b.classList.remove('on');});
+  var el=document.getElementById('lb-'+id);if(el)el.classList.add('on');
+  loadLeague(id);
+}
+function loadLeague(id){
+  var evl=document.getElementById('evl');if(!evl)return;
+  var lg=SOCCER_LEAGUES.filter(function(l){return l.id===id;})[0]||SOCCER_LEAGUES[0];
+  evl.innerHTML='<div class="spload">⚡ Loading '+lg.name+'…</div>';
+  fetch('https://site.api.espn.com/apis/site/v2/sports/soccer/'+id+'/scoreboard')
+    .then(function(r){return r.json();})
+    .then(function(d){
+      var evs=(d.events||[]).filter(function(e){return e.competitions&&e.competitions[0];});
+      if(evs.length>0){
+        liveEvs=evs;
+        var tagged=evs.map(function(ev){return{ev:ev,lg:lg.name};});
+        tagged.sort(function(a,b){
+          var al=(a.ev.competitions[0].status||{}).type,bl=(b.ev.competitions[0].status||{}).type;
+          return (bl&&bl.state==='in'?1:0)-(al&&al.state==='in'?1:0);
+        });
+        renderSportTagged(tagged);
+      } else {
+        var cards='';
+        FALLBACK.soccer.forEach(function(d,i){cards+=mkCard(i,lg.name,d.t1,d.t2,d.s1,d.s2,d.live,d.time,'soccer');});
+        evl.innerHTML=cards||'<div class="spload">No matches scheduled today</div>';
+      }
+    })
+    .catch(function(){
+      var cards='';
+      FALLBACK.soccer.forEach(function(d,i){cards+=mkCard(i,lg.name,d.t1,d.t2,d.s1,d.s2,d.live,d.time,'soccer');});
+      evl.innerHTML=cards;
+    });
 }
 function loadSport(sport){
   curSport=sport;var evl=document.getElementById('evl');if(!evl)return;
-  evl.innerHTML='<div class="spload">⚡ Loading…</div>';
-  var urls={soccer:'https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard',nba:'https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard',nfl:'https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard',tennis:'https://site.api.espn.com/apis/site/v2/sports/tennis/scoreboard'};
-  fetch(urls[sport]||urls.soccer)
-  .then(function(r){return r.json();})
-  .then(function(d){var evs=(d.events||[]).filter(function(e){return e.competitions&&e.competitions[0];});if(evs.length>0){liveEvs=evs;renderSport(evs);}else renderFallback(sport);})
-  .catch(function(){renderFallback(sport);});
+  if(sport==='soccer'){
+    loadLeague(curLeague);
+  } else {
+    evl.innerHTML='<div class="spload">⚡ Loading…</div>';
+    var urls={nba:'https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard',nfl:'https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard',tennis:'https://site.api.espn.com/apis/site/v2/sports/tennis/scoreboard'};
+    fetch(urls[sport]||urls.nba)
+    .then(function(r){return r.json();})
+    .then(function(d){var evs=(d.events||[]).filter(function(e){return e.competitions&&e.competitions[0];});if(evs.length>0){liveEvs=evs;renderSport(evs);}else renderFallback(sport);})
+    .catch(function(){renderFallback(sport);});
+  }
+}
+function renderSportTagged(tagged){
+  var evl=document.getElementById('evl');if(!evl)return;
+  var cards='';
+  tagged.slice(0,20).forEach(function(t,i){
+    var ev=t.ev,c=ev.competitions[0],teams=c.competitors||[];
+    var h1=teams[0]||{},h2=teams[1]||{};
+    var n1=(h1.team||{}).shortDisplayName||'Home',n2=(h2.team||{}).shortDisplayName||'Away';
+    var s1=h1.score||'0',s2=h2.score||'0';
+    var st=(c.status||{}).type||{},live=st.state==='in';
+    var min=live&&c.status&&c.status.displayClock?c.status.displayClock:'';
+    var l1=(h1.team||{}).logo||(h1.team&&h1.team.logos&&h1.team.logos[0]&&h1.team.logos[0].href)||'';
+    var l2=(h2.team||{}).logo||(h2.team&&h2.team.logos&&h2.team.logos[0]&&h2.team.logos[0].href)||'';
+    cards+=mkCard(i,t.lg,n1,n2,s1,s2,live,min,'soccer',l1,l2);
+  });
+  evl.innerHTML=cards||'<div class="spload">No matches today</div>';
+}
+function tcol(name){var pal=['#DC052D','#034694','#6CABDD','#C8102E','#004170','#1D428A','#552583','#007A33','#E31837','#241773','#FDE100','#00471B','#1B9E17','#8B0000'];var h=0;for(var i=0;i<name.length;i++)h=(h*31+name.charCodeAt(i))&0xFFFF;return pal[h%pal.length];}
+function tinit(name){var p=name.split(' ');return p.length>=2?(p[0][0]+p[1][0]).toUpperCase():name.substring(0,3).toUpperCase();}
+function mkCrest(logo,name){
+  if(logo)return '<img class="etlogo" src="'+logo+'" alt="'+name+'" onerror="this.parentNode.innerHTML=\'<span>\'+this.getAttribute(\'alt\').substring(0,3).toUpperCase()+\'</span>\'">';
+  return '<span>'+tinit(name)+'</span>';
+}
+function mkCard(idx,lg,t1,t2,s1,s2,live,timeStr,sport,l1,l2){
+  var eid='ev-'+idx;
+  var c1=l1?'transparent':tcol(t1),c2=l2?'transparent':tcol(t2);
+  var o1=(1.4+Math.random()*1.8).toFixed(2),od=(2.8+Math.random()*1.4).toFixed(2),o2=(1.5+Math.random()*2).toFixed(2);
+  var ou=(1.55+Math.random()*.55).toFixed(2),uu=(1.8+Math.random()*.55).toFixed(2);
+  var tag=live?'<span class="ltag">● LIVE '+timeStr+'</span>':'<span class="fttag">FT</span>';
+  var showDraw=(sport==='soccer'||!sport);
+  return '<div class="ev" id="'+eid+'">'
+    +'<div class="evh">'+tag+'<span class="evlg">'+lg+'</span></div>'
+    +'<div class="evteams">'
+    +'<div class="etrow"><div class="etcrest" style="background:'+c1+'">'+mkCrest(l1,t1)+'</div><span class="etname">'+t1+'</span><span class="etscore">'+s1+'</span></div>'
+    +'<div class="etrow"><div class="etcrest" style="background:'+c2+'">'+mkCrest(l2,t2)+'</div><span class="etname">'+t2+'</span><span class="etscore">'+s2+'</span></div>'
+    +'</div>'
+    +'<div class="evdiv"></div>'
+    +'<div class="evos">'
+    +'<div class="ob" onclick="addSlip(this,\''+eid+'\',\''+t1+'\','+o1+',\'1\',\''+t1+' v '+t2+'\')"><div class="ol">1</div><div class="ov">'+o1+'</div></div>'
+    +(showDraw?'<div class="ob" onclick="addSlip(this,\''+eid+'\',\'Draw\','+od+',\'X\',\''+t1+' v '+t2+'\')"><div class="ol">X</div><div class="ov">'+od+'</div></div>':'')
+    +'<div class="ob" onclick="addSlip(this,\''+eid+'\',\''+t2+'\','+o2+',\'2\',\''+t1+' v '+t2+'\')"><div class="ol">2</div><div class="ov">'+o2+'</div></div>'
+    +'<div class="ovsep"></div>'
+    +'<div class="ob" onclick="addSlip(this,\''+eid+'\',\'Over 2.5\','+ou+',\'O2.5\',\''+t1+' v '+t2+'\')"><div class="ol">O 2.5</div><div class="ov">'+ou+'</div></div>'
+    +'<div class="ob" onclick="addSlip(this,\''+eid+'\',\'Under 2.5\','+uu+',\'U2.5\',\''+t1+' v '+t2+'\')"><div class="ol">U 2.5</div><div class="ov">'+uu+'</div></div>'
+    +'</div></div>';
 }
 function renderSport(evs){
   var evl=document.getElementById('evl');if(!evl)return;
-  var h='';evs.slice(0,10).forEach(function(ev){
+  var cards='';evs.slice(0,8).forEach(function(ev,i){
     var c=ev.competitions[0],teams=c.competitors||[];
     var h1=teams[0]||{},h2=teams[1]||{};
-    var n1=(h1.team||{}).shortDisplayName||'Team A',n2=(h2.team||{}).shortDisplayName||'Team B';
+    var n1=(h1.team||{}).shortDisplayName||'Home',n2=(h2.team||{}).shortDisplayName||'Away';
     var s1=h1.score||'0',s2=h2.score||'0';
-    var live=(c.status||{}).type&&c.status.type.state==='in';
-    var o1=(1.5+Math.random()*2).toFixed(2),od=(2.8+Math.random()*1.5).toFixed(2),o2=(1.4+Math.random()*2.2).toFixed(2);
-    h+='<div class="ev"><div class="evh"><span class="'+(live?'ltag':'fttag')+'">'+(live?'LIVE':'FT')+'</span><span>'+ev.name+'</span></div>';
-    h+='<div class="evt"><div class="etm">'+n1+'</div><div class="esc">'+s1+' — '+s2+'</div><div class="etm">'+n2+'</div></div>';
-    h+='<div class="evos"><div class="ob" onclick="addSlip(\''+n1+'\','+o1+')"><div class="ol">Home</div><div class="ov">'+o1+'</div></div>';
-    h+='<div class="ob" onclick="addSlip(\'Draw\','+od+')"><div class="ol">Draw</div><div class="ov">'+od+'</div></div>';
-    h+='<div class="ob" onclick="addSlip(\''+n2+'\','+o2+')"><div class="ol">Away</div><div class="ov">'+o2+'</div></div></div></div>';
+    var st=(c.status||{}).type||{};
+    var live=st.state==='in';
+    var min=live&&c.status&&c.status.displayClock?c.status.displayClock:'';
+    var lg=(ev.competitions[0].league||{}).abbreviation||(ev.season&&ev.season.type===3?'Playoffs':'');
+    var l1=(h1.team||{}).logo||(h1.team&&h1.team.logos&&h1.team.logos[0]&&h1.team.logos[0].href)||'';
+    var l2=(h2.team||{}).logo||(h2.team&&h2.team.logos&&h2.team.logos[0]&&h2.team.logos[0].href)||'';
+    cards+=mkCard(i,lg||'Match',n1,n2,s1,s2,live,min,curSport,l1,l2);
   });
-  evl.innerHTML=h;
+  evl.innerHTML=cards;
 }
-var FALLBACK={soccer:[['Man City','Arsenal','2-1'],['Liverpool','Chelsea','0-0'],['Real Madrid','Barcelona','3-2'],['PSG','Bayern','1-1'],['Juventus','AC Milan','2-0']],nba:[['Lakers','Celtics','108-112'],['Warriors','Heat','121-98'],['Nets','Bucks','89-105'],['76ers','Suns','116-110']],nfl:[['Chiefs','Eagles','24-17'],['Bills','Ravens','21-28'],['Cowboys','Rams','31-14']],tennis:[['Djokovic','Alcaraz','7-6,4-6,6-3'],['Swiatek','Gauff','6-4,7-5']]};
+var FALLBACK={
+  soccer:[
+    {lg:'Premier League',t1:'Man City',t2:'Arsenal',s1:'2',s2:'1',live:true,time:"67'"},
+    {lg:'Premier League',t1:'Liverpool',t2:'Chelsea',s1:'0',s2:'0',live:true,time:"23'"},
+    {lg:'La Liga',t1:'Real Madrid',t2:'Barcelona',s1:'3',s2:'2',live:false,time:''},
+    {lg:'Bundesliga',t1:'Bayern',t2:'Dortmund',s1:'3',s2:'1',live:false,time:''},
+    {lg:'Serie A',t1:'Juventus',t2:'AC Milan',s1:'2',s2:'0',live:true,time:"55'"},
+    {lg:'Ligue 1',t1:'PSG',t2:'Lyon',s1:'1',s2:'1',live:false,time:''}
+  ],
+  nba:[
+    {lg:'NBA',t1:'Lakers',t2:'Celtics',s1:'108',s2:'112',live:true,time:'Q4 2:34'},
+    {lg:'NBA',t1:'Warriors',t2:'Heat',s1:'121',s2:'98',live:false,time:''},
+    {lg:'NBA',t1:'Nets',t2:'Bucks',s1:'89',s2:'105',live:false,time:''}
+  ],
+  nfl:[
+    {lg:'NFL',t1:'Chiefs',t2:'Eagles',s1:'24',s2:'17',live:true,time:'Q3 8:22'},
+    {lg:'NFL',t1:'Bills',t2:'Ravens',s1:'21',s2:'28',live:false,time:''}
+  ],
+  tennis:[
+    {lg:'ATP Tour',t1:'Djokovic',t2:'Alcaraz',s1:'7-6',s2:'4-6',live:true,time:'3rd Set'},
+    {lg:'WTA Tour',t1:'Swiatek',t2:'Gauff',s1:'6-4',s2:'7-5',live:false,time:''}
+  ]
+};
 function renderFallback(sport){
   var evl=document.getElementById('evl');if(!evl)return;
-  var data=FALLBACK[sport]||FALLBACK.soccer,h='';
-  data.forEach(function(d){
-    var o1=(1.5+Math.random()*2).toFixed(2),od=(2.8+Math.random()*1.5).toFixed(2),o2=(1.4+Math.random()*2.2).toFixed(2);
-    h+='<div class="ev"><div class="evh"><span class="fttag">FT</span><span>Demo data</span></div>';
-    h+='<div class="evt"><div class="etm">'+d[0]+'</div><div class="esc">'+d[2]+'</div><div class="etm">'+d[1]+'</div></div>';
-    h+='<div class="evos"><div class="ob" onclick="addSlip(\''+d[0]+'\','+o1+')"><div class="ol">Home</div><div class="ov">'+o1+'</div></div>';
-    h+='<div class="ob" onclick="addSlip(\'Draw\','+od+')"><div class="ol">Draw</div><div class="ov">'+od+'</div></div>';
-    h+='<div class="ob" onclick="addSlip(\''+d[1]+'\','+o2+')"><div class="ol">Away</div><div class="ov">'+o2+'</div></div></div></div>';
-  });
-  evl.innerHTML=h;
+  var data=FALLBACK[sport]||FALLBACK.soccer,cards='';
+  data.forEach(function(d,i){cards+=mkCard(i,d.lg,d.t1,d.t2,d.s1,d.s2,d.live,d.time,sport);});
+  evl.innerHTML=cards;
 }
 
 // ─── BET SLIP ─────────────────────────────────────────────────────────────────
-function addSlip(team,odds){
-  slip.push({team:team,odds:odds});renderSlip();
-  toast('Added: '+team+' @ '+odds,'ok');
+function addSlip(el,matchId,team,odds,betType,matchName){
+  // Replace existing bet for same match
+  var prev=-1;slip.forEach(function(b,i){if(b.matchId===matchId)prev=i;});
+  if(prev>=0)slip.splice(prev,1);
+  // Clear highlights for this card
+  var card=document.getElementById(matchId);
+  if(card)card.querySelectorAll('.ob').forEach(function(b){b.classList.remove('on');});
+  slip.push({matchId:matchId,team:team,odds:parseFloat(odds),betType:betType||'1X2',matchName:matchName||team});
+  if(el)el.classList.add('on');
+  renderSlip();
+  toast('✓ '+team+' ('+betType+') @ '+odds,'ok');
 }
 function renderSlip(){
-  var cnt=document.getElementById('scnt');if(cnt)cnt.textContent=slip.length;
+  var cnt=document.getElementById('scnt');if(cnt)cnt.textContent=slip.length||'';
   var em=document.getElementById('slem'),its=document.getElementById('slitems'),ft=document.getElementById('slft');
   if(slip.length===0){if(em)em.style.display='flex';if(its)its.style.display='none';if(ft)ft.style.display='none';return;}
-  if(em)em.style.display='none';if(its){its.style.display='block';its.innerHTML=slip.map(function(b,i){return '<div class="slit"><button class="slrm" onclick="rmSlip('+i+')">✕</button><div class="slm">Match</div><div class="slsel">'+b.team+'</div><div class="slod">'+b.odds+'×</div></div>';}).join('');}
+  if(em)em.style.display='none';
+  if(its){
+    its.style.display='block';
+    its.innerHTML=slip.map(function(b,i){
+      return '<div class="slit">'
+        +'<div class="slm">'+b.matchName+'</div>'
+        +'<div class="slrow">'
+        +'<div class="slsel">'+b.team+' <span class="slbt">'+b.betType+'</span></div>'
+        +'<div style="display:flex;align-items:center;gap:6px"><span class="slod">'+b.odds.toFixed(2)+'×</span>'
+        +'<button class="slrm" onclick="rmSlip('+i+')">✕</button></div>'
+        +'</div></div>';
+    }).join('');
+  }
   if(ft)ft.style.display='block';uslip();
 }
-function rmSlip(i){slip.splice(i,1);renderSlip();}
+function rmSlip(i){
+  var b=slip[i];
+  if(b){var card=document.getElementById(b.matchId);if(card)card.querySelectorAll('.ob').forEach(function(o){o.classList.remove('on');});}
+  slip.splice(i,1);renderSlip();
+}
 function uslip(){
   var stk=parseInt((document.getElementById('slstk')||{}).value)||10000;
   var tot=slip.reduce(function(a,b){return a*b.odds;},1);
   var pay=Math.floor(stk*tot);
-  var sp=document.getElementById('slpay');if(sp)sp.textContent='₿ '+(pay/1e8).toFixed(5);
+  var sp=document.getElementById('slpay');
+  if(sp){var sv=sp.querySelectorAll('span');if(sv[0])sv[0].textContent=slip.length>1?'Acca ('+slip.length+' legs) payout':'Payout';if(sv[1])sv[1].textContent='+'+(pay/1e8).toFixed(5)+' BTC';}
 }
 function sss(v){var el=document.getElementById('slstk');if(el){el.value=v;uslip();}}
 function placeBet(){
