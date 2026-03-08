@@ -522,6 +522,22 @@ function pg(name){
   if(name==='casino')nts[0].classList.add('on');
   else if(name==='sports'){nts[1].classList.add('on');loadSport(curSport);}
 }
+function mobPg(name){
+  pg(name);
+  closeMobSlip();
+  document.querySelectorAll('.mnb').forEach(function(b){b.classList.remove('on');});
+  var el=document.getElementById('mn-'+name);if(el)el.classList.add('on');
+}
+function toggleMobSlip(){
+  var s=document.getElementById('slip'),o=document.getElementById('slipovl');
+  if(s)s.classList.toggle('mob-open');
+  if(o)o.classList.toggle('on');
+}
+function closeMobSlip(){
+  var s=document.getElementById('slip'),o=document.getElementById('slipovl');
+  if(s)s.classList.remove('mob-open');
+  if(o)o.classList.remove('on');
+}
 function sg(id){
   pg('casino');
   if(id==='cf')openCF();
@@ -2969,6 +2985,7 @@ function addSlip(el,matchId,team,odds,betType,matchName){
 }
 function renderSlip(){
   var cnt=document.getElementById('scnt');if(cnt)cnt.textContent=slip.length||'';
+  var cnt2=document.getElementById('mn-cnt');if(cnt2)cnt2.textContent=slip.length||'0';
   var em=document.getElementById('slem'),its=document.getElementById('slitems'),ft=document.getElementById('slft');
   if(slip.length===0){if(em)em.style.display='flex';if(its)its.style.display='none';if(ft)ft.style.display='none';return;}
   if(em)em.style.display='none';
