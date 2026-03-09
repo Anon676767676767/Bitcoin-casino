@@ -2,6 +2,8 @@
 var BAL=parseInt(localStorage.getItem('bal')||'1000000');
 var SPIN=false,cfSel=0,rSel=37,depAmt=100000;
 var slip=[],liveEvs=[],curSport='soccer';
+var betHistory=JSON.parse(localStorage.getItem('betHistory')||'[]');
+var myBetsTab='open';
 var RWHEEL=[0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26];
 var RREDS=[1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36];
 var rWheelAngle=0,rBallAngle=0,rBallR=0,rAnimId=null,rSpinning=false,rCanvas,rCtx,rWinIdx=-1,rAudioCtx=null;
@@ -516,11 +518,16 @@ genFeed();setInterval(genFeed,18000);
 // ─── NAV ──────────────────────────────────────────────────────────────────────
 function pg(name){
   document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('on');});
-  document.getElementById('pg-'+name).classList.add('on');
+  var target=document.getElementById('pg-'+name);if(target)target.classList.add('on');
   document.querySelectorAll('.nt').forEach(function(t){t.classList.remove('on');});
-  var nts=document.querySelectorAll('.nt');
-  if(name==='casino')nts[0].classList.add('on');
-  else if(name==='sports'){nts[1].classList.add('on');loadSport(curSport);}
+  var nt=document.getElementById('nt-'+name);if(nt)nt.classList.add('on');
+  if(name==='sports')loadSport(curSport);
+  if(name==='mybets')renderMyBets();
+}
+function pgNav(name){
+  pg(name);
+  document.querySelectorAll('.mnb').forEach(function(b){b.classList.remove('on');});
+  var el=document.getElementById('mn-'+name);if(el)el.classList.add('on');
 }
 function mobPg(name){
   pg(name);
@@ -2837,33 +2844,53 @@ function setLeague(id){
   var el=document.getElementById('lb-'+id);if(el)el.classList.add('on');
   loadLeague(id);
 }
+function todayParam(){
+  var n=new Date();
+  return n.getFullYear()+String(n.getMonth()+1).padStart(2,'0')+String(n.getDate()).padStart(2,'0');
+}
+function isToday(isoDate){
+  if(!isoDate)return false;
+  var d=new Date(isoDate),n=new Date();
+  return d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth()&&d.getDate()===n.getDate();
+}
+function stateOrder(state){return state==='in'?0:state==='pre'?1:2;}
+function sortEvs(tagged){
+  tagged.sort(function(a,b){
+    var ast=(a.ev.competitions[0].status||{}).type||{},bst=(b.ev.competitions[0].status||{}).type||{};
+    var ao=stateOrder(ast.state),bo=stateOrder(bst.state);
+    if(ao!==bo)return ao-bo;
+    return new Date(a.ev.date||0)-new Date(b.ev.date||0);
+  });
+}
+function nearestDateParam(offset){
+  /* offset 0=today, -1=yesterday, 1=tomorrow */
+  var n=new Date();n.setDate(n.getDate()+offset);
+  return n.getFullYear()+String(n.getMonth()+1).padStart(2,'0')+String(n.getDate()).padStart(2,'0');
+}
 function loadLeague(id){
   var evl=document.getElementById('evl');if(!evl)return;
   var lg=SOCCER_LEAGUES.filter(function(l){return l.id===id;})[0]||SOCCER_LEAGUES[0];
   evl.innerHTML='<div class="spload">⚡ Loading '+lg.name+'…</div>';
-  fetch('https://site.api.espn.com/apis/site/v2/sports/soccer/'+id+'/scoreboard')
-    .then(function(r){return r.json();})
-    .then(function(d){
-      var evs=(d.events||[]).filter(function(e){return e.competitions&&e.competitions[0];});
-      if(evs.length>0){
-        liveEvs=evs;
-        var tagged=evs.map(function(ev){return{ev:ev,lg:lg.name};});
-        tagged.sort(function(a,b){
-          var al=(a.ev.competitions[0].status||{}).type,bl=(b.ev.competitions[0].status||{}).type;
-          return (bl&&bl.state==='in'?1:0)-(al&&al.state==='in'?1:0);
-        });
-        renderSportTagged(tagged);
-      } else {
-        var cards='';
-        FALLBACK.soccer.forEach(function(d,i){cards+=mkCard(i,lg.name,d.t1,d.t2,d.s1,d.s2,d.live,d.time,'soccer');});
-        evl.innerHTML=cards||'<div class="spload">No matches scheduled today</div>';
-      }
-    })
-    .catch(function(){
-      var cards='';
-      FALLBACK.soccer.forEach(function(d,i){cards+=mkCard(i,lg.name,d.t1,d.t2,d.s1,d.s2,d.live,d.time,'soccer');});
-      evl.innerHTML=cards;
-    });
+  /* Try today, then tomorrow, then yesterday to always find matches */
+  var offsets=[0,1,-1,2,-2];
+  function tryOffset(i){
+    if(i>=offsets.length){renderFallback();return;}
+    fetch('https://site.api.espn.com/apis/site/v2/sports/soccer/'+id+'/scoreboard?dates='+nearestDateParam(offsets[i]))
+      .then(function(r){return r.json();})
+      .then(function(d){
+        var evs=(d.events||[]).filter(function(e){return e.competitions&&e.competitions[0];});
+        if(evs.length>0){
+          liveEvs=evs;
+          var tagged=evs.map(function(ev){return{ev:ev,lg:lg.name};});
+          sortEvs(tagged);
+          renderSportTagged(tagged);
+        } else {
+          tryOffset(i+1);
+        }
+      })
+      .catch(function(){tryOffset(i+1);});
+  }
+  tryOffset(0);
 }
 function loadSport(sport){
   curSport=sport;var evl=document.getElementById('evl');if(!evl)return;
@@ -2871,11 +2898,20 @@ function loadSport(sport){
     loadLeague(curLeague);
   } else {
     evl.innerHTML='<div class="spload">⚡ Loading…</div>';
-    var urls={nba:'https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard',nfl:'https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard',tennis:'https://site.api.espn.com/apis/site/v2/sports/tennis/scoreboard'};
-    fetch(urls[sport]||urls.nba)
-    .then(function(r){return r.json();})
-    .then(function(d){var evs=(d.events||[]).filter(function(e){return e.competitions&&e.competitions[0];});if(evs.length>0){liveEvs=evs;renderSport(evs);}else renderFallback(sport);})
-    .catch(function(){renderFallback(sport);});
+    var bases={nba:'https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard',nfl:'https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard',tennis:'https://site.api.espn.com/apis/site/v2/sports/tennis/scoreboard'};
+    var base=bases[sport]||bases.nba;
+    var offsets=[0,1,-1,2,-2];
+    function tryOffset(i){
+      if(i>=offsets.length){renderFallback();return;}
+      fetch(base+'?dates='+nearestDateParam(offsets[i]))
+        .then(function(r){return r.json();})
+        .then(function(d){
+          var evs=(d.events||[]).filter(function(e){return e.competitions&&e.competitions[0];});
+          if(evs.length>0){liveEvs=evs;renderSport(evs);}else tryOffset(i+1);
+        })
+        .catch(function(){tryOffset(i+1);});
+    }
+    tryOffset(0);
   }
 }
 function renderSportTagged(tagged){
@@ -2886,11 +2922,12 @@ function renderSportTagged(tagged){
     var h1=teams[0]||{},h2=teams[1]||{};
     var n1=(h1.team||{}).shortDisplayName||'Home',n2=(h2.team||{}).shortDisplayName||'Away';
     var s1=h1.score||'0',s2=h2.score||'0';
-    var st=(c.status||{}).type||{},live=st.state==='in';
+    var st=(c.status||{}).type||{},state=st.state||'pre',live=state==='in';
     var min=live&&c.status&&c.status.displayClock?c.status.displayClock:'';
+    var kickoff=fmtTime(ev.date||c.date||'');
     var l1=(h1.team||{}).logo||(h1.team&&h1.team.logos&&h1.team.logos[0]&&h1.team.logos[0].href)||'';
     var l2=(h2.team||{}).logo||(h2.team&&h2.team.logos&&h2.team.logos[0]&&h2.team.logos[0].href)||'';
-    cards+=mkCard(i,t.lg,n1,n2,s1,s2,live,min,'soccer',l1,l2);
+    cards+=mkCard(i,t.lg,n1,n2,s1,s2,live,min,'soccer',l1,l2,kickoff,state);
   });
   evl.innerHTML=cards||'<div class="spload">No matches today</div>';
 }
@@ -2900,18 +2937,38 @@ function mkCrest(logo,name){
   if(logo)return '<img class="etlogo" src="'+logo+'" alt="'+name+'" onerror="this.parentNode.innerHTML=\'<span>\'+this.getAttribute(\'alt\').substring(0,3).toUpperCase()+\'</span>\'">';
   return '<span>'+tinit(name)+'</span>';
 }
-function mkCard(idx,lg,t1,t2,s1,s2,live,timeStr,sport,l1,l2){
+function fmtTime(iso){
+  if(!iso)return '';
+  try{var d=new Date(iso);return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',hour12:false});}catch(e){return '';}
+}
+function mkCard(idx,lg,t1,t2,s1,s2,live,timeStr,sport,l1,l2,kickoff,state){
   var eid='ev-'+idx;
   var c1=l1?'transparent':tcol(t1),c2=l2?'transparent':tcol(t2);
   var o1=(1.4+Math.random()*1.8).toFixed(2),od=(2.8+Math.random()*1.4).toFixed(2),o2=(1.5+Math.random()*2).toFixed(2);
   var ou=(1.55+Math.random()*.55).toFixed(2),uu=(1.8+Math.random()*.55).toFixed(2);
-  var tag=live?'<span class="ltag">● LIVE '+timeStr+'</span>':'<span class="fttag">FT</span>';
   var showDraw=(sport==='soccer'||!sport);
+  /* centre column: time display between the two team rows */
+  var timeMid,liveTag='';
+  if(state==='in'||live){
+    timeMid='<div class="evtm live">'+timeStr+'</div>';
+    liveTag='<span class="ltag">● LIVE</span>';
+  } else if(state==='post'){
+    timeMid='<div class="evtm ft">FT</div>';
+  } else {
+    /* upcoming — show kick-off time prominently */
+    timeMid='<div class="evtm pre">'+(kickoff||'--:--')+'</div>';
+  }
   return '<div class="ev" id="'+eid+'">'
-    +'<div class="evh">'+tag+'<span class="evlg">'+lg+'</span></div>'
-    +'<div class="evteams">'
-    +'<div class="etrow"><div class="etcrest" style="background:'+c1+'">'+mkCrest(l1,t1)+'</div><span class="etname">'+t1+'</span><span class="etscore">'+s1+'</span></div>'
-    +'<div class="etrow"><div class="etcrest" style="background:'+c2+'">'+mkCrest(l2,t2)+'</div><span class="etname">'+t2+'</span><span class="etscore">'+s2+'</span></div>'
+    +'<div class="evh">'+liveTag+'<span class="evlg">'+lg+'</span></div>'
+    +'<div class="evmatch">'
+      +'<div class="evcol">'
+        +'<div class="etrow2"><div class="etcrest" style="background:'+c1+'">'+mkCrest(l1,t1)+'</div><span class="etname">'+t1+'</span></div>'
+        +'<div class="etrow2"><div class="etcrest" style="background:'+c2+'">'+mkCrest(l2,t2)+'</div><span class="etname">'+t2+'</span></div>'
+      +'</div>'
+      +'<div class="evct">'
+        +timeMid
+        +'<div class="evsc">'+(state==='pre'?'<span class="evvs">vs</span>':'<span class="evscn">'+s1+'</span><span style="color:var(--mut);font-size:14px">-</span><span class="evscn">'+s2+'</span>')+'</div>'
+      +'</div>'
     +'</div>'
     +'<div class="evdiv"></div>'
     +'<div class="evos">'
@@ -2930,58 +2987,79 @@ function renderSport(evs){
     var h1=teams[0]||{},h2=teams[1]||{};
     var n1=(h1.team||{}).shortDisplayName||'Home',n2=(h2.team||{}).shortDisplayName||'Away';
     var s1=h1.score||'0',s2=h2.score||'0';
-    var st=(c.status||{}).type||{};
-    var live=st.state==='in';
+    var st=(c.status||{}).type||{},state=st.state||'pre';
+    var live=state==='in';
     var min=live&&c.status&&c.status.displayClock?c.status.displayClock:'';
+    var kickoff=fmtTime(ev.date||c.date||'');
     var lg=(ev.competitions[0].league||{}).abbreviation||(ev.season&&ev.season.type===3?'Playoffs':'');
     var l1=(h1.team||{}).logo||(h1.team&&h1.team.logos&&h1.team.logos[0]&&h1.team.logos[0].href)||'';
     var l2=(h2.team||{}).logo||(h2.team&&h2.team.logos&&h2.team.logos[0]&&h2.team.logos[0].href)||'';
-    cards+=mkCard(i,lg||'Match',n1,n2,s1,s2,live,min,curSport,l1,l2);
+    cards+=mkCard(i,lg||'Match',n1,n2,s1,s2,live,min,curSport,l1,l2,kickoff,state);
   });
   evl.innerHTML=cards;
 }
 var FALLBACK={
   soccer:[
-    {lg:'Premier League',t1:'Man City',t2:'Arsenal',s1:'2',s2:'1',live:true,time:"67'"},
-    {lg:'Premier League',t1:'Liverpool',t2:'Chelsea',s1:'0',s2:'0',live:true,time:"23'"},
-    {lg:'La Liga',t1:'Real Madrid',t2:'Barcelona',s1:'3',s2:'2',live:false,time:''},
-    {lg:'Bundesliga',t1:'Bayern',t2:'Dortmund',s1:'3',s2:'1',live:false,time:''},
-    {lg:'Serie A',t1:'Juventus',t2:'AC Milan',s1:'2',s2:'0',live:true,time:"55'"},
-    {lg:'Ligue 1',t1:'PSG',t2:'Lyon',s1:'1',s2:'1',live:false,time:''}
+    {lg:'Premier League',t1:'Man City',t2:'Arsenal',s1:'2',s2:'1',live:true,time:"67'",kickoff:'15:00',state:'in'},
+    {lg:'Premier League',t1:'Liverpool',t2:'Chelsea',s1:'0',s2:'0',live:true,time:"23'",kickoff:'17:30',state:'in'},
+    {lg:'La Liga',t1:'Real Madrid',t2:'Barcelona',s1:'0',s2:'0',live:false,time:'',kickoff:'20:00',state:'pre'},
+    {lg:'La Liga',t1:'Atletico Madrid',t2:'Sevilla',s1:'0',s2:'0',live:false,time:'',kickoff:'18:00',state:'pre'},
+    {lg:'Bundesliga',t1:'Bayern',t2:'Dortmund',s1:'3',s2:'1',live:false,time:'',kickoff:'18:30',state:'post'},
+    {lg:'Bundesliga',t1:'Leverkusen',t2:'Leipzig',s1:'0',s2:'0',live:false,time:'',kickoff:'20:30',state:'pre'},
+    {lg:'Serie A',t1:'Juventus',t2:'AC Milan',s1:'2',s2:'0',live:true,time:"55'",kickoff:'20:45',state:'in'},
+    {lg:'Ligue 1',t1:'PSG',t2:'Lyon',s1:'0',s2:'0',live:false,time:'',kickoff:'21:00',state:'pre'},
+    {lg:'Premier League',t1:'Tottenham',t2:'Newcastle',s1:'0',s2:'0',live:false,time:'',kickoff:'16:00',state:'pre'},
+    {lg:'Serie A',t1:'Inter',t2:'Napoli',s1:'0',s2:'0',live:false,time:'',kickoff:'18:00',state:'pre'}
   ],
   nba:[
-    {lg:'NBA',t1:'Lakers',t2:'Celtics',s1:'108',s2:'112',live:true,time:'Q4 2:34'},
-    {lg:'NBA',t1:'Warriors',t2:'Heat',s1:'121',s2:'98',live:false,time:''},
-    {lg:'NBA',t1:'Nets',t2:'Bucks',s1:'89',s2:'105',live:false,time:''}
+    {lg:'NBA',t1:'Lakers',t2:'Celtics',s1:'108',s2:'112',live:true,time:'Q4 2:34',kickoff:'20:00',state:'in'},
+    {lg:'NBA',t1:'Warriors',t2:'Heat',s1:'0',s2:'0',live:false,time:'',kickoff:'22:30',state:'pre'},
+    {lg:'NBA',t1:'Nets',t2:'Bucks',s1:'0',s2:'0',live:false,time:'',kickoff:'01:00',state:'pre'},
+    {lg:'NBA',t1:'Bulls',t2:'76ers',s1:'0',s2:'0',live:false,time:'',kickoff:'19:00',state:'pre'},
+    {lg:'NBA',t1:'Nuggets',t2:'Suns',s1:'0',s2:'0',live:false,time:'',kickoff:'21:00',state:'pre'}
   ],
   nfl:[
-    {lg:'NFL',t1:'Chiefs',t2:'Eagles',s1:'24',s2:'17',live:true,time:'Q3 8:22'},
-    {lg:'NFL',t1:'Bills',t2:'Ravens',s1:'21',s2:'28',live:false,time:''}
+    {lg:'NFL',t1:'Chiefs',t2:'Eagles',s1:'24',s2:'17',live:true,time:'Q3 8:22',kickoff:'18:25',state:'in'},
+    {lg:'NFL',t1:'Bills',t2:'Ravens',s1:'0',s2:'0',live:false,time:'',kickoff:'22:20',state:'pre'},
+    {lg:'NFL',t1:'Cowboys',t2:'Giants',s1:'0',s2:'0',live:false,time:'',kickoff:'20:15',state:'pre'}
   ],
   tennis:[
-    {lg:'ATP Tour',t1:'Djokovic',t2:'Alcaraz',s1:'7-6',s2:'4-6',live:true,time:'3rd Set'},
-    {lg:'WTA Tour',t1:'Swiatek',t2:'Gauff',s1:'6-4',s2:'7-5',live:false,time:''}
+    {lg:'ATP Tour',t1:'Djokovic',t2:'Alcaraz',s1:'7-6',s2:'4-6',live:true,time:'3rd Set',kickoff:'14:00',state:'in'},
+    {lg:'WTA Tour',t1:'Swiatek',t2:'Gauff',s1:'0',s2:'0',live:false,time:'',kickoff:'16:30',state:'pre'},
+    {lg:'ATP Tour',t1:'Sinner',t2:'Medvedev',s1:'0',s2:'0',live:false,time:'',kickoff:'18:00',state:'pre'},
+    {lg:'WTA Tour',t1:'Sabalenka',t2:'Rybakina',s1:'0',s2:'0',live:false,time:'',kickoff:'20:00',state:'pre'}
   ]
 };
-function renderFallback(sport){
+function renderFallback(){
   var evl=document.getElementById('evl');if(!evl)return;
-  var data=FALLBACK[sport]||FALLBACK.soccer,cards='';
-  data.forEach(function(d,i){cards+=mkCard(i,d.lg,d.t1,d.t2,d.s1,d.s2,d.live,d.time,sport);});
-  evl.innerHTML=cards;
+  var sport=curSport||'soccer';
+  var data=FALLBACK[sport]||FALLBACK.soccer;
+  var cards='';
+  data.forEach(function(d,i){cards+=mkCard(i,d.lg,d.t1,d.t2,d.s1,d.s2,d.live,d.time,sport,null,null,d.kickoff,d.state);});
+  evl.innerHTML='<div class="demobanner">⚡ Demo matches — no live data available right now</div>'+cards;
 }
 
 // ─── BET SLIP ─────────────────────────────────────────────────────────────────
 function addSlip(el,matchId,team,odds,betType,matchName){
-  // Replace existing bet for same match
   var prev=-1;slip.forEach(function(b,i){if(b.matchId===matchId)prev=i;});
   if(prev>=0)slip.splice(prev,1);
-  // Clear highlights for this card
   var card=document.getElementById(matchId);
   if(card)card.querySelectorAll('.ob').forEach(function(b){b.classList.remove('on');});
   slip.push({matchId:matchId,team:team,odds:parseFloat(odds),betType:betType||'1X2',matchName:matchName||team});
   if(el)el.classList.add('on');
   renderSlip();
-  toast('✓ '+team+' ('+betType+') @ '+odds,'ok');
+  /* on mobile: auto-open slip on first bet, pulse button on subsequent bets */
+  var isMob=window.innerWidth<=767;
+  if(isMob){
+    var s=document.getElementById('slip');
+    if(slip.length===1&&s&&!s.classList.contains('mob-open')){
+      toggleMobSlip();
+    } else {
+      var btn=document.getElementById('mn-slip');
+      if(btn){btn.classList.add('pulse');setTimeout(function(){btn.classList.remove('pulse');},600);}
+    }
+  }
+  toast('✓ '+team+' @ '+odds+' added','ok');
 }
 function renderSlip(){
   var cnt=document.getElementById('scnt');if(cnt)cnt.textContent=slip.length||'';
@@ -3021,9 +3099,76 @@ function placeBet(){
   if(!chk(stk))return;
   var tot=slip.reduce(function(a,b){return a*b.odds;},1);
   var won=Math.random()<0.42;
-  if(won){var pay=Math.floor(stk*tot);BAL+=pay-stk;updBal();showWin(pay,'Sports Bet');toast('🏆 Bet won! +'+pay.toLocaleString()+' sat','ok');}
+  var pay=Math.floor(stk*tot);
+  var entry={
+    id:Date.now(),
+    date:new Date().toISOString(),
+    selections:slip.map(function(b){return{matchName:b.matchName,team:b.team,betType:b.betType,odds:b.odds};}),
+    stake:stk,
+    totalOdds:parseFloat(tot.toFixed(2)),
+    potentialPayout:pay,
+    status:won?'won':'lost',
+    actualPayout:won?pay:0
+  };
+  betHistory.unshift(entry);
+  if(betHistory.length>100)betHistory=betHistory.slice(0,100);
+  localStorage.setItem('betHistory',JSON.stringify(betHistory));
+  if(won){BAL+=pay-stk;updBal();showWin(pay,'Sports Bet');toast('🏆 Bet won! +'+pay.toLocaleString()+' sat','ok');}
   else{BAL-=stk;updBal();toast('❌ Bet lost — -'+stk.toLocaleString()+' sat','er');}
   slip=[];renderSlip();
+  /* refresh my bets page if open */
+  var mb=document.getElementById('pg-mybets');if(mb&&mb.classList.contains('on'))renderMyBets();
+}
+
+// ─── MY BETS ──────────────────────────────────────────────────────────────────
+function setMyBetsTab(tab){
+  myBetsTab=tab;
+  document.querySelectorAll('.mbtab').forEach(function(b){b.classList.remove('on');});
+  var el=document.getElementById('mbt-'+tab);if(el)el.classList.add('on');
+  renderMyBets();
+}
+function renderMyBets(){
+  var el=document.getElementById('mblist');if(!el)return;
+  var list=betHistory;
+  if(myBetsTab==='open') list=betHistory.filter(function(b){return b.status==='pending';});
+  else if(myBetsTab==='settled') list=betHistory.filter(function(b){return b.status!=='pending';});
+  if(list.length===0){
+    el.innerHTML='<div class="spload">'+(myBetsTab==='open'?'No open bets':'No settled bets yet')+'</div>';
+    return;
+  }
+  el.innerHTML=list.map(function(b){
+    var d=new Date(b.date);
+    var ds=d.toLocaleDateString([],{day:'2-digit',month:'short'})+' '+d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',hour12:false});
+    var stBadge=b.status==='won'
+      ?'<span class="mbst won">WON</span>'
+      :b.status==='lost'
+        ?'<span class="mbst lost">LOST</span>'
+        :'<span class="mbst pend">OPEN</span>';
+    var payLine=b.status==='won'
+      ?'<div class="mbpay won">+'+b.actualPayout.toLocaleString()+' sat</div>'
+      :b.status==='lost'
+        ?'<div class="mbpay lost">-'+b.stake.toLocaleString()+' sat</div>'
+        :'<div class="mbpay pend">Potential: +'+b.potentialPayout.toLocaleString()+' sat</div>';
+    var sels=b.selections.map(function(s){
+      return '<div class="mbsel">'
+        +'<span class="mbmatch">'+s.matchName+'</span>'
+        +'<span class="mbpick">'+s.team+' <em>'+s.betType+'</em></span>'
+        +'<span class="mbodds">'+s.odds.toFixed(2)+'×</span>'
+        +'</div>';
+    }).join('');
+    return '<div class="mbcard">'
+      +'<div class="mbhd">'
+        +stBadge
+        +'<span class="mbdate">'+ds+'</span>'
+        +payLine
+      +'</div>'
+      +'<div class="mbsels">'+sels+'</div>'
+      +'<div class="mbft">'
+        +'<span>Stake: <b>'+b.stake.toLocaleString()+' sat</b></span>'
+        +'<span>Total odds: <b>'+b.totalOdds.toFixed(2)+'×</b></span>'
+      +'</div>'
+    +'</div>';
+  }).join('');
 }
 
 // ─── WALLET CONNECTION ────────────────────────────────────────────────────────

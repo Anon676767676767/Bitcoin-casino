@@ -195,13 +195,26 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
 .evh{display:flex;align-items:center;gap:6px;margin-bottom:10px}
 .ltag{background:#ef4444;color:#fff;font-size:8px;font-weight:800;padding:2px 6px;border-radius:10px;letter-spacing:.04em;animation:blink 1.4s infinite}
 .fttag{background:var(--c2);color:var(--mut);border:1px solid var(--bdr);font-size:8px;font-weight:700;padding:2px 6px;border-radius:10px}
+.pretag{background:rgba(247,147,26,.12);color:var(--or);border:1px solid rgba(247,147,26,.3);font-size:8px;font-weight:700;padding:2px 6px;border-radius:10px}
 .evlg{font-size:10px;color:var(--mut);flex:1;font-weight:600}
-.evteams{display:flex;flex-direction:column;gap:7px;margin-bottom:11px}
-.etrow{display:flex;align-items:center;gap:9px}
-.etcrest{width:30px;height:30px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:900;color:#fff;flex-shrink:0;letter-spacing:-.5px;text-shadow:0 1px 2px rgba(0,0,0,.4);overflow:hidden}
+/* match body: teams col + center time col */
+.evmatch{display:flex;align-items:center;gap:8px;margin-bottom:11px}
+.evcol{flex:1;display:flex;flex-direction:column;gap:8px;min-width:0}
+.etrow2{display:flex;align-items:center;gap:8px}
+.etcrest{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:900;color:#fff;flex-shrink:0;letter-spacing:-.5px;text-shadow:0 1px 2px rgba(0,0,0,.4);overflow:hidden}
 .etlogo{width:100%;height:100%;object-fit:contain;display:block;padding:2px}
-.etname{flex:1;font-size:13px;font-weight:700}
-.etscore{font-size:19px;font-weight:900;min-width:22px;text-align:right}
+.etname{flex:1;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* centre time column */
+.evct{display:flex;flex-direction:column;align-items:center;gap:3px;flex-shrink:0;width:52px}
+.evtm{font-size:15px;font-weight:900;line-height:1}
+.evtm.live{color:#ef4444;animation:blink 1.4s infinite}
+.evtm.pre{color:var(--or)}
+.evtm.ft{color:var(--mut);font-size:12px}
+.evsc{display:flex;align-items:center;gap:3px}
+.evscn{font-size:18px;font-weight:900}
+.evvs{font-size:10px;color:var(--mut);font-weight:700}
+/* keep old .etrow for any leftover usage */
+.etrow{display:flex;align-items:center;gap:9px}
 .evdiv{height:1px;background:var(--bdr);margin:0 2px 11px}
 .evos{display:flex;gap:4px}
 .ob{flex:1;background:var(--c2);border:1.5px solid var(--bdr);border-radius:8px;padding:7px 3px;cursor:pointer;text-align:center;transition:.15s;user-select:none}
@@ -212,6 +225,33 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
 .ov{font-size:12px;font-weight:800}
 .ovsep{width:1px;background:var(--bdr);margin:0 2px;border-radius:1px;flex-shrink:0}
 .spload{text-align:center;padding:36px;color:var(--mut);font-size:13px}
+.demobanner{background:rgba(247,147,26,.08);border:1px solid rgba(247,147,26,.2);border-radius:8px;padding:8px 12px;margin:10px 10px 0;font-size:11px;color:var(--or);font-weight:600;text-align:center}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
+.mnb.pulse .mnico{animation:pulse .4s ease}
+.mnb.pulse{color:var(--or)}
+/* MY BETS */
+.mbtab{background:none;border:1px solid var(--bdr);color:var(--mut);padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;transition:.15s}
+.mbtab.on{background:rgba(247,147,26,.15);color:var(--or);border-color:rgba(247,147,26,.4)}
+.mbcard{background:var(--card);border:1px solid var(--bdr);border-radius:12px;overflow:hidden;transition:border-color .15s}
+.mbcard:hover{border-color:rgba(247,147,26,.3)}
+.mbhd{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--c2);border-bottom:1px solid var(--bdr)}
+.mbst{font-size:10px;font-weight:900;padding:3px 8px;border-radius:8px;letter-spacing:.05em}
+.mbst.won{background:rgba(16,185,129,.2);color:#10b981;border:1px solid rgba(16,185,129,.3)}
+.mbst.lost{background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3)}
+.mbst.pend{background:rgba(251,191,36,.15);color:#fbbf24;border:1px solid rgba(251,191,36,.3)}
+.mbdate{font-size:11px;color:var(--mut);flex:1}
+.mbpay{font-size:13px;font-weight:800}
+.mbpay.won{color:#10b981}
+.mbpay.lost{color:#ef4444}
+.mbpay.pend{color:var(--or)}
+.mbsels{padding:10px 12px;display:flex;flex-direction:column;gap:7px}
+.mbsel{display:flex;align-items:center;gap:6px;font-size:12px}
+.mbmatch{color:var(--mut);font-size:11px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mbpick{font-weight:700;white-space:nowrap}
+.mbpick em{font-style:normal;color:var(--mut);font-size:10px;margin-left:3px}
+.mbodds{color:var(--or);font-weight:800;font-size:12px;white-space:nowrap}
+.mbft{display:flex;justify-content:space-between;padding:8px 12px;border-top:1px solid var(--bdr);font-size:11px;color:var(--mut)}
+.mbft b{color:var(--txt)}
 /* SLIP */
 .slhd{padding:12px 14px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
 .sltt{font-weight:700;font-size:13px}
@@ -277,90 +317,146 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
 #slipovl.on{display:block}
 /* ═══ RESPONSIVE ═══ */
 @media(max-width:767px){
-  html,body{overflow:hidden}
-  /* Top bar */
-  #top{height:48px;padding:0 10px;gap:6px}
-  .logo{font-size:16px;margin-right:0}
+  /* ── Viewport ── */
+  html{height:-webkit-fill-available}
+  body{min-height:-webkit-fill-available;overflow:hidden}
+
+  /* ── Game overlay must sit ABOVE mobile nav ── */
+  #fsov{z-index:600!important}
+
+  /* ── Top bar ── */
+  #top{height:46px;padding:0 10px;gap:6px;flex-shrink:0}
+  .logo{font-size:16px}
   .pxs{display:none}
   .bbtc{display:none}
-  .bsat{font-size:12px}
-  .bal{padding:4px 8px;gap:5px}
+  .bsat{font-size:13px}
+  .bal{padding:4px 9px;gap:5px}
   #wltBtn{display:none}
-  .dbtn{padding:5px 9px;font-size:11px}
-  .nt{padding:5px 9px;font-size:11px}
-  /* Feed */
-  #feed{height:22px;font-size:10px}
-  /* Layout: hide sidebar and inline slip */
-  #body{height:calc(100vh - 70px - 54px);flex-direction:row}
-  #sb{display:none}
-  #main{flex:1;width:100%;overflow-y:auto;-webkit-overflow-scrolling:touch}
-  /* Slip becomes bottom drawer */
-  #slip{position:fixed;bottom:54px;left:0;right:0;width:100%!important;max-height:78vh;z-index:495;border-radius:18px 18px 0 0;border-top:2px solid rgba(247,147,26,.5);transform:translateY(110%);transition:transform .32s cubic-bezier(.4,0,.2,1)}
-  #slip.mob-open{transform:translateY(0)}
-  /* Show mobile nav */
+  .dbtn{padding:5px 10px;font-size:11px}
+  .nt{display:none}
+
+  /* ── Live feed ── */
+  #feed{height:22px}
+
+  /* ── Core layout ── */
+  #body{height:calc(100vh - 68px - 54px);height:calc(100dvh - 68px - 54px);flex-direction:row}
+  #sb{display:none!important}
+  #main{flex:1;min-width:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
   #mobnav{display:flex}
-  #toasts{bottom:70px;right:10px}
-  /* Games grid: 2 columns */
-  .gg{grid-template-columns:repeat(2,1fr);gap:8px;padding:0 10px 10px}
-  .gc{height:105px}
-  .gbg{font-size:32px!important}
-  /* Game panels */
-  .gpw{padding:2px 8px 80px}
-  .gp{padding:12px}
-  .gph{margin-bottom:12px}
-  .gpico{font-size:26px}
-  .gptit{font-size:14px}
-  /* Roulette: stack vertically, shrink canvas */
-  .roul-wrap{flex-direction:column;align-items:center;gap:10px}
-  .roul-right{min-width:unset;width:100%}
-  #roul-cv{width:200px!important;height:200px!important}
-  /* Slots: scale columns */
-  .srcol{width:calc(33.33vw - 24px)!important;height:auto}
-  .ssym{width:100%!important;height:calc(33.33vw - 24px)!important;font-size:28px}
-  .sreels{gap:2px;padding:3px}
-  /* Blackjack cards */
+  #toasts{bottom:62px;right:10px;max-width:220px}
+
+  /* ── Bet slip — slides up from bottom ── */
+  #slip{
+    position:fixed!important;
+    bottom:54px;left:0;right:0;
+    width:100%!important;
+    height:72vh;
+    z-index:495;
+    border-radius:16px 16px 0 0;
+    border-top:2px solid rgba(247,147,26,.4);
+    transform:translateY(100%);
+    transition:transform .3s ease;
+    overflow:hidden;
+    display:flex!important;
+    flex-direction:column!important;
+    flex-shrink:0!important;
+  }
+  #slip.mob-open{transform:translateY(0)}
+
+  /* ── Games grid: 2 columns ── */
+  .gg{grid-template-columns:repeat(2,1fr);gap:8px;padding:8px 10px 10px}
+  .gc{height:110px}
+  .gbg{font-size:34px!important}
+  .gn{font-size:10px}
+
+  /* ── Fullscreen game overlay layout ── */
+  #fsov .fsh{height:44px!important;padding:0 12px!important}
+  #fsov .fsb{flex-direction:column!important}
+  #fsov .fsM{
+    flex:none!important;
+    height:44vh;
+    padding:6px!important;
+    overflow:hidden;
+    display:flex!important;
+    align-items:center;
+    justify-content:center;
+  }
+  #fsov .fsC{
+    flex:1!important;
+    width:100%!important;
+    border-left:none!important;
+    border-top:1px solid #1e1f30;
+    overflow-y:auto!important;
+    -webkit-overflow-scrolling:touch;
+    padding:12px 14px 40px!important;
+  }
+
+  /* ── Blackjack cards (overlay) ── */
+  .card2{width:48px!important;height:70px!important}
+  .c2r,.c2b{font-size:9px!important}
+  .c2s{font-size:20px!important}
+  .bjrow{min-height:55px!important;gap:4px!important}
+  .bjtbl{padding:12px!important}
+
+  /* ── Roulette ── */
+  .roul-wrap{flex-direction:column!important;align-items:center!important;gap:10px}
+  .roul-right{min-width:unset!important;width:100%!important}
+
+  /* ── Slots ── */
+  .srcol{width:calc(30vw - 6px)!important}
+  .ssym{width:100%!important;height:calc(30vw - 6px)!important;font-size:26px}
+  .sreels{gap:3px;padding:3px}
+
+  /* ── Blackjack cards (inline fallback) ── */
   .card{width:44px;height:64px}
   .cr,.crb{font-size:8px}
   .cs{font-size:18px}
   .bjhand{min-height:70px;gap:4px}
-  /* Crash multiplier */
-  #crash-mult{font-size:32px}
-  /* Mines grid */
-  .mgrid{gap:4px}
-  /* Sports tabs: horizontal scroll */
-  .sptb{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none;padding:8px 10px}
-  .sptb::-webkit-scrollbar{display:none}
-  #lgtb{scrollbar-width:none}
-  #lgtb::-webkit-scrollbar{display:none}
-  /* Coin flip */
+
+  /* ── Sports ── */
+  .sptb{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:8px 10px}
+  .sptb::-webkit-scrollbar,#lgtb::-webkit-scrollbar{display:none}
+  #lgtb{overflow-x:auto;scrollbar-width:none}
+  .evos{flex-wrap:wrap;gap:4px}
+  .ob{min-width:calc(33% - 3px);flex:none}
+
+  /* ── Controls ── */
+  .ctrl{gap:6px}
+  .qs{gap:3px;flex-wrap:wrap}
+  .qb{padding:5px 8px;font-size:11px}
   .cpicks{width:100%!important}
-  /* Bet controls */
-  .ctrl{gap:7px}
-  .qs{gap:3px}
-  .qb{padding:4px 7px;font-size:10px}
-  /* Cards in sport */
-  .evos{flex-wrap:wrap;gap:3px}
-  .ob{min-width:calc(33% - 3px)}
-  /* Fullscreen game overlay — stack controls below main content */
-  .fsb{flex-direction:column!important}
-  .fsM{flex:1;padding:8px!important;min-height:0;overflow-y:auto}
-  .fsC{width:100%!important;border-left:none!important;border-top:1px solid #1e1f30;flex-shrink:0;max-height:46vh;overflow-y:auto;padding:12px 12px 24px!important}
-  .fsh{height:46px!important;padding:0 12px!important}
-  /* BJ cards in overlay */
-  .card2{width:52px!important;height:76px!important}
-  .c2r,.c2b{font-size:10px!important}
-  .c2s{font-size:24px!important}
-  .bjrow{min-height:60px!important;gap:4px!important}
-  .bjzone{gap:6px!important}
-  /* Dice canvas */
-  .dc-canvas-wrap canvas{width:160px!important;height:160px!important}
+
+  /* ── Misc ── */
+  #crash-mult{font-size:36px}
+  .mgrid{gap:4px}
+  .dc-canvas-wrap canvas{width:180px!important;height:180px!important}
+  .gpw{padding:6px 8px 80px}
+  .gp{padding:12px}
+
+  /* ── Canvas overflow fix ── */
+  #fsov canvas{max-width:100%!important;height:auto!important}
+  #crash-wrap{width:100%;overflow:hidden}
+  #crash-wrap canvas{width:100%!important;height:auto!important}
+  #plinko-wrap{width:100%;overflow:hidden}
+  #plinko-wrap canvas{width:100%!important;height:auto!important}
+  #roul-cv{width:min(200px,80vw)!important;height:min(200px,80vw)!important}
+
+  /* ── Coin flip mobile ── */
+  .cscene,.coin{width:80px!important;height:80px!important}
+  .cscene{perspective:300px!important}
+  .cf{font-size:26px!important}
+
+  /* ── Input/button sizing ── */
+  input[type=number],input[type=text]{font-size:14px!important}
+  .cinp{font-size:14px!important}
 }
 </style></head><body>
 
 <div id="top">
   <div class="logo">₿ BitOPNet</div>
-  <button class="nt on" onclick="pg('casino')">🎰 Casino</button>
-  <button class="nt" onclick="pg('sports')">⚽ Sports</button>
+  <button class="nt on" id="nt-casino" onclick="pgNav('casino')">🎰 Casino</button>
+  <button class="nt" id="nt-sports" onclick="pgNav('sports')">⚽ Sports</button>
+  <button class="nt" id="nt-mybets" onclick="pgNav('mybets')">📋 My Bets</button>
   <div class="pxs">
     <div class="px"><span style="color:var(--mut);font-size:11px">BTC</span>&nbsp;<span id="bp" style="font-weight:700">…</span>&nbsp;<span id="bc" class="up"></span></div>
     <div class="px"><span style="color:var(--mut);font-size:11px">ETH</span>&nbsp;<span id="ep" style="font-weight:700">…</span>&nbsp;<span id="ec" class="up"></span></div>
@@ -384,10 +480,11 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
   <div class="si" onclick="sg('slots');sa(this)">🎰 Slots</div>
   <div class="si" onclick="sg('mines');sa(this)">💣 Mines</div>
   <div class="ss">Sports Betting</div>
-  <div class="si" onclick="pg('sports');setSport('soccer');sa(this)">⚽ Football</div>
-  <div class="si" onclick="pg('sports');setSport('nba');sa(this)">🏀 Basketball</div>
-  <div class="si" onclick="pg('sports');setSport('nfl');sa(this)">🏈 NFL</div>
-  <div class="si" onclick="pg('sports');setSport('tennis');sa(this)">🎾 Tennis</div>
+  <div class="si" onclick="pgNav('sports');setSport('soccer');sa(this)">⚽ Football</div>
+  <div class="si" onclick="pgNav('sports');setSport('nba');sa(this)">🏀 Basketball</div>
+  <div class="si" onclick="pgNav('sports');setSport('nfl');sa(this)">🏈 NFL</div>
+  <div class="si" onclick="pgNav('sports');setSport('tennis');sa(this)">🎾 Tennis</div>
+  <div class="si" onclick="pgNav('mybets')">🏆 My Bets</div>
   <div class="ss">Account</div>
   <div class="si" onclick="odep()">💰 Deposit</div>
 </div>
@@ -613,11 +710,29 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
 </div>
 </div>
 
+<!-- MY BETS PAGE -->
+<div id="pg-mybets" class="pg">
+  <div class="sptb" style="border-bottom:1px solid var(--bdr)">
+    <span style="font-weight:700;font-size:14px">📋 My Bets</span>
+    <div style="margin-left:auto;display:flex;gap:5px">
+      <button class="mbtab on" id="mbt-open" onclick="setMyBetsTab('open')">Open</button>
+      <button class="mbtab" id="mbt-settled" onclick="setMyBetsTab('settled')">Settled</button>
+      <button class="mbtab" id="mbt-all" onclick="setMyBetsTab('all')">All</button>
+    </div>
+  </div>
+  <div id="mblist" style="padding:10px;display:flex;flex-direction:column;gap:8px"></div>
+</div>
+</div>
+
 <!-- BET SLIP -->
 <div id="slip">
   <div class="slhd"><div class="sltt">📋 Bet Slip</div><div class="slcnt" id="scnt">0</div></div>
   <div id="slbody" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
-    <div class="slem" id="slem"><div style="font-size:32px;opacity:.2">📋</div><div>Click odds to add bets</div></div>
+    <div class="slem" id="slem">
+      <div style="font-size:36px;opacity:.25">🎯</div>
+      <div style="font-weight:700;font-size:13px;margin-bottom:4px">No selections yet</div>
+      <div style="font-size:11px;line-height:1.5;text-align:center">Go to <b>Sports</b> and click any odds button<br>(1 · X · 2) to add a bet</div>
+    </div>
     <div style="display:none;flex:1;overflow-y:auto" id="slitems"></div>
   </div>
   <div id="slft" style="display:none" class="slft">
@@ -634,7 +749,8 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
 <div id="mobnav">
   <button class="mnb on" id="mn-casino" onclick="mobPg('casino')"><span class="mnico">🎰</span><span>Casino</span></button>
   <button class="mnb" id="mn-sports" onclick="mobPg('sports')"><span class="mnico">⚽</span><span>Sports</span></button>
-  <button class="mnb" id="mn-slip" onclick="toggleMobSlip()"><span class="mnico">📋</span><span id="mn-cnt" class="mnbadge">0</span></button>
+  <button class="mnb" id="mn-mybets" onclick="mobPg('mybets');renderMyBets()"><span class="mnico">🏆</span><span>My Bets</span></button>
+  <button class="mnb" id="mn-slip" onclick="toggleMobSlip()"><span class="mnico">🎯</span><span id="mn-cnt" class="mnbadge">0</span></button>
 </div>
 
 <!-- WIN BANNER -->
