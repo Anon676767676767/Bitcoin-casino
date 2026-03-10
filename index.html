@@ -26,8 +26,13 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
 /* LAYOUT */
 #body{display:flex;height:calc(100vh - 78px)}
 #sb{width:186px;background:var(--sb);border-right:1px solid var(--bdr);overflow-y:auto;flex-shrink:0;padding-bottom:16px}
-#main{flex:1;overflow-y:auto}
-#slip{width:254px;background:var(--sb);border-left:1px solid var(--bdr);display:flex;flex-direction:column;flex-shrink:0}
+#main{flex:1;overflow-y:auto;overflow-x:hidden}
+/* sports page two-column layout */
+#pg-sports{flex-direction:column;height:100%}
+#pg-sports.on{display:flex!important}
+.spbody{display:flex;flex:1;min-height:0;overflow:hidden}
+.spmatches{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px}
+.spinslip{width:268px;background:var(--sb);border-left:1px solid var(--bdr);display:flex;flex-direction:column;flex-shrink:0}
 /* SIDEBAR */
 .ss{padding:10px 8px 3px;font-size:9px;font-weight:700;color:var(--mut);letter-spacing:.1em;text-transform:uppercase}
 .si{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;margin:1px 4px;cursor:pointer;font-size:12px;font-weight:500;color:var(--mut);transition:.12s}
@@ -36,29 +41,30 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
 /* PAGES */
 .pg{display:none}.pg.on{display:block}
 /* GAMES GRID */
-.gtit{font-size:11px;font-weight:700;color:var(--mut);letter-spacing:.1em;text-transform:uppercase;padding:12px 12px 6px}
-.gg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:0 10px 10px}
-.gc{border-radius:10px;overflow:hidden;cursor:pointer;transition:transform .2s,box-shadow .2s;position:relative;height:90px;display:flex;flex-direction:column;justify-content:flex-end}
-.gc:hover{transform:translateY(-3px) scale(1.03);z-index:5;box-shadow:0 8px 24px rgba(0,0,0,.5),0 0 0 1.5px rgba(247,147,26,.5)}
+.gtit{font-size:11px;font-weight:700;color:var(--mut);letter-spacing:.1em;text-transform:uppercase;padding:14px 14px 8px}
+.gg{display:grid;grid-template-columns:repeat(4,160px);gap:8px;padding:0 12px 12px}
+.gc{border-radius:12px;overflow:hidden;cursor:pointer;transition:transform .2s,box-shadow .2s;position:relative;width:160px;height:160px;display:flex;flex-direction:column;justify-content:flex-end;box-shadow:0 3px 12px rgba(0,0,0,.5)}
+.gc:hover{transform:translateY(-4px) scale(1.06);z-index:5;box-shadow:0 10px 24px rgba(0,0,0,.6),0 0 0 2px rgba(247,147,26,.55)}
 .gc:hover .gov{opacity:1}
-.gbg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:28px;border-radius:10px;transition:transform .3s}
-.gc:hover .gbg{transform:scale(1.1)}
-.bg0{background:linear-gradient(145deg,#3d2200,#6b4200)}
-.bg1{background:linear-gradient(145deg,#1c2437,#0f172a)}
-.bg2{background:linear-gradient(145deg,#052e16,#065f46)}
-.bg3{background:linear-gradient(145deg,#5c1a00,#8b2500)}
-.bg4{background:linear-gradient(145deg,#3b0764,#7c3aed)}
-.bg5{background:linear-gradient(145deg,#0a3554,#0369a1)}
+.gbg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:56px;border-radius:12px;transition:transform .3s}
+.gc:hover .gbg{transform:scale(1.12)}
+.bg0{background:linear-gradient(145deg,#3d1a00,#7c3200)}
+.bg1{background:linear-gradient(145deg,#111827,#1e3a5f)}
+.bg2{background:linear-gradient(145deg,#052e16,#047857)}
+.bg3{background:linear-gradient(145deg,#5c1a00,#991b1b)}
+.bg4{background:linear-gradient(145deg,#2d0a5e,#6d28d9)}
+.bg5{background:linear-gradient(145deg,#0c3059,#0369a1)}
 .bg6{background:linear-gradient(145deg,#0f4c46,#0d9488)}
-.bg7{background:linear-gradient(145deg,#3d1a00,#78350f)}
-.gov{position:absolute;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;opacity:0;transition:.2s;border-radius:10px}
-.pbtn{background:var(--or);color:#000;border:none;padding:4px 12px;border-radius:4px;font-weight:800;font-size:10px;cursor:pointer}
-.gi{position:relative;padding:3px 6px 4px;background:linear-gradient(transparent,rgba(0,0,0,.92))}
-.gn{font-size:9px;font-weight:700}.gpr{font-size:7px;color:var(--mut)}
-.gbdg{position:absolute;font-size:7px;font-weight:800;padding:1px 4px;border-radius:3px}
-.hot{background:#ef4444;color:#fff;top:5px;left:5px}
-.new{background:#10b981;color:#fff;top:5px;left:5px}
-.rtp{background:rgba(0,0,0,.65);color:var(--or);top:5px;right:5px;border:1px solid rgba(247,147,26,.3)}
+.bg7{background:linear-gradient(145deg,#3b1c00,#92400e)}
+.gov{position:absolute;inset:0;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;opacity:0;transition:.2s;border-radius:12px}
+.pbtn{background:linear-gradient(135deg,var(--or),var(--or2));color:#000;border:none;padding:5px 10px;border-radius:5px;font-weight:900;font-size:10px;cursor:pointer}
+.gi{position:relative;padding:8px 10px 10px;background:linear-gradient(transparent,rgba(0,0,0,.95))}
+.gn{font-size:13px;font-weight:800;margin-bottom:2px}
+.gpr{font-size:10px;color:var(--mut)}
+.gbdg{position:absolute;font-size:8px;font-weight:900;padding:2px 7px;border-radius:4px;letter-spacing:.04em}
+.hot{background:#ef4444;color:#fff;top:8px;left:8px}
+.new{background:#10b981;color:#fff;top:8px;left:8px}
+.rtp{background:rgba(0,0,0,.7);color:var(--or);top:8px;right:8px;border:1px solid rgba(247,147,26,.35);font-size:8px;padding:2px 6px}
 /* GAME PANEL */
 .gpw{padding:2px 10px 14px}
 .gp{background:var(--card);border:1px solid var(--bdr);border-radius:13px;padding:18px;display:none}
@@ -92,9 +98,9 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
 /* COIN */
 .cscene{perspective:500px;width:100px;height:100px}
 .coin{width:100px;height:100px;transform-style:preserve-3d;position:relative}
-.cf{position:absolute;inset:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:40px;backface-visibility:hidden;border:3px solid rgba(255,255,255,.1)}
-.ch{background:radial-gradient(circle at 40% 35%,#f7931a,#c45e00)}
-.ct{background:radial-gradient(circle at 40% 35%,#9ca3af,#374151);transform:rotateY(180deg)}
+.cf{position:absolute;inset:0;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:3px;font-size:40px;backface-visibility:hidden}
+.ch{background:radial-gradient(circle at 40% 35%,#1e0800,#080300);border:3px solid #f7931a;box-shadow:0 0 22px rgba(247,147,26,.55),inset 0 0 18px rgba(247,147,26,.08)}
+.ct{background:radial-gradient(circle at 40% 35%,#001a08,#000805);border:3px solid #10b981;box-shadow:0 0 22px rgba(16,185,129,.55),inset 0 0 18px rgba(16,185,129,.08);transform:rotateY(180deg)}
 .cpicks{display:flex;gap:8px}
 .cp{flex:1;padding:8px;border-radius:7px;border:2px solid var(--bdr);cursor:pointer;text-align:center;font-size:12px;font-weight:600;background:var(--c2);transition:.15s}
 .cp.on{border-color:var(--or);background:rgba(247,147,26,.12);color:#fff}
@@ -183,8 +189,9 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
 .msb.on{border-color:var(--or);color:var(--or);background:rgba(247,147,26,.1)}
 /* SPORTS */
 .sptb{display:flex;align-items:center;gap:6px;padding:10px 12px 8px;border-bottom:1px solid var(--bdr)}
-.spbtn{padding:5px 13px;border-radius:20px;border:1px solid var(--bdr);background:var(--c2);color:var(--mut);font-size:11px;font-weight:700;cursor:pointer;transition:.15s}
+.spbtn{padding:5px 13px;border-radius:20px;border:1px solid var(--bdr);background:var(--c2);color:var(--mut);font-size:11px;font-weight:700;cursor:pointer;transition:.15s;position:relative}
 .spbtn.on{background:var(--or);border-color:var(--or);color:#000}
+.sp-badge{position:absolute;top:-5px;right:-5px;background:#ef4444;color:#fff;font-size:8px;font-weight:900;min-width:14px;height:14px;border-radius:7px;display:flex;align-items:center;justify-content:center;padding:0 3px;pointer-events:none;border:1.5px solid var(--bg)}
 .lgbtn{padding:5px 12px;border-radius:20px;border:1px solid var(--bdr);background:var(--c2);color:var(--mut);font-size:11px;font-weight:700;cursor:pointer;transition:.15s;white-space:nowrap;flex-shrink:0}
 .lgbtn.on{background:rgba(247,147,26,.15);border-color:var(--or);color:var(--or)}
 .ldot{width:7px;height:7px;background:#ef4444;border-radius:50%;animation:blink 1s infinite;flex-shrink:0}
@@ -252,6 +259,73 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
 .mbodds{color:var(--or);font-weight:800;font-size:12px;white-space:nowrap}
 .mbft{display:flex;justify-content:space-between;padding:8px 12px;border-top:1px solid var(--bdr);font-size:11px;color:var(--mut)}
 .mbft b{color:var(--txt)}
+/* selection row layout */
+.mbsel{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;padding:4px 0;border-bottom:1px solid var(--bdr)}
+.mbsel:last-child{border-bottom:none}
+.mbselinfo{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.mbselrt{display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0}
+/* result badges */
+.mbrw{color:#10b981;font-size:11px;font-weight:700;white-space:nowrap}
+.mbrL{color:#ef4444;font-size:11px;font-weight:700;white-space:nowrap}
+.mbrlive{color:var(--or);font-size:11px;font-weight:700;white-space:nowrap;animation:blink 1.4s infinite}
+.mbrpre{color:var(--mut);font-size:11px;white-space:nowrap}
+/* card border by status */
+.mbcard.mbwon{border-color:rgba(16,185,129,.35)}
+.mbcard.mblost{border-color:rgba(239,68,68,.25)}
+.mbcard.mbopen{border-color:rgba(247,147,26,.25)}
+/* My Bets page layout — must display:flex when active */
+#pg-mybets{flex-direction:column;height:100%}
+#pg-mybets.on{display:flex!important}
+/* live watcher bar */
+.mb-watchbar{display:flex;align-items:center;gap:10px;padding:8px 14px;background:rgba(247,147,26,.06);border-bottom:1px solid var(--bdr);font-size:11px;color:var(--mut);flex-shrink:0}
+.mb-watchbar .mwlive{display:flex;align-items:center;gap:5px;color:var(--or);font-weight:700;font-size:11px}
+.mb-watchbar .mwdot{width:7px;height:7px;border-radius:50%;background:var(--or);animation:blink 1.2s infinite}
+.mb-watchbar .mwctd{margin-left:auto;display:flex;align-items:center;gap:7px}
+.mb-watchbar .mwrbtn{background:rgba(247,147,26,.15);color:var(--or);border:1px solid rgba(247,147,26,.3);padding:3px 10px;border-radius:5px;cursor:pointer;font-size:11px;font-weight:700;transition:.15s}
+.mb-watchbar .mwrbtn:hover{background:rgba(247,147,26,.3)}
+/* live score chip inside card */
+.mblscore{display:inline-flex;align-items:center;gap:4px;background:rgba(247,147,26,.12);border:1px solid rgba(247,147,26,.3);border-radius:6px;padding:3px 8px;font-size:12px;font-weight:800;color:var(--or);animation:blink 1.4s infinite}
+.mblscore .lsclock{font-size:10px;font-weight:600;color:var(--or);opacity:.8}
+.mbscore-fin{display:inline-flex;align-items:center;gap:4px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);border-radius:6px;padding:3px 8px;font-size:12px;font-weight:800;color:#10b981}
+.mbscore-fin.lost{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.25);color:#ef4444}
+/* open bets pulse */
+.mbst.pend.watching{animation:blink 2s infinite}
+/* selection rows */
+.mbrow{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:10px 14px;border-bottom:1px solid var(--bdr)}
+.mbrow:last-child{border-bottom:none}
+.mbrow-left{flex:1;min-width:0}
+.mbrow-match{font-size:13px;font-weight:700;color:var(--txt);margin-bottom:3px}
+.mbrow-pick{font-size:11px;color:var(--mut)}
+.mbrow-pick b{color:var(--or)}
+.mbrow-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+.mbrow-odds{font-size:15px;font-weight:900;color:var(--or)}
+/* live/result chips */
+.mbchip{font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;white-space:nowrap}
+.mbchip-won{background:rgba(16,185,129,.15);color:#10b981;border:1px solid rgba(16,185,129,.3)}
+.mbchip-lost{background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.3)}
+.mbchip-live{background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3);animation:blink 1.4s infinite}
+.mbchip-wait{background:var(--c2);color:var(--mut);border:1px solid var(--bdr)}
+/* big payout block at bottom */
+.mbwin-block{border-top:2px solid var(--bdr);padding:14px}
+.mbwin-won{background:rgba(16,185,129,.07);border-top-color:rgba(16,185,129,.3)}
+.mbwin-lost{background:rgba(239,68,68,.05);border-top-color:rgba(239,68,68,.2)}
+.mbwin-open{display:flex;align-items:center;gap:10px;background:rgba(247,147,26,.04);border-top-color:rgba(247,147,26,.2)}
+.mbwin-lbl{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);margin-bottom:3px}
+.mbwin-big{font-size:26px;font-weight:900;line-height:1;margin-bottom:4px}
+.mbwin-won .mbwin-big{color:#10b981}
+.mbwin-lost .mbwin-big{color:#ef4444}
+.mbwin-sub{font-size:10px;color:var(--mut)}
+.mbwin-left{flex:1}
+.mbwin-right{flex:1;text-align:right}
+.mbwin-arrow{font-size:20px;color:var(--bdr);flex-shrink:0}
+.mbwin-stake{font-size:16px;font-weight:800;color:var(--txt);margin-bottom:3px}
+.mbwin-profit{font-size:24px;font-weight:900;color:#10b981;line-height:1;margin-bottom:3px}
+.mbstat{padding:10px 8px;text-align:center;border-right:1px solid var(--bdr)}
+.mbstat:last-child{border-right:none}
+.mbstat-val{font-size:13px;font-weight:900;color:var(--or);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mbstat-lbl{font-size:9px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px}
+.mbstat-won .mbstat-val{color:#10b981}
+.mbstat-neg .mbstat-val{color:#ef4444}
 /* SLIP */
 .slhd{padding:12px 14px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
 .sltt{font-weight:700;font-size:13px}
@@ -259,6 +333,7 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
 .slem{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--mut);font-size:12px;padding:24px}
 .slit{background:var(--c2);border:1px solid var(--bdr);border-radius:9px;padding:10px 12px;margin:4px 8px;transition:.12s}
 .slit:hover{border-color:rgba(247,147,26,.3)}
+.slacca{font-size:10px;font-weight:700;color:var(--cyn);background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.2);border-radius:6px;padding:5px 8px;margin:4px 8px;text-align:center}
 .slm{font-size:9px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
 .slmatch{font-size:11px;font-weight:700;margin-bottom:4px}
 .slrow{display:flex;align-items:center;justify-content:space-between;gap:6px}
@@ -267,7 +342,17 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
 .slod{color:var(--or);font-weight:800;font-size:13px}
 .slrm{background:none;border:none;color:var(--mut);cursor:pointer;font-size:14px;padding:2px 4px;line-height:1;transition:.12s}
 .slrm:hover{color:#ef4444}
-.slft{border-top:1px solid var(--bdr);padding:10px 12px;flex-shrink:0}
+.slft{border-top:1px solid var(--bdr);padding:10px 12px;flex-shrink:0;display:flex;flex-direction:column;gap:7px}
+/* bet type label */
+.sl-type{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;padding:4px 8px;border-radius:6px;text-align:center;background:rgba(247,147,26,.12);color:var(--or);border:1px solid rgba(247,147,26,.25)}
+/* total odds row */
+.sl-odds-row{display:flex;align-items:center;justify-content:space-between}
+.sl-totodds{font-size:20px;font-weight:900;color:var(--or)}
+/* payout summary box */
+.sl-summary{background:var(--c2);border:1px solid var(--bdr);border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;gap:5px}
+.sl-srow{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--mut)}
+.sl-srow-total{border-top:1px solid var(--bdr);padding-top:5px;margin-top:2px;font-weight:700;color:var(--txt);font-size:12px}
+.sl-towin-val{color:#10b981;font-weight:800;font-size:12px}
 .slsr{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;font-size:12px}
 .slin{background:var(--c2);border:1px solid var(--bdr);color:var(--txt);padding:6px 9px;border-radius:6px;font-size:13px;font-weight:700;outline:none;width:120px}
 .slin:focus{border-color:var(--or)}
@@ -313,8 +398,6 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
 .mnb .mnico{font-size:22px;line-height:1}
 .mnb.on{color:var(--or)}
 .mnbadge{background:var(--or);color:#000;font-size:9px;font-weight:900;padding:1px 5px;border-radius:10px;min-width:16px;text-align:center;display:inline-block}
-#slipovl{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:490;backdrop-filter:blur(2px)}
-#slipovl.on{display:block}
 /* ═══ RESPONSIVE ═══ */
 @media(max-width:767px){
   /* ── Viewport ── */
@@ -345,23 +428,10 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
   #mobnav{display:flex}
   #toasts{bottom:62px;right:10px;max-width:220px}
 
-  /* ── Bet slip — slides up from bottom ── */
-  #slip{
-    position:fixed!important;
-    bottom:54px;left:0;right:0;
-    width:100%!important;
-    height:72vh;
-    z-index:495;
-    border-radius:16px 16px 0 0;
-    border-top:2px solid rgba(247,147,26,.4);
-    transform:translateY(100%);
-    transition:transform .3s ease;
-    overflow:hidden;
-    display:flex!important;
-    flex-direction:column!important;
-    flex-shrink:0!important;
-  }
-  #slip.mob-open{transform:translateY(0)}
+  /* ── Inline bet slip on mobile — below matches ── */
+  .spbody{flex-direction:column!important}
+  .spinslip{width:100%!important;border-left:none!important;border-top:2px solid rgba(247,147,26,.3);max-height:55vh;flex-shrink:0}
+  .spmatches{flex:1;min-height:120px}
 
   /* ── Games grid: 2 columns ── */
   .gg{grid-template-columns:repeat(2,1fr);gap:8px;padding:8px 10px 10px}
@@ -374,11 +444,11 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
   #fsov .fsb{flex-direction:column!important}
   #fsov .fsM{
     flex:none!important;
-    height:44vh;
+    height:48vh;
     padding:6px!important;
-    overflow:hidden;
+    overflow:visible;
     display:flex!important;
-    align-items:center;
+    align-items:stretch;
     justify-content:center;
   }
   #fsov .fsC{
@@ -392,11 +462,11 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
   }
 
   /* ── Blackjack cards (overlay) ── */
-  .card2{width:48px!important;height:70px!important}
-  .c2r,.c2b{font-size:9px!important}
-  .c2s{font-size:20px!important}
-  .bjrow{min-height:55px!important;gap:4px!important}
-  .bjtbl{padding:12px!important}
+  .card2{width:52px!important;height:76px!important}
+  .c2r,.c2b{font-size:10px!important}
+  .c2s{font-size:22px!important}
+  .bjrow{min-height:80px!important;gap:4px!important}
+  .bjtbl{padding:10px 12px!important}
 
   /* ── Roulette ── */
   .roul-wrap{flex-direction:column!important;align-items:center!important;gap:10px}
@@ -444,7 +514,7 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
   /* ── Coin flip mobile ── */
   .cscene,.coin{width:80px!important;height:80px!important}
   .cscene{perspective:300px!important}
-  .cf{font-size:26px!important}
+  .cf img{width:36px!important;height:36px!important}
 
   /* ── Input/button sizing ── */
   input[type=number],input[type=text]{font-size:14px!important}
@@ -491,7 +561,18 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
 
 <div id="main">
 <div id="pg-casino" class="pg on">
-  <div class="gtit">🎮 Click a game to play instantly</div>
+  <div style="margin:12px 12px 4px;background:linear-gradient(135deg,rgba(247,147,26,.12),rgba(124,58,237,.1));border:1px solid rgba(247,147,26,.2);border-radius:14px;padding:16px 18px;display:flex;align-items:center;gap:14px">
+    <div style="font-size:38px;line-height:1">🎰</div>
+    <div style="flex:1">
+      <div style="font-size:17px;font-weight:900;background:linear-gradient(90deg,#f7931a,#fbbf24);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:3px">BitOPNet Casino</div>
+      <div style="font-size:11px;color:var(--mut)">Provably fair · Instant payouts · On-chain Bitcoin</div>
+    </div>
+    <div style="text-align:right;flex-shrink:0">
+      <div style="font-size:10px;color:var(--mut);margin-bottom:2px">Best RTP</div>
+      <div style="font-size:18px;font-weight:900;color:#10b981">99.5%</div>
+    </div>
+  </div>
+  <div class="gtit">🎮 Choose a game</div>
   <div class="gg" id="gg"></div>
   <div class="gpw" style="display:none">
 
@@ -499,16 +580,19 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
     <div class="gp" id="pp-cf">
       <div class="gph"><span class="gpico">🪙</span><div><div class="gptit">Coin Flip</div><div class="gpsub">50/50 · 1.95× payout · Provably fair</div></div><button class="gpcl" onclick="cp()">✕ Close</button></div>
       <div style="display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:16px">
-        <div class="cscene"><div class="coin" id="cfcoin"><div class="cf ch">₿</div><div class="cf ct">🌙</div></div></div>
+        <div class="cscene"><div class="coin" id="cfcoin">
+          <div class="cf ch"><img src="https://unavatar.io/twitter/opnetbtc" width="52" height="52" style="border-radius:50%;object-fit:cover"><span style="font-size:8px;font-weight:900;color:#f7931a;letter-spacing:2px;margin-top:2px">OPNET</span></div>
+          <div class="cf ct"><img src="https://unavatar.io/twitter/Motoswap" width="52" height="52" style="border-radius:50%;object-fit:cover"><span style="font-size:8px;font-weight:900;color:#10b981;letter-spacing:2px;margin-top:2px">MOTOSWAP</span></div>
+        </div></div>
         <div class="cpicks" style="width:200px">
-          <div class="cp on" id="cph" onclick="cfp(0,this)"><span style="font-size:20px">₿</span><br>HEADS</div>
-          <div class="cp" id="cpt" onclick="cfp(1,this)"><span style="font-size:20px">🌙</span><br>TAILS</div>
+          <div class="cp on" id="cph" onclick="cfp(0,this)"><img src="https://unavatar.io/twitter/opnetbtc" width="26" height="26" style="border-radius:50%"><br>OPNET</div>
+          <div class="cp" id="cpt" onclick="cfp(1,this)"><img src="https://unavatar.io/twitter/Motoswap" width="26" height="26" style="border-radius:50%"><br>MOTOSWAP</div>
         </div>
       </div>
       <div class="ctrl"><div class="cg"><div class="cl">Bet (sat)</div><input class="ci" type="number" id="cfa" value="10000" min="1000" oninput="uw('cf')"></div><div class="cg"><div class="cl">Win</div><input class="ci wv" readonly id="cfw" value="19,500 sat"></div></div>
       <div class="qs"><div class="qb" onclick="sa2('cfa',1000);uw('cf')">1k</div><div class="qb" onclick="sa2('cfa',5000);uw('cf')">5k</div><div class="qb" onclick="sa2('cfa',10000);uw('cf')">10k</div><div class="qb" onclick="sa2('cfa',50000);uw('cf')">50k</div><div class="qb" onclick="sa2('cfa',Math.floor(BAL/2));uw('cf')">½</div><div class="qb" onclick="sa2('cfa',BAL);uw('cf')">MAX</div></div>
       <div class="ptbl"><div class="ph">PAYOUT</div><div class="pr"><span>✅ Correct pick</span><span>1.95×</span></div><div class="pr"><span>❌ Wrong pick</span><span>0×</span></div></div>
-      <button class="bplay" id="cfbtn" onclick="playCF()">🪙 FLIP COIN</button>
+      <button class="bplay" id="cfbtn" onclick="playCF()"><span style="display:flex;align-items:center;gap:8px;justify-content:center"><img src="https://unavatar.io/twitter/opnetbtc" width="22" height="22" style="border-radius:50%"> Flip — Bet on OpNet</span></button>
       <div class="res" id="cfr"></div>
     </div>
 
@@ -688,7 +772,7 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
   </div>
 </div>
 
-<!-- SPORTS PAGE -->
+<!-- SPORTS PAGE — matches + inline bet slip -->
 <div id="pg-sports" class="pg">
   <div class="sptb">
     <div class="ldot"></div><span style="font-weight:700;font-size:13px">Live Sports</span>
@@ -706,51 +790,75 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
     <button class="lgbtn" id="lb-ita.1" onclick="setLeague('ita.1')">🇮🇹 Serie A</button>
     <button class="lgbtn" id="lb-fra.1" onclick="setLeague('fra.1')">🇫🇷 Ligue 1</button>
   </div>
-  <div class="evl" id="evl"><div class="spload">⚡ Loading matches…</div></div>
-</div>
+  <div class="spbody">
+    <!-- Matches list -->
+    <div class="spmatches" id="evl"><div class="spload">⚡ Loading matches…</div></div>
+    <!-- Inline Bet Slip -->
+    <div class="spinslip" id="slip">
+      <div class="slhd"><div class="sltt">🎯 Bet Slip</div><div class="slcnt" id="scnt">0</div></div>
+      <div id="slbody" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+        <div class="slem" id="slem">
+          <div style="font-size:32px;opacity:.2">🎯</div>
+          <div style="font-weight:700;font-size:13px;margin-bottom:6px">No selections yet</div>
+          <div style="font-size:11px;color:var(--mut);line-height:1.6;text-align:center">Click any odds button<br><b style="color:var(--txt)">1 · X · 2</b> to add a bet</div>
+        </div>
+        <div style="display:none;flex:1;overflow-y:auto" id="slitems"></div>
+      </div>
+      <div id="slft" style="display:none" class="slft">
+        <!-- Bet type label -->
+        <div id="sl-type" class="sl-type">Single Bet</div>
+        <!-- Total combined odds -->
+        <div class="sl-odds-row">
+          <span style="color:var(--mut);font-size:11px">Total odds</span>
+          <span id="sl-totodds" class="sl-totodds">1.00×</span>
+        </div>
+        <!-- Stake input -->
+        <div class="slsr"><label style="color:var(--mut);font-weight:600;font-size:11px">Stake (sat)</label><input class="slin" type="number" id="slstk" value="10000" min="1000" oninput="uslip()"></div>
+        <div class="slqs"><div class="sqb" onclick="sss(5000)">5k</div><div class="sqb" onclick="sss(10000)">10k</div><div class="sqb" onclick="sss(50000)">50k</div><div class="sqb" onclick="sss(100000)">100k</div></div>
+        <!-- Payout breakdown -->
+        <div class="sl-summary">
+          <div class="sl-srow"><span>Stake</span><span id="sl-stk-show">10,000 sat</span></div>
+          <div class="sl-srow"><span>To win</span><span id="sl-towin" class="sl-towin-val">+0 sat</span></div>
+          <div class="sl-srow sl-srow-total"><span>Returns</span><span id="sl-returns">10,000 sat</span></div>
+        </div>
+        <button class="slpl" onclick="placeBet()">🎯 Place Bet</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- MY BETS PAGE -->
 <div id="pg-mybets" class="pg">
-  <div class="sptb" style="border-bottom:1px solid var(--bdr)">
-    <span style="font-weight:700;font-size:14px">📋 My Bets</span>
+  <div class="sptb" style="border-bottom:1px solid var(--bdr);flex-shrink:0">
+    <span style="font-weight:700;font-size:14px">🏆 My Bets</span>
     <div style="margin-left:auto;display:flex;gap:5px">
       <button class="mbtab on" id="mbt-open" onclick="setMyBetsTab('open')">Open</button>
       <button class="mbtab" id="mbt-settled" onclick="setMyBetsTab('settled')">Settled</button>
       <button class="mbtab" id="mbt-all" onclick="setMyBetsTab('all')">All</button>
     </div>
   </div>
-  <div id="mblist" style="padding:10px;display:flex;flex-direction:column;gap:8px"></div>
-</div>
-</div>
-
-<!-- BET SLIP -->
-<div id="slip">
-  <div class="slhd"><div class="sltt">📋 Bet Slip</div><div class="slcnt" id="scnt">0</div></div>
-  <div id="slbody" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
-    <div class="slem" id="slem">
-      <div style="font-size:36px;opacity:.25">🎯</div>
-      <div style="font-weight:700;font-size:13px;margin-bottom:4px">No selections yet</div>
-      <div style="font-size:11px;line-height:1.5;text-align:center">Go to <b>Sports</b> and click any odds button<br>(1 · X · 2) to add a bet</div>
+  <div id="mb-statsbar" style="display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--bdr);flex-shrink:0">
+    <div class="mbstat"><div class="mbstat-val" id="mbs-total">0</div><div class="mbstat-lbl">Total Bets</div></div>
+    <div class="mbstat"><div class="mbstat-val" id="mbs-staked">0</div><div class="mbstat-lbl">Total Staked</div></div>
+    <div class="mbstat mbstat-won"><div class="mbstat-val" id="mbs-won">0</div><div class="mbstat-lbl">Total Won</div></div>
+    <div class="mbstat" id="mbs-net-wrap"><div class="mbstat-val" id="mbs-net">0</div><div class="mbstat-lbl">Net Profit</div></div>
+  </div>
+  <div class="mb-watchbar" id="mb-watchbar" style="display:none">
+    <div class="mwlive" id="mb-watchlbl"><div class="mwdot"></div><span id="mb-watchcount">Watching 0 bets</span></div>
+    <div class="mwctd">
+      <span id="mb-cntlbl" style="font-size:11px;color:var(--mut)">Next update in <b id="mb-countdown">60</b>s</span>
+      <button class="mwrbtn" onclick="mbManualRefresh()">⟳ Refresh now</button>
     </div>
-    <div style="display:none;flex:1;overflow-y:auto" id="slitems"></div>
   </div>
-  <div id="slft" style="display:none" class="slft">
-    <div class="slsr"><label style="color:var(--mut);font-weight:600;font-size:12px">Stake (sat)</label><input class="slin" type="number" id="slstk" value="10000" min="1000" oninput="uslip()"></div>
-    <div class="slqs"><div class="sqb" onclick="sss(5000)">5k</div><div class="sqb" onclick="sss(10000)">10k</div><div class="sqb" onclick="sss(50000)">50k</div><div class="sqb" onclick="sss(100000)">100k</div></div>
-    <div class="slpay" id="slpay"><span>Payout</span><span>+0.00000 BTC</span></div>
-    <button class="slpl" onclick="placeBet()">🎯 Place Bet</button>
-  </div>
+  <div id="mblist" style="flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px"></div>
 </div>
 </div>
 
-<!-- MOBILE BACKDROP + BOTTOM NAV -->
-<div id="slipovl" onclick="toggleMobSlip()"></div>
+<!-- MOBILE BOTTOM NAV -->
 <div id="mobnav">
   <button class="mnb on" id="mn-casino" onclick="mobPg('casino')"><span class="mnico">🎰</span><span>Casino</span></button>
   <button class="mnb" id="mn-sports" onclick="mobPg('sports')"><span class="mnico">⚽</span><span>Sports</span></button>
   <button class="mnb" id="mn-mybets" onclick="mobPg('mybets');renderMyBets()"><span class="mnico">🏆</span><span>My Bets</span></button>
-  <button class="mnb" id="mn-slip" onclick="toggleMobSlip()"><span class="mnico">🎯</span><span id="mn-cnt" class="mnbadge">0</span></button>
 </div>
 
 <!-- WIN BANNER -->
