@@ -137,13 +137,16 @@ export function nextAddressIndex(merchantId) {
 
 // ─── Sessions ─────────────────────────────────────────────────────────────────
 
-export function createSession({ merchantId, amountEur, amountBtc, btcAddress, addressIndex, description, method, metadata, expiryMinutes = 30 }) {
+export function createSession({ merchantId, amountEur, amountBtc, currency = 'EUR', amountLocal, btcAddress, addressIndex, description, method, metadata, expiryMinutes = 30 }) {
   const id  = uuid();
   const now = Date.now();
+  // Add currency columns if they don't exist yet (safe migration)
+  try { db.exec('ALTER TABLE sessions ADD COLUMN currency TEXT NOT NULL DEFAULT \'EUR\''); } catch {}
+  try { db.exec('ALTER TABLE sessions ADD COLUMN amount_local REAL'); } catch {}
   db.prepare(`
-    INSERT INTO sessions (id, merchant_id, amount_eur, amount_btc, btc_address, address_index, description, method, status, expires_at, created_at, metadata)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)
-  `).run(id, merchantId, amountEur, amountBtc, btcAddress, addressIndex ?? null, description ?? null, method ?? 'bitcoin', now + expiryMinutes * 60_000, now, metadata ? JSON.stringify(metadata) : null);
+    INSERT INTO sessions (id, merchant_id, amount_eur, amount_btc, currency, amount_local, btc_address, address_index, description, method, status, expires_at, created_at, metadata)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)
+  `).run(id, merchantId, amountEur, amountBtc, currency.toUpperCase(), amountLocal ?? amountEur, btcAddress, addressIndex ?? null, description ?? null, method ?? 'bitcoin', now + expiryMinutes * 60_000, now, metadata ? JSON.stringify(metadata) : null);
   return getSession(id);
 }
 

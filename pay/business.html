@@ -319,8 +319,8 @@
   <div class="trust-item"><span class="trust-icon">⚡</span><span class="trust-text"><strong>15s</strong> detection time</span></div>
   <div class="trust-item"><span class="trust-icon">🔌</span><span class="trust-text"><strong>1 script tag</strong> to embed</span></div>
   <div class="trust-item"><span class="trust-icon">🔒</span><span class="trust-text"><strong>HMAC-signed</strong> webhooks</span></div>
-  <div class="trust-item"><span class="trust-icon">🌍</span><span class="trust-text"><strong>No KYC</strong> — borderless</span></div>
-  <div class="trust-item"><span class="trust-icon">💸</span><span class="trust-text"><strong>0% fees</strong> from OpPay</span></div>
+  <div class="trust-item"><span class="trust-icon">🌍</span><span class="trust-text"><strong>7 currencies</strong> — EUR, USD, GBP &amp; more</span></div>
+  <div class="trust-item"><span class="trust-icon">💸</span><span class="trust-text"><strong>0% fees</strong> — no KYC, borderless</span></div>
 </div>
 
 <!-- HOW IT WORKS -->
@@ -600,7 +600,8 @@ app.post(<span class="cv">'/api/create-session'</span>, <span class="ck">async</
       <span class="cv">'Content-Type'</span>:  <span class="cv">'application/json'</span>,
     },
     body: JSON.stringify({
-      amount_eur:  <span class="cn">49.99</span>,
+      amount:      <span class="cn">49.99</span>,
+      currency:    <span class="cv">'USD'</span>, <span class="cm">// EUR, USD, GBP, JPY, CHF, AUD, CAD</span>
       description: <span class="cv">'Order #1234'</span>,
       metadata:    { order_id: req.body.order_id },
     }),
@@ -611,7 +612,7 @@ app.post(<span class="cv">'/api/create-session'</span>, <span class="ck">async</
 
 <span class="cm">// Webhook handler — fires when payment is confirmed</span>
 app.post(<span class="cv">'/api/oppay-webhook'</span>, (req, res) => {
-  <span class="ck">const</span> { event, session_id, amount_eur, metadata } = req.body;
+  <span class="ck">const</span> { event, session_id, amount, currency, amount_eur, metadata } = req.body;
   <span class="ck">if</span> (event === <span class="cv">'payment.confirmed'</span>) {
     markOrderAsPaid(metadata.order_id); <span class="cm">// your logic</span>
   }
@@ -664,7 +665,8 @@ $response = <span class="cf">file_get_contents</span>(<span class="cv">'http://o
       <span class="cv">'Content-Type: application/json'</span>,
     ]),
     <span class="cv">'content'</span> => json_encode([
-      <span class="cv">'amount_eur'</span>  => 49.99,
+      <span class="cv">'amount'</span>      => 49.99,
+      <span class="cv">'currency'</span>    => <span class="cv">'EUR'</span>, <span class="cm">// EUR, USD, GBP, JPY, CHF, AUD, CAD</span>
       <span class="cv">'description'</span> => <span class="cv">'Order #1234'</span>,
       <span class="cv">'metadata'</span>    => [<span class="cv">'order_id'</span> => $order_id],
     ]),
@@ -846,7 +848,7 @@ $session = json_decode($response, <span class="ck">true</span>);
       </details>
       <details class="faq-item">
         <summary>What currencies can I price products in? <span class="faq-icon">+</span></summary>
-        <div class="faq-body">Currently EUR. The BTC equivalent is calculated live using a CoinGecko price feed with a 1-minute cache. Multi-currency support (USD, GBP, etc.) is on the roadmap.</div>
+        <div class="faq-body">EUR, USD, GBP, JPY, CHF, AUD, and CAD — all supported. Pass <code>currency: 'USD'</code> when creating a session and the BTC equivalent is calculated live using CoinGecko with a 1-minute cache. The widget automatically formats prices in the customer's chosen currency.</div>
       </details>
     </div>
   </div>

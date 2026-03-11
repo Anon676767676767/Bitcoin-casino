@@ -324,6 +324,11 @@
     .footer-bottom { max-width: 1120px; margin: 40px auto 0; padding-top: 24px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; font-size: 12px; color: #252840; }
     .footer-bottom a { color: var(--orange); text-decoration: none; }
 
+    /* ─── CURRENCY SELECTOR ─────────────────────────────────────────────── */
+    .cur-btn { padding: 6px 13px; border-radius: 20px; border: 1px solid var(--border); background: var(--card); color: var(--muted); font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+    .cur-btn:hover { border-color: rgba(247,147,26,0.4); color: white; }
+    .cur-btn.cur-active { background: rgba(247,147,26,0.12); border-color: rgba(247,147,26,0.35); color: var(--orange); }
+
     /* ─── HAMBURGER + MOBILE NAV ─────────────────────────────────────────── */
     .nav-ham { display: none; flex-direction: column; justify-content: space-between; width: 30px; height: 22px; background: none; border: none; cursor: pointer; padding: 0; z-index: 1100; }
     .nav-ham span { display: block; width: 100%; height: 2px; background: var(--text); border-radius: 2px; transition: all 0.25s ease; }
@@ -400,8 +405,8 @@
     </div>
     <div style="width:1px;background:var(--border)"></div>
     <div>
-      <div class="hero-stat-num">2 methods</div>
-      <div class="hero-stat-label">OPNet Wallet · OpCredit</div>
+      <div class="hero-stat-num">3 methods</div>
+      <div class="hero-stat-label">OPNet · BTC · OpCredit</div>
     </div>
     <div style="width:1px;background:var(--border)"></div>
     <div>
@@ -476,6 +481,20 @@
     <div class="sec-title reveal reveal-delay-1">Try it now</div>
     <div class="sec-sub reveal reveal-delay-2">Click any Pay button below to go through the full Bitcoin payment flow.</div>
 
+    <!-- Currency selector -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:28px;flex-wrap:wrap;" class="reveal">
+      <span style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;">Currency:</span>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="cur-btn cur-active" data-cur="EUR" onclick="setCurrency('EUR')">🇪🇺 EUR</button>
+        <button class="cur-btn" data-cur="USD" onclick="setCurrency('USD')">🇺🇸 USD</button>
+        <button class="cur-btn" data-cur="GBP" onclick="setCurrency('GBP')">🇬🇧 GBP</button>
+        <button class="cur-btn" data-cur="JPY" onclick="setCurrency('JPY')">🇯🇵 JPY</button>
+        <button class="cur-btn" data-cur="CHF" onclick="setCurrency('CHF')">🇨🇭 CHF</button>
+        <button class="cur-btn" data-cur="AUD" onclick="setCurrency('AUD')">🇦🇺 AUD</button>
+        <button class="cur-btn" data-cur="CAD" onclick="setCurrency('CAD')">🇨🇦 CAD</button>
+      </div>
+    </div>
+
     <div class="shop-grid">
       <div class="product reveal">
         <div class="product-img" style="background:linear-gradient(135deg,#0d1020,#1a1030);">🎧</div>
@@ -484,7 +503,7 @@
           <div class="product-desc">Premium noise-cancelling, 30h battery, Hi-Fi audio.</div>
           <div class="product-foot">
             <div>
-              <div class="product-price">€ 89.99</div>
+              <div class="product-price" data-eur="89.99">€ 89.99</div>
               <div class="product-btc">≈ 0.00089 BTC</div>
             </div>
             <button class="oppay-btn" onclick="pay(89.99, 0.00089, 'TechStore NL', 'Wireless Headphones #4821')">
@@ -501,7 +520,7 @@
           <div class="product-desc">Lightweight, size 42, perfect for daily training.</div>
           <div class="product-foot">
             <div>
-              <div class="product-price">€ 129.95</div>
+              <div class="product-price" data-eur="129.95">€ 129.95</div>
               <div class="product-btc">≈ 0.00129 BTC</div>
             </div>
             <button class="oppay-btn" onclick="pay(129.95, 0.00129, 'SportShop', 'Running Shoes size 42 #7203')">
@@ -518,7 +537,7 @@
           <div class="product-desc">Premium plan — unlimited access, priority support.</div>
           <div class="product-foot">
             <div>
-              <div class="product-price">€ 19.00</div>
+              <div class="product-price" data-eur="19.00">€ 19.00</div>
               <div class="product-btc">≈ 0.000188 BTC</div>
             </div>
             <button class="oppay-btn" onclick="pay(19.00, 0.000188, 'GreenApp', 'Premium Monthly April 2026')">
@@ -587,16 +606,22 @@
   ₿ Pay with Bitcoin
 <span class="ct">&lt;/button&gt;</span></div>
       <div class="cblock" id="tab-js"><span class="co">OpPay</span>.<span class="cf">open</span>({
-  <span class="ca">amount</span>:      <span class="cn">49.99</span>,          <span class="cm">// EUR amount</span>
+  <span class="ca">amount</span>:      <span class="cn">49.99</span>,          <span class="cm">// amount in chosen currency</span>
   <span class="ca">btc</span>:         <span class="cn">0.000495</span>,       <span class="cm">// BTC equivalent</span>
+  <span class="ca">currency</span>:    <span class="cv">'USD'</span>,           <span class="cm">// EUR | USD | GBP | JPY | CHF | AUD | CAD</span>
   <span class="ca">merchant</span>:    <span class="cv">'My Shop'</span>,
   <span class="ca">description</span>: <span class="cv">'Order #1234'</span>,
 
   <span class="ca">onSuccess</span>: (d) =&gt; {
     console.<span class="cf">log</span>(<span class="cv">'Paid!'</span>, d.<span class="ca">txId</span>, d.<span class="ca">method</span>);
-    <span class="cm">// d.method = 'opnet' | 'opcredit'</span>
+    <span class="cm">// d.method = 'opnet' | 'btcaddr' | 'opcredit'</span>
+    <span class="cm">// d.escrowId — set when method = 'opcredit'</span>
   },
-  <span class="ca">onFailure</span>: (d) =&gt; console.<span class="cf">log</span>(<span class="cv">'Failed:'</span>, d.<span class="ca">reason</span>),
+  <span class="ca">onFailure</span>: (d) =&gt; {
+    <span class="cm">// d.reason: 'rejected' | 'escrow_failed' | 'returned' | 'cancelled'</span>
+    <span class="cm">// 'returned' = customer clicked Return Order (BTC refunded)</span>
+    console.<span class="cf">log</span>(<span class="cv">'Failed:'</span>, d.<span class="ca">reason</span>);
+  },
   <span class="ca">onCancel</span>:  ()  =&gt; console.<span class="cf">log</span>(<span class="cv">'Cancelled'</span>),
 });</div>
       <div class="cblock" id="tab-react"><span class="ck">import</span> { <span class="co">useCallback</span> } <span class="ck">from</span> <span class="cv">'react'</span>;
@@ -657,14 +682,25 @@
 <script>
 (function(g){'use strict';
 let overlay=null,opts={};
-function txId(){return Math.random().toString(36).slice(2,10).toUpperCase()+'...'+Math.random().toString(36).slice(2,6).toUpperCase();}
-function fmtEur(n){return new Intl.NumberFormat('nl-NL',{style:'currency',currency:'EUR'}).format(n);}
+// Supported currencies: code → { locale, label, rate vs EUR }
+const CURRENCIES={
+  EUR:{locale:'nl-NL',label:'EUR',symbol:'€',rate:1},
+  USD:{locale:'en-US',label:'USD',symbol:'$',rate:1.08},
+  GBP:{locale:'en-GB',label:'GBP',symbol:'£',rate:0.86},
+  JPY:{locale:'ja-JP',label:'JPY',symbol:'¥',rate:162},
+  CHF:{locale:'de-CH',label:'CHF',symbol:'Fr',rate:0.98},
+  AUD:{locale:'en-AU',label:'AUD',symbol:'A$',rate:1.65},
+  CAD:{locale:'en-CA',label:'CAD',symbol:'C$',rate:1.47},
+};
+function fmtAmount(n,cur){const c=CURRENCIES[cur]||CURRENCIES.EUR;return new Intl.NumberFormat(c.locale,{style:'currency',currency:c.label}).format(n);}
 function fmtBtc(n){return n.toFixed(8).replace(/\.?0+$/,'')+' BTC';}
 function qrHtml(){const pat=[[1,1,1,1,1,1,1,0,1,0],[1,0,0,0,0,0,1,0,0,1],[1,0,1,1,1,0,1,0,1,0],[1,0,1,1,1,0,1,0,0,1],[1,0,1,1,1,0,1,0,1,1],[1,0,0,0,0,0,1,0,1,0],[1,1,1,1,1,1,1,0,0,1],[0,0,0,0,0,0,0,0,1,0],[1,0,1,1,0,1,1,0,1,1],[0,1,0,0,1,1,0,1,0,1]];return pat.flat().map(c=>`<div class="op-qr-cell${c?' b':''}"></div>`).join('');}
 
 function modal(o){
-  const ef=fmtEur(o.amount),eb=fmtBtc(o.btc||0);
+  const cur=o.currency||'EUR';
+  const ef=fmtAmount(o.amount,cur),eb=fmtBtc(o.btc||0);
   const addr='bc1q'+Math.random().toString(36).slice(2,12)+'opnet'+Math.random().toString(36).slice(2,8);
+  const shortAddr=addr.slice(0,12)+'…'+addr.slice(-6);
   return `<div class="oppay-overlay" id="op-ov">
 <div class="oppay-modal">
   <div class="op-header">
@@ -688,12 +724,17 @@ function modal(o){
         <button class="op-method" id="m-opnet" onclick="selMethod('opnet')" type="button">
           <div class="op-method-icon" style="background:rgba(247,147,26,0.1);">🔗</div>
           <div class="op-method-info"><div class="op-method-name">OPNet Wallet</div><div class="op-method-desc">Connect and sign with your OPNet wallet</div></div>
-          <div class="op-method-badge">RECOMMENDED</div>
+          <div class="op-method-badge">FASTEST</div>
+        </button>
+        <button class="op-method" id="m-btcaddr" onclick="selMethod('btcaddr')" type="button">
+          <div class="op-method-icon" style="background:rgba(247,147,26,0.08);">₿</div>
+          <div class="op-method-info"><div class="op-method-name">Bitcoin Address</div><div class="op-method-desc">Scan QR or copy address — any Bitcoin wallet</div></div>
+          <div class="op-method-badge" style="background:rgba(6,182,212,0.12);color:#06b6d4;border-color:rgba(6,182,212,0.25);">UNIVERSAL</div>
         </button>
         <button class="op-method opcredit" id="m-opcredit" onclick="selMethod('opcredit')" type="button">
           <div class="op-method-icon purple">🔒</div>
-          <div class="op-method-info"><div class="op-method-name" style="color:#a78bfa;">OpCredit — Pay Later</div><div class="op-method-desc">Lock BTC in escrow · Confirm after delivery · 14 days</div></div>
-          <div class="opcredit-badge">NEW</div>
+          <div class="op-method-info"><div class="op-method-name" style="color:#a78bfa;">OpCredit — Pay Later</div><div class="op-method-desc">Lock BTC in escrow · Confirm after delivery · Refundable</div></div>
+          <div class="opcredit-badge">BUYER PROTECTED</div>
         </button>
       </div>
       <button class="op-btn op-btn-orange" id="op-continue" disabled onclick="goStep1()">Continue →</button>
@@ -716,14 +757,32 @@ function modal(o){
         <button class="op-btn op-btn-ghost" onclick="setStep(0)">← Back</button>
       </div>
     </div>
+    <div class="op-step" id="os1-btcaddr">
+      <div class="op-step-title">Send Bitcoin to this address</div>
+      <div class="op-step-sub">Open any Bitcoin wallet, scan the QR or copy the address</div>
+      <div class="op-qr-wrap"><div class="op-qr">${qrHtml()}</div></div>
+      <div class="op-wallet-addr" style="margin-bottom:10px;">
+        <div class="op-wallet-addr-label">Bitcoin address</div>
+        <div class="op-wallet-addr-value" id="btc-addr-display" style="cursor:pointer;" title="Click to copy">${addr}</div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:14px;">
+        <button onclick="copyBtcAddr('${addr}')" style="flex:1;background:rgba(247,147,26,0.1);border:1px solid rgba(247,147,26,0.25);color:var(--orange);border-radius:10px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s;" id="copy-addr-btn">📋 Copy Address</button>
+        <button onclick="openWalletUri('bitcoin:${addr}?amount=${o.btc||0}&label=${encodeURIComponent(o.merchant||'OpPay')}')" style="flex:1;background:rgba(247,147,26,0.1);border:1px solid rgba(247,147,26,0.25);color:var(--orange);border-radius:10px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s;">🔗 Open Wallet</button>
+      </div>
+      <div style="background:rgba(247,147,26,0.05);border:1px solid rgba(247,147,26,0.15);border-radius:10px;padding:10px 13px;margin-bottom:14px;font-size:11px;color:#6b7280;line-height:1.6;">
+        ⚠️ Send exactly <strong style="color:var(--orange);">₿ ${o.btc||0}</strong> to this address. Sending a different amount may delay processing.
+      </div>
+      <button class="op-btn op-btn-orange" onclick="goConfirm()">I've sent the BTC →</button>
+      <button class="op-btn op-btn-ghost" onclick="setStep(0)">← Back</button>
+    </div>
     <div class="op-step" id="os1-opcredit">
       <div class="op-step-title" style="color:#a78bfa;">OpCredit — Pay Later</div>
-      <div class="op-step-sub">Bitcoin escrow · No identity needed · 100% anonymous</div>
+      <div class="op-step-sub">Bitcoin escrow · No identity needed · 100% refundable</div>
       <div class="escrow-timeline">
         <div class="escrow-tl-item"><div class="escrow-tl-dot" style="background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.3);">🔒</div><div class="escrow-tl-content"><div class="escrow-tl-title">Now — BTC locked in escrow</div><div class="escrow-tl-sub">Your ${eb} is locked in an OPNet smart contract. The merchant cannot touch it yet.</div></div></div>
         <div class="escrow-tl-item"><div class="escrow-tl-dot" style="background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);">📦</div><div class="escrow-tl-content"><div class="escrow-tl-title">Merchant ships your order</div><div class="escrow-tl-sub">The merchant sees the escrow is locked and ships your order without receiving payment yet.</div></div></div>
-        <div class="escrow-tl-item"><div class="escrow-tl-dot" style="background:rgba(0,200,83,0.15);border:1px solid rgba(0,200,83,0.3);">✓</div><div class="escrow-tl-content"><div class="escrow-tl-title">You confirm receipt → BTC released</div><div class="escrow-tl-sub">Click "Confirm Received" after delivery and BTC goes to merchant instantly.</div></div></div>
-        <div class="escrow-tl-item"><div class="escrow-tl-dot" style="background:rgba(247,147,26,0.15);border:1px solid rgba(247,147,26,0.3);">⏳</div><div class="escrow-tl-content"><div class="escrow-tl-title">Auto-release after 14 days</div><div class="escrow-tl-sub">If you do nothing, BTC auto-releases to merchant after 14 days.</div></div></div>
+        <div class="escrow-tl-item"><div class="escrow-tl-dot" style="background:rgba(0,200,83,0.15);border:1px solid rgba(0,200,83,0.3);">✓</div><div class="escrow-tl-content"><div class="escrow-tl-title">Confirm receipt → BTC released to merchant</div><div class="escrow-tl-sub">Click "Confirm Received" after delivery and BTC goes to merchant instantly.</div></div></div>
+        <div class="escrow-tl-item"><div class="escrow-tl-dot" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);">↩</div><div class="escrow-tl-content"><div class="escrow-tl-title">Return order → BTC refunded to you</div><div class="escrow-tl-sub">If you want to return, dispute the escrow and BTC comes back to your wallet.</div></div></div>
       </div>
       <div style="background:rgba(0,0,0,0.3);border:1px solid #1e2235;border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:12px;color:#4a5568;line-height:1.6;">🕵️ <strong style="color:#6b7280;">Fully anonymous.</strong> No name, email, or address required.</div>
       <button class="op-btn op-btn-purple" onclick="goConfirm()">🔒 Lock BTC in Escrow →</button>
@@ -772,12 +831,19 @@ g.selMethod=function(m){
   else{btn.style.background='';btn.style.boxShadow='';}
 };
 
+g.copyBtcAddr=function(addr){
+  navigator.clipboard.writeText(addr).catch(()=>{});
+  const btn=document.getElementById('copy-addr-btn');
+  if(btn){btn.textContent='✓ Copied!';btn.style.color='#00c853';setTimeout(()=>{btn.textContent='📋 Copy Address';btn.style.color='';},2000);}
+};
+g.openWalletUri=function(uri){window.location.href=uri;};
+
 g.setStep=function(n){
-  ['os0','os1-opnet','os1-opcredit','os2','os3','os4'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('op-active');});
+  ['os0','os1-opnet','os1-btcaddr','os1-opcredit','os2','os3','os4'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('op-active');});
   const dots=document.querySelectorAll('.op-dot');
   dots.forEach((d,i)=>d.classList.toggle('active',i===Math.min(n,3)));
   if(n===0)document.getElementById('os0').classList.add('op-active');
-  else if(n===1){const map={opnet:'os1-opnet',opcredit:'os1-opcredit'};document.getElementById(map[curMethod]||'os1-opnet').classList.add('op-active');}
+  else if(n===1){const map={opnet:'os1-opnet',btcaddr:'os1-btcaddr',opcredit:'os1-opcredit'};document.getElementById(map[curMethod]||'os1-opnet').classList.add('op-active');}
   else if(n===2)document.getElementById('os2').classList.add('op-active');
   else if(n===3)document.getElementById('os3').classList.add('op-active');
   else if(n===4)document.getElementById('os4').classList.add('op-active');
@@ -787,24 +853,48 @@ g.goStep1=function(){setStep(1);};
 
 g.goConfirm=function(){
   const isCredit=curMethod==='opcredit';
-  document.getElementById('confirm-title').textContent=isCredit?'Lock BTC in Escrow':'Confirm payment';
-  document.getElementById('confirm-sub').textContent=isCredit?'Your BTC will be locked — merchant ships first':'Review your transaction before authorizing';
-  document.getElementById('confirm-method').textContent=curMethod==='opnet'?'🔗 OPNet Wallet':'🔒 OpCredit Escrow';
+  const isBtc=curMethod==='btcaddr';
+  document.getElementById('confirm-title').textContent=isCredit?'Lock BTC in Escrow':isBtc?'Confirm BTC transfer':'Confirm payment';
+  document.getElementById('confirm-sub').textContent=isCredit?'Your BTC will be locked — merchant ships first':isBtc?'Confirming you have sent the Bitcoin':'Review your transaction before authorizing';
+  document.getElementById('confirm-method').textContent=isCredit?'🔒 OpCredit Escrow':isBtc?'₿ Bitcoin Address':'🔗 OPNet Wallet';
   const extraRow=document.getElementById('confirm-extra-row');
-  if(isCredit){extraRow.style.display='';document.getElementById('confirm-extra-label').textContent='Escrow duration';document.getElementById('confirm-extra-val').textContent='14 days auto-release';document.getElementById('confirm-authorize-btn').textContent='🔒 Lock in OPNet Escrow';document.getElementById('confirm-authorize-btn').style.background='linear-gradient(135deg,#7c3aed,#6d28d9)';}
-  else{extraRow.style.display='none';document.getElementById('confirm-authorize-btn').textContent='🔐 Authorize & Send';document.getElementById('confirm-authorize-btn').style.background='';}
+  if(isCredit){
+    extraRow.style.display='';
+    document.getElementById('confirm-extra-label').textContent='Escrow duration';
+    document.getElementById('confirm-extra-val').textContent='14 days auto-release';
+    document.getElementById('confirm-authorize-btn').textContent='🔒 Lock in OPNet Escrow';
+    document.getElementById('confirm-authorize-btn').style.background='linear-gradient(135deg,#7c3aed,#6d28d9)';
+  } else if(isBtc){
+    extraRow.style.display='';
+    document.getElementById('confirm-extra-label').textContent='Confirmation';
+    document.getElementById('confirm-extra-val').textContent='1–3 Bitcoin blocks';
+    document.getElementById('confirm-authorize-btn').textContent='✓ I sent the BTC — monitor now';
+    document.getElementById('confirm-authorize-btn').style.background='';
+  } else {
+    extraRow.style.display='none';
+    document.getElementById('confirm-authorize-btn').textContent='🔐 Authorize & Send';
+    document.getElementById('confirm-authorize-btn').style.background='';
+  }
   setStep(2);
 };
 
 g.goProcess=function(){
   setStep(3);
   const isCredit=curMethod==='opcredit';
+  const isBtc=curMethod==='btcaddr';
   if(isCredit){
     document.getElementById('proc-ring').style.borderTopColor='#7c3aed';
     document.getElementById('proc-icon').textContent='🔒';
     document.getElementById('proc-title').textContent='Locking BTC in escrow...';
     document.getElementById('proc-sub').textContent='OPNet smart contract deploying';
     const steps=[{id:'ps1',text:'Signing escrow transaction'},{id:'ps2',text:'Deploying OPNet escrow contract'},{id:'ps3',text:'BTC locked — awaiting confirmation'}];
+    steps.forEach(s=>{const el=document.getElementById(s.id);if(el)el.lastChild.textContent=s.text;});
+  } else if(isBtc){
+    document.getElementById('proc-ring').style.borderTopColor='#f7931a';
+    document.getElementById('proc-icon').textContent='₿';
+    document.getElementById('proc-title').textContent='Monitoring Bitcoin network...';
+    document.getElementById('proc-sub').textContent='Scanning for your transaction';
+    const steps=[{id:'ps1',text:'Scanning for incoming transaction'},{id:'ps2',text:'Transaction detected in mempool'},{id:'ps3',text:'Waiting for block confirmation'}];
     steps.forEach(s=>{const el=document.getElementById(s.id);if(el)el.lastChild.textContent=s.text;});
   }
   const procSteps=[{id:'ps1',delay:700},{id:'ps2',delay:1700},{id:'ps3',delay:2900}];
@@ -819,7 +909,7 @@ g.goProcess=function(){
     const ok=Math.random()>0.1;
     const tx='0x'+Array.from({length:16},()=>Math.floor(Math.random()*16).toString(16)).join('')+'...';
     const escrowId=isCredit?'ESC-'+Math.random().toString(36).slice(2,10).toUpperCase():null;
-    try{const txs=JSON.parse(localStorage.getItem('oppay_transactions')||'[]');txs.push({txId:tx,amount:opts.amount,btc:opts.btc||0,description:opts.description||'Payment',method:curMethod,status:isCredit&&ok?'escrowed':ok?'confirmed':'failed',escrowId,escrowRelease:isCredit&&ok?Date.now()+(14*24*60*60*1000):null,time:Date.now(),_new:true});localStorage.setItem('oppay_transactions',JSON.stringify(txs));}catch(e){}
+    try{const txs=JSON.parse(localStorage.getItem('oppay_transactions')||'[]');txs.push({txId:tx,amount:opts.amount,currency:opts.currency||'EUR',btc:opts.btc||0,description:opts.description||'Payment',method:curMethod,status:isCredit&&ok?'escrowed':ok?'confirmed':'failed',escrowId,escrowRelease:isCredit&&ok?Date.now()+(14*24*60*60*1000):null,time:Date.now(),_new:true});localStorage.setItem('oppay_transactions',JSON.stringify(txs));}catch(e){}
     isCredit?showEscrowResult(ok,tx,escrowId):showResult(ok,tx);
   },4000);
 };
@@ -829,7 +919,7 @@ function showResult(ok,tx){
   if(ok){el.innerHTML=`<div class="op-result"><div class="op-result-ring ok">✓</div><div class="op-result-title ok">Payment Confirmed!</div><div class="op-result-sub">Your Bitcoin transaction was broadcast and accepted.</div><div class="op-conf-badge">✓ &nbsp;1 OPNet confirmation</div><br/><div class="op-txid">${tx}</div><button class="op-btn op-btn-green" id="r-done">← Back to shop</button></div>`;}
   else{el.innerHTML=`<div class="op-result"><div class="op-result-ring fail">✗</div><div class="op-result-title fail">Transaction Failed</div><div class="op-result-sub">The transaction was rejected. Please try again.</div><div class="op-txid">${tx}</div><button class="op-btn op-btn-orange" id="r-retry">↺ &nbsp;Try Again</button><button class="op-btn op-btn-ghost" id="r-cancel">Cancel</button></div>`;}
   setStep(4);
-  const done=document.getElementById('r-done');if(done)done.onclick=()=>{close();if(ok&&opts.onSuccess)opts.onSuccess({txId:tx,method:curMethod,amount:opts.amount});};
+  const done=document.getElementById('r-done');if(done)done.onclick=()=>{close();if(ok&&opts.onSuccess)opts.onSuccess({txId:tx,method:curMethod,amount:opts.amount,currency:opts.currency||'EUR'});};
   const retry=document.getElementById('r-retry');if(retry)retry.onclick=()=>{close();if(opts.onFailure)opts.onFailure({txId:tx,reason:'rejected'});};
   const can=document.getElementById('r-cancel');if(can)can.onclick=()=>{close();if(opts.onFailure)opts.onFailure({txId:tx,reason:'cancelled'});};
 }
@@ -837,15 +927,40 @@ function showResult(ok,tx){
 function showEscrowResult(ok,tx,escrowId){
   const el=document.getElementById('os4-content');
   if(ok){
-    const releaseDate=new Date(Date.now()+14*24*60*60*1000).toLocaleDateString('nl-NL',{day:'2-digit',month:'long',year:'numeric'});
-    el.innerHTML=`<div class="escrow-success"><div class="escrow-icon">🔒</div><div class="op-result-title ok" style="color:#a78bfa;">BTC Locked in Escrow!</div><div class="op-result-sub">The merchant will now ship your order. Your BTC is safe.</div><div class="escrow-id">${escrowId}</div><div class="escrow-countdown"><div class="escrow-countdown-label">Auto-releases to merchant in</div><div class="escrow-countdown-days">14 days</div><div class="escrow-countdown-sub">on ${releaseDate} — or earlier when you confirm receipt</div></div><button class="op-btn op-btn-confirm-receipt" id="r-confirm-receipt">✓ &nbsp;Confirm Received (release now)</button><button class="op-btn op-btn-ghost" id="r-done" style="margin-top:10px;">← Back to shop</button></div>`;
+    const releaseDate=new Date(Date.now()+14*24*60*60*1000).toLocaleDateString(undefined,{day:'2-digit',month:'long',year:'numeric'});
+    el.innerHTML=`<div class="escrow-success">
+<div class="escrow-icon">🔒</div>
+<div class="op-result-title ok" style="color:#a78bfa;">BTC Locked in Escrow!</div>
+<div class="op-result-sub">The merchant will now ship your order. Your BTC is safe.</div>
+<div class="escrow-id">${escrowId}</div>
+<div class="escrow-countdown">
+  <div class="escrow-countdown-label">Auto-releases to merchant in</div>
+  <div class="escrow-countdown-days">14 days</div>
+  <div class="escrow-countdown-sub">on ${releaseDate} — or earlier when you confirm receipt</div>
+</div>
+<button class="op-btn op-btn-confirm-receipt" id="r-confirm-receipt" style="margin-bottom:8px;">✓ Confirm Received (release to merchant)</button>
+<button id="r-return" style="width:100%;padding:12px;background:rgba(239,68,68,0.08);border:1.5px solid rgba(239,68,68,0.25);color:#f87171;border-radius:12px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.15s;margin-bottom:8px;" onmouseover="this.style.background='rgba(239,68,68,0.15)'" onmouseout="this.style.background='rgba(239,68,68,0.08)'">↩ Return Order (get BTC refund)</button>
+<button class="op-btn op-btn-ghost" id="r-done">← Back to shop</button>
+</div>`;
   }else{
     el.innerHTML=`<div class="op-result"><div class="op-result-ring fail">✗</div><div class="op-result-title fail">Escrow Failed</div><div class="op-result-sub">Could not deploy the escrow contract. Please try again.</div><div class="op-txid">${tx}</div><button class="op-btn op-btn-purple" id="r-retry" style="margin-bottom:0">↺ &nbsp;Try Again</button><button class="op-btn op-btn-ghost" id="r-cancel">Cancel</button></div>`;
   }
   setStep(4);
-  const done=document.getElementById('r-done');if(done)done.onclick=()=>{close();if(ok&&opts.onSuccess)opts.onSuccess({txId:tx,method:'opcredit',escrowId,amount:opts.amount});};
+  const done=document.getElementById('r-done');if(done)done.onclick=()=>{close();if(ok&&opts.onSuccess)opts.onSuccess({txId:tx,method:'opcredit',escrowId,amount:opts.amount,currency:opts.currency||'EUR'});};
   const cr=document.getElementById('r-confirm-receipt');
-  if(cr)cr.onclick=()=>{cr.textContent='✓ Receipt confirmed — BTC released!';cr.style.background='rgba(0,200,83,0.2)';cr.disabled=true;try{const txs=JSON.parse(localStorage.getItem('oppay_transactions')||'[]');const t=txs.find(t=>t.escrowId===escrowId);if(t){t.status='confirmed';t.escrowReleased=true;localStorage.setItem('oppay_transactions',JSON.stringify(txs));}}catch(e){}setTimeout(()=>{close();if(opts.onSuccess)opts.onSuccess({txId:tx,method:'opcredit',escrowId,amount:opts.amount});},1000);};
+  if(cr)cr.onclick=()=>{
+    cr.textContent='✓ Receipt confirmed — BTC released to merchant!';cr.style.background='rgba(0,200,83,0.15)';cr.style.color='#00c853';cr.style.borderColor='rgba(0,200,83,0.3)';cr.disabled=true;
+    const ret=document.getElementById('r-return');if(ret)ret.style.display='none';
+    try{const txs=JSON.parse(localStorage.getItem('oppay_transactions')||'[]');const t=txs.find(t=>t.escrowId===escrowId);if(t){t.status='confirmed';t.escrowReleased=true;localStorage.setItem('oppay_transactions',JSON.stringify(txs));}}catch(e){}
+    setTimeout(()=>{close();if(opts.onSuccess)opts.onSuccess({txId:tx,method:'opcredit',escrowId,amount:opts.amount,currency:opts.currency||'EUR'});},1000);
+  };
+  const ret=document.getElementById('r-return');
+  if(ret)ret.onclick=()=>{
+    ret.textContent='↩ Dispute submitted — BTC will be refunded';ret.style.color='#fbbf24';ret.style.borderColor='rgba(251,191,36,0.3)';ret.style.background='rgba(251,191,36,0.08)';ret.disabled=true;
+    if(cr)cr.style.display='none';
+    try{const txs=JSON.parse(localStorage.getItem('oppay_transactions')||'[]');const t=txs.find(t=>t.escrowId===escrowId);if(t){t.status='disputed';t.escrowRefunded=true;localStorage.setItem('oppay_transactions',JSON.stringify(txs));}}catch(e){}
+    setTimeout(()=>{close();if(opts.onFailure)opts.onFailure({txId:tx,reason:'returned',escrowId});},1500);
+  };
   const retry=document.getElementById('r-retry');if(retry)retry.onclick=()=>{close();if(opts.onFailure)opts.onFailure({txId:tx,reason:'escrow_failed'});};
   const can=document.getElementById('r-cancel');if(can)can.onclick=()=>{close();if(opts.onFailure)opts.onFailure({txId:tx,reason:'cancelled'});};
 }
@@ -876,14 +991,43 @@ g.OpPay={open,close,version:'1.0.0'};
 
 <!-- PAGE LOGIC -->
 <script>
-function pay(amount,btc,merchant,description){
+// Currency system for demo
+const CUR_RATES={EUR:1,USD:1.08,GBP:0.86,JPY:162,CHF:0.98,AUD:1.65,CAD:1.47};
+const CUR_SYMBOLS={EUR:'€',USD:'$',GBP:'£',JPY:'¥',CHF:'Fr',AUD:'A$',CAD:'C$'};
+const BTC_EUR=100000; // approx sats per EUR for demo
+let demoCurrentency='EUR';
+
+function fmtDemo(eur,cur){
+  const amt=eur*CUR_RATES[cur];
+  const sym=CUR_SYMBOLS[cur]||cur;
+  if(cur==='JPY')return sym+Math.round(amt).toLocaleString();
+  return sym+amt.toFixed(2);
+}
+
+function setCurrency(cur){
+  demoCurrentency=cur;
+  document.querySelectorAll('.cur-btn').forEach(b=>b.classList.toggle('cur-active',b.dataset.cur===cur));
+  // Update product display prices
+  document.querySelectorAll('[data-eur]').forEach(el=>{
+    el.textContent=fmtDemo(parseFloat(el.dataset.eur),cur);
+  });
+}
+
+function pay(eurAmount,btc,merchant,description){
+  const cur=demoCurrentency;
+  const displayAmt=eurAmount*CUR_RATES[cur];
   OpPay.open({
-    amount,btc,merchant,description,
+    amount:displayAmt, btc, merchant, description, currency:cur,
     onSuccess:(d)=>{
-      if(d.method==='opcredit'){logEvent('ok',`🔒 OpCredit · €${amount.toFixed(2)} ESCROWED → ${merchant} · ID ${d.escrowId}`);}
-      else{logEvent('ok',`₿ ${d.method.toUpperCase()} · €${amount.toFixed(2)} → ${merchant} · TX ${d.txId}`);}
+      const sym=CUR_SYMBOLS[cur]||cur;
+      if(d.method==='opcredit'){logEvent('ok',`🔒 OpCredit · ${sym}${displayAmt.toFixed(2)} ESCROWED → ${merchant} · ID ${d.escrowId}`);}
+      else if(d.method==='btcaddr'){logEvent('ok',`₿ Bitcoin Address · ${sym}${displayAmt.toFixed(2)} → ${merchant} · TX ${d.txId}`);}
+      else{logEvent('ok',`🔗 OPNet Wallet · ${sym}${displayAmt.toFixed(2)} → ${merchant} · TX ${d.txId}`);}
     },
-    onFailure:(d)=>logEvent('fail',`Payment failed: ${d.reason}`),
+    onFailure:(d)=>{
+      if(d.reason==='returned')logEvent('cancel',`↩ Order returned — BTC refund initiated · Escrow ${d.escrowId}`);
+      else logEvent('fail',`Payment failed: ${d.reason}`);
+    },
     onCancel:()=>logEvent('cancel','Payment cancelled by user'),
   });
 }
@@ -891,8 +1035,10 @@ function pay(amount,btc,merchant,description){
 function payCustom(){
   const amount=parseFloat(document.getElementById('custom-amount').value);
   if(!amount||amount<=0)return alert('Enter a valid amount.');
-  const btc=+(amount/100000).toFixed(8);
-  pay(amount,btc,'Custom Demo',`Custom payment €${amount.toFixed(2)}`);
+  const btc=+(amount/BTC_EUR).toFixed(8);
+  const cur=demoCurrentency;
+  const sym=CUR_SYMBOLS[cur]||cur;
+  pay(amount,btc,'Custom Demo',`Custom payment ${sym}${amount.toFixed(2)}`);
 }
 
 function showTab(id){

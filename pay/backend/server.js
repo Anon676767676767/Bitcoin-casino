@@ -84,20 +84,25 @@ setPushCallback(pushToMerchant);
 
 // ─── BTC Price ────────────────────────────────────────────────────────────────
 
-let cachedBtcPrice = 60000; // fallback EUR
+const SUPPORTED_CURRENCIES = ['eur', 'usd', 'gbp', 'jpy', 'chf', 'aud', 'cad'];
+let cachedPrices = { eur: 60000, usd: 64800, gbp: 51600, jpy: 9720000, chf: 58800, aud: 99000, cad: 88200 };
 let lastPriceFetch = 0;
 
-async function getBtcPrice() {
-  if (Date.now() - lastPriceFetch < 60_000) return cachedBtcPrice;
+async function getBtcPrice(currency = 'eur') {
+  const cur = currency.toLowerCase();
+  if (Date.now() - lastPriceFetch < 60_000) return cachedPrices[cur] ?? cachedPrices.eur;
   try {
-    const res  = await fetch(process.env.BTC_PRICE_API, { signal: AbortSignal.timeout(5000) });
+    const vs = SUPPORTED_CURRENCIES.join(',');
+    const url = `https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=${vs}`;
+    const res  = await fetch(url, { signal: AbortSignal.timeout(5000) });
     const json = await res.json();
-    cachedBtcPrice = json?.bitcoin?.eur ?? cachedBtcPrice;
+    const btc = json?.bitcoin || {};
+    SUPPORTED_CURRENCIES.forEach(c => { if (btc[c]) cachedPrices[c] = btc[c]; });
     lastPriceFetch = Date.now();
   } catch {
-    console.warn('[price] Could not fetch BTC price, using cached:', cachedBtcPrice);
+    console.warn('[price] Could not fetch BTC price, using cached');
   }
-  return cachedBtcPrice;
+  return cachedPrices[cur] ?? cachedPrices.eur;
 }
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
@@ -148,12 +153,17 @@ app.get('/api/auth/me', requireAuth, (req, res) => {
  */
 app.post('/api/sessions', requireAuth, async (req, res) => {
   try {
-    const { amount_eur, description, method = 'bitcoin', metadata } = req.body;
-    if (!amount_eur || amount_eur <= 0) return res.status(400).json({ error: 'amount_eur required' });
+    const { amount, amount_eur, currency = 'eur', description, method = 'bitcoin', metadata } = req.body;
+    // Support both old `amount_eur` field and new `amount` + `currency`
+    const fiatAmount = amount ?? amount_eur;
+    if (!fiatAmount || fiatAmount <= 0) return res.status(400).json({ error: 'amount required' });
+    const cur = currency.toLowerCase();
+    if (!SUPPORTED_CURRENCIES.includes(cur)) return res.status(400).json({ error: `Unsupported currency. Supported: ${SUPPORTED_CURRENCIES.join(', ')}` });
 
     const merchant  = req.merchant;
-    const btcPrice  = await getBtcPrice();
-    const amountBtc = parseFloat((amount_eur / btcPrice).toFixed(8));
+    const btcPrice  = await getBtcPrice(cur);
+    const amountBtc = parseFloat((fiatAmount / btcPrice).toFixed(8));
+    const amount_eur = cur === 'eur' ? fiatAmount : parseFloat((fiatAmount / (await getBtcPrice('eur') / btcPrice)).toFixed(2));
 
     // Derive unique address
     let btcAddress, addressIndex;
@@ -171,6 +181,8 @@ app.post('/api/sessions', requireAuth, async (req, res) => {
       merchantId:     merchant.id,
       amountEur:      amount_eur,
       amountBtc,
+      currency:       cur.toUpperCase(),
+      amountLocal:    fiatAmount,
       btcAddress,
       addressIndex,
       description,
@@ -180,13 +192,15 @@ app.post('/api/sessions', requireAuth, async (req, res) => {
     });
 
     res.status(201).json({
-      session_id:  session.id,
-      btc_address: session.btc_address,
-      amount_btc:  session.amount_btc,
-      amount_eur:  session.amount_eur,
-      method:      session.method,
-      expires_at:  session.expires_at,
-      qr_uri:      `bitcoin:${btcAddress}?amount=${amountBtc}&label=${encodeURIComponent(description || 'OpPay')}`,
+      session_id:   session.id,
+      btc_address:  session.btc_address,
+      amount_btc:   session.amount_btc,
+      amount_eur:   session.amount_eur,
+      amount:       fiatAmount,
+      currency:     cur.toUpperCase(),
+      method:       session.method,
+      expires_at:   session.expires_at,
+      qr_uri:       `bitcoin:${btcAddress}?amount=${amountBtc}&label=${encodeURIComponent(description || 'OpPay')}`,
     });
   } catch (err) {
     console.error('[sessions] create error:', err);
@@ -285,9 +299,33 @@ app.post('/api/webhooks/test', requireAuth, async (req, res) => {
 
 // ── BTC Price ─────────────────────────────────────────────────────────────────
 
-app.get('/api/price', async (_req, res) => {
-  const price = await getBtcPrice();
-  res.json({ eur: price, timestamp: lastPriceFetch });
+app.get('/api/price', async (req, res) => {
+  const cur = (req.query.currency || 'eur').toLowerCase();
+  await getBtcPrice(cur); // refresh if stale
+  res.json({ ...cachedPrices, currency: cur, price: cachedPrices[cur] ?? cachedPrices.eur, timestamp: lastPriceFetch });
+});
+
+// ── Refund (OpCredit return) ───────────────────────────────────────────────────
+
+/**
+ * POST /api/sessions/:id/refund
+ * Merchant OR buyer can dispute OpCredit escrow to refund BTC to buyer.
+ * In production this would call the OPNet smart contract dispute function.
+ */
+app.post('/api/sessions/:id/refund', async (req, res) => {
+  try {
+    const session = db.getSession(req.params.id);
+    if (!session) return res.status(404).json({ error: 'Session not found' });
+    if (session.method !== 'opcredit') return res.status(400).json({ error: 'Refunds only apply to OpCredit sessions' });
+    if (session.status === 'confirmed') return res.status(400).json({ error: 'Escrow already released to merchant — cannot refund' });
+    if (session.status === 'refunded') return res.status(400).json({ error: 'Already refunded' });
+
+    db.updateSessionStatus(session.id, 'refunded');
+    pushToMerchant(session.merchant_id, 'session.refunded', { session_id: session.id, reason: req.body.reason || 'customer_return' });
+    res.json({ ok: true, message: 'Escrow disputed — BTC will be returned to buyer', session_id: session.id });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

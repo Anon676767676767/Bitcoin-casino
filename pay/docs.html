@@ -310,11 +310,23 @@
         </div>
       </div>
 
+      <div class="method-card reveal">
+        <div class="method-icon orange">₿</div>
+        <div class="method-body">
+          <div class="method-name">Bitcoin Address (QR)</div>
+          <div class="method-desc">A unique Bitcoin address and QR code is shown for the session. The customer scans it with any Bitcoin wallet (BlueWallet, Exodus, Muun, etc.) or copies the address and sends from an exchange. The backend monitors the address and confirms when funds arrive — no wallet extension required.</div>
+          <div>
+            <span class="step-tag tag-blue">Any Bitcoin wallet</span>
+            <span class="step-tag tag-orange" style="margin-left:6px;">1 block confirmation</span>
+          </div>
+        </div>
+      </div>
+
       <div class="method-card purple reveal">
         <div class="method-icon purple-bg">🔒</div>
         <div class="method-body">
-          <div class="method-name" style="color:var(--purple-light);">OpCredit — Pay Later <span class="step-tag tag-purple" style="margin-top:0;margin-left:8px;vertical-align:middle;">NEW</span></div>
-          <div class="method-desc">Inspired by Klarna. The customer locks BTC in an OPNet smart contract escrow. The merchant sees the locked funds and ships the order. After delivery the customer clicks "Confirm Received" and the BTC is released instantly. If nothing happens, BTC auto-releases after 14 days. Fully anonymous — no name, email or address required.</div>
+          <div class="method-name" style="color:var(--purple-light);">OpCredit — Pay Later <span class="step-tag tag-purple" style="margin-top:0;margin-left:8px;vertical-align:middle;">BUYER PROTECTED</span></div>
+          <div class="method-desc">Inspired by Klarna. The customer locks BTC in an OPNet smart contract escrow. The merchant sees the locked funds and ships the order. After delivery the customer clicks "Confirm Received" and BTC goes to the merchant. If the order is returned, the customer disputes and BTC is refunded. Auto-releases after 14 days if no action. Fully anonymous — no name, email or address required.</div>
           <div>
             <span class="step-tag tag-purple">Anonymous</span>
             <span class="step-tag tag-green" style="margin-left:6px;">Escrow protected</span>
@@ -352,7 +364,7 @@
           <div class="step-num">3</div>
           <div class="step-body">
             <div class="step-title">Customer chooses method and pays</div>
-            <div class="step-text">The customer selects OPNet Wallet or OpCredit. They authorize the transaction in their wallet, or OpCredit customers lock BTC in an OPNet smart contract escrow.</div>
+            <div class="step-text">The customer selects OPNet Wallet, Bitcoin Address (QR), or OpCredit. They sign in their wallet, scan the QR code with any Bitcoin app, or lock BTC in an OPNet smart contract escrow.</div>
           </div>
         </div>
         <div class="step">
@@ -407,13 +419,14 @@
     <span class="cv">'Content-Type'</span>:  <span class="cv">'application/json'</span>,
   },
   body: JSON.stringify({
-    amount_eur:  <span class="cn">49.99</span>,
+    amount:      <span class="cn">49.99</span>,
+    currency:    <span class="cv">'USD'</span>,           <span class="cm">// EUR | USD | GBP | JPY | CHF | AUD | CAD</span>
     description: <span class="cv">'Order #1234 — Running Shoes'</span>,
-    method:      <span class="cv">'bitcoin'</span>,  <span class="cm">// 'bitcoin' | 'opcredit'</span>
+    method:      <span class="cv">'bitcoin'</span>,          <span class="cm">// 'bitcoin' | 'opcredit'</span>
     metadata:    { order_id: <span class="cv">'1234'</span>, user_id: <span class="cv">'u_abc'</span> },
   }),
 });
-<span class="ck">const</span> { session_id, btc_address, amount_btc, qr_uri } = <span class="ck">await</span> res.json();</div>
+<span class="ck">const</span> { session_id, btc_address, amount_btc, amount, currency, qr_uri } = <span class="ck">await</span> res.json();</div>
       </div>
 
       <h3 style="font-size:16px;font-weight:700;margin:28px 0 12px;color:white;">Step 3 — Open the payment modal</h3>
@@ -575,7 +588,9 @@ npm start
   <span class="ca">"session_id"</span>:  <span class="cv">"uuid-..."</span>,
   <span class="ca">"tx_id"</span>:       <span class="cv">"uuid-..."</span>,
   <span class="ca">"tx_hash"</span>:     <span class="cv">"0xabc123..."</span>,
-  <span class="ca">"amount_eur"</span>:  <span class="cn">49.99</span>,
+  <span class="ca">"amount"</span>:      <span class="cn">49.99</span>,
+  <span class="ca">"currency"</span>:    <span class="cv">"USD"</span>,       <span class="cm">// the currency you specified</span>
+  <span class="ca">"amount_eur"</span>:  <span class="cn">46.29</span>,       <span class="cm">// always included for your records</span>
   <span class="ca">"amount_btc"</span>:  <span class="cn">0.000495</span>,
   <span class="ca">"method"</span>:      <span class="cv">"bitcoin"</span>,  <span class="cm">// 'opnet' | 'bitcoin' | 'opcredit'</span>
   <span class="ca">"description"</span>: <span class="cv">"Order #1234"</span>,
