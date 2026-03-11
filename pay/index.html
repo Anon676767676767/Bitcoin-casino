@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OpPay — Bitcoin Payment SDK</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --orange: #f7931a; --orange-dark: #d4780f; --orange-glow: rgba(247,147,26,0.35);
+      --blue: #0070f3; --green: #00c853; --red: #ff4444;
+      --bg: #080810; --surface: #0e101a; --card: #12141f; --border: #1e2235;
+      --text: #f0f0f0; --muted: #6b7280; --sub: #9aa3b2;
+      --purple: #7c3aed; --purple-light: #a78bfa;
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+
+    /* ─── OPPAY MODAL SDK ──────────────────────────────────────────────── */
+    .oppay-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+      z-index: 99999; display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity 0.3s ease; backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .oppay-overlay.oppay-visible { opacity: 1; }
+    .oppay-modal {
+      background: #0f111a; border: 1px solid #252840;
+      border-radius: 24px; width: 100%; max-width: 430px; margin: 16px;
+      box-shadow: 0 40px 120px rgba(0,0,0,0.7), 0 0 0 1px rgba(247,147,26,0.08), inset 0 1px 0 rgba(255,255,255,0.05);
+      font-family: 'Inter', sans-serif; overflow: hidden;
+      transform: translateY(32px) scale(0.95);
+      transition: transform 0.32s cubic-bezier(0.34,1.4,0.64,1);
+    }
+    .oppay-overlay.oppay-visible .oppay-modal { transform: translateY(0) scale(1); }
+
+    .op-header {
+      background: linear-gradient(160deg, #14100a 0%, #0a0c14 100%);
+      border-bottom: 1px solid #1e2235; padding: 22px 26px 20px; position: relative; overflow: hidden;
+    }
+    .op-header::before {
+      content: ''; position: absolute; top: -40px; right: -40px; width: 160px; height: 160px;
+      background: radial-gradient(circle, rgba(247,147,26,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .op-header-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .op-logo { display: flex; align-items: center; gap: 9px; font-weight: 800; font-size: 17px; letter-spacing: -0.3px; }
+    .op-logo-icon { width: 30px; height: 30px; background: linear-gradient(135deg, #f7931a, #d4780f); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; box-shadow: 0 4px 12px rgba(247,147,26,0.3); }
+    .op-logo-text { color: #f0f0f0; }
+    .op-logo-text span { color: var(--orange); }
+    .op-close { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #888; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: all 0.2s; }
+    .op-close:hover { background: rgba(255,255,255,0.12); color: white; transform: rotate(90deg); }
+    .op-merchant-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 3px; }
+    .op-merchant-name { font-size: 14px; font-weight: 600; color: #ccc; margin-bottom: 12px; }
+    .op-amount-row { display: flex; align-items: baseline; gap: 12px; }
+    .op-amount-eur { font-size: 36px; font-weight: 900; letter-spacing: -1.5px; color: white; }
+    .op-amount-btc { font-size: 13px; font-weight: 600; color: var(--orange); background: rgba(247,147,26,0.12); padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(247,147,26,0.22); }
+    .op-dots { display: flex; justify-content: center; gap: 6px; padding: 14px 0 2px; }
+    .op-dot { width: 6px; height: 6px; border-radius: 50%; background: #252840; transition: all 0.25s cubic-bezier(0.4,0,0.2,1); }
+    .op-dot.active { background: var(--orange); width: 24px; border-radius: 3px; }
+    .op-body { padding: 22px 24px 26px; }
+    .op-step { display: none; animation: stepIn 0.2s ease; }
+    .op-step.op-active { display: block; }
+    @keyframes stepIn { from { opacity: 0; transform: translateX(8px); } to { opacity: 1; transform: translateX(0); } }
+    .op-step-title { font-size: 16px; font-weight: 700; color: white; margin-bottom: 5px; }
+    .op-step-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
+    .op-methods { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+    .op-method {
+      display: flex; align-items: center; gap: 14px; padding: 15px 18px; border-radius: 14px;
+      border: 1.5px solid var(--border); background: var(--card);
+      cursor: pointer; transition: all 0.18s; text-align: left; width: 100%; font-family: inherit;
+    }
+    .op-method:hover { border-color: rgba(247,147,26,0.5); background: rgba(247,147,26,0.05); transform: translateY(-1px); }
+    .op-method.selected { border-color: var(--orange); background: rgba(247,147,26,0.09); box-shadow: 0 0 0 3px rgba(247,147,26,0.1); }
+    .op-method-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 21px; flex-shrink: 0; }
+    .op-method-info { flex: 1; }
+    .op-method-name { font-size: 14px; font-weight: 700; color: white; margin-bottom: 2px; }
+    .op-method-desc { font-size: 12px; color: var(--muted); }
+    .op-method-badge { font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 20px; background: rgba(247,147,26,0.14); color: var(--orange); border: 1px solid rgba(247,147,26,0.28); white-space: nowrap; }
+    .op-wallet-screen { text-align: center; }
+    .op-wallet-icon { font-size: 52px; margin-bottom: 14px; }
+    .op-wallet-addr { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; margin-bottom: 14px; text-align: left; }
+    .op-wallet-addr-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 5px; }
+    .op-wallet-addr-value { font-family: monospace; font-size: 12px; color: var(--orange); word-break: break-all; line-height: 1.5; }
+    .op-wallet-balance { display: flex; justify-content: space-between; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; margin-bottom: 20px; }
+    .op-wallet-balance-label { font-size: 12px; color: var(--muted); margin-bottom: 2px; }
+    .op-wallet-balance-val { font-size: 16px; font-weight: 700; color: white; }
+    .op-wallet-balance-btc { font-size: 12px; color: var(--orange); }
+    .op-qr-wrap { display: flex; justify-content: center; margin-bottom: 16px; }
+    .op-qr { width: 160px; height: 160px; background: white; border-radius: 14px; padding: 12px; display: grid; grid-template-columns: repeat(10,1fr); grid-template-rows: repeat(10,1fr); gap: 1px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+    .op-qr-cell { border-radius: 1px; background: white; }
+    .op-qr-cell.b { background: #111; }
+    .op-summary { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; margin-bottom: 20px; }
+    .op-summary-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 13px; }
+    .op-summary-row:last-child { border-bottom: none; padding-top: 12px; }
+    .op-summary-row span:first-child { color: var(--muted); }
+    .op-summary-row span:last-child { font-weight: 600; color: white; }
+    .op-summary-row.total span:last-child { color: var(--orange); font-weight: 800; font-size: 15px; }
+    .op-processing { text-align: center; padding: 10px 0; }
+    .op-btc-spinner { position: relative; width: 72px; height: 72px; margin: 0 auto 20px; }
+    .op-btc-spinner-ring { width: 72px; height: 72px; border: 3px solid rgba(247,147,26,0.12); border-top-color: var(--orange); border-radius: 50%; animation: op-spin 0.8s linear infinite; }
+    .op-btc-spinner-icon { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 28px; }
+    @keyframes op-spin { to { transform: rotate(360deg); } }
+    .op-proc-title { font-size: 17px; font-weight: 700; color: white; margin-bottom: 6px; }
+    .op-proc-sub { font-size: 13px; color: var(--muted); }
+    .op-proc-steps { margin-top: 22px; text-align: left; }
+    .op-proc-step { display: flex; align-items: center; gap: 10px; padding: 9px 0; font-size: 13px; color: var(--muted); }
+    .op-proc-step.done { color: var(--green); }
+    .op-proc-step.active { color: white; }
+    .op-proc-step-dot { width: 8px; height: 8px; border-radius: 50%; background: #252840; flex-shrink: 0; transition: background 0.3s; }
+    .op-proc-step.done .op-proc-step-dot { background: var(--green); }
+    .op-proc-step.active .op-proc-step-dot { background: var(--orange); animation: op-pulse 1s ease infinite; }
+    @keyframes op-pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.7)} }
+    .op-result { text-align: center; padding: 10px 0; }
+    .op-result-ring { width: 76px; height: 76px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 32px; }
+    .op-result-ring.ok { background: rgba(0,200,83,0.1); border: 2px solid rgba(0,200,83,0.25); color: var(--green); animation: popIn 0.4s cubic-bezier(0.34,1.6,0.64,1); }
+    .op-result-ring.fail { background: rgba(255,68,68,0.1); border: 2px solid rgba(255,68,68,0.25); color: var(--red); }
+    @keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .op-result-title { font-size: 20px; font-weight: 800; margin-bottom: 6px; letter-spacing: -0.5px; }
+    .op-result-title.ok { color: var(--green); }
+    .op-result-title.fail { color: var(--red); }
+    .op-result-sub { font-size: 13px; color: var(--muted); margin-bottom: 12px; }
+    .op-txid { font-size: 11px; font-family: monospace; color: var(--orange); background: rgba(247,147,26,0.07); border: 1px solid rgba(247,147,26,0.18); padding: 8px 14px; border-radius: 8px; display: inline-block; margin-bottom: 22px; word-break: break-all; }
+    .op-conf-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--green); background: rgba(0,200,83,0.07); border: 1px solid rgba(0,200,83,0.2); padding: 5px 14px; border-radius: 20px; margin-bottom: 22px; }
+    .op-btn { width: 100%; padding: 14px; border: none; border-radius: 12px; font-family: inherit; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.18s; display: flex; align-items: center; justify-content: center; gap: 8px; letter-spacing: -0.2px; }
+    .op-btn-orange { background: linear-gradient(135deg, #f7931a, #e07d0e); color: #000; }
+    .op-btn-orange:hover:not(:disabled) { background: linear-gradient(135deg, #ffaa33, #f7931a); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(247,147,26,0.4); }
+    .op-btn-orange:disabled { opacity: 0.35; cursor: not-allowed; }
+    .op-btn-ghost { background: transparent; color: #666; border: 1.5px solid var(--border); margin-top: 10px; }
+    .op-btn-ghost:hover { background: rgba(255,255,255,0.04); color: #aaa; border-color: #333; }
+    .op-btn-green { background: linear-gradient(135deg, #00c853, #00a040); color: #000; }
+    .op-btn-green:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,200,83,0.35); }
+    .op-btn-purple { background: linear-gradient(135deg, #7c3aed, #6d28d9); color: white; }
+    .op-btn-purple:hover:not(:disabled) { background: linear-gradient(135deg, #8b5cf6, #7c3aed); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(124,58,237,0.4); }
+    .op-btn-confirm-receipt { background: rgba(0,200,83,0.1); color: var(--green); border: 1.5px solid rgba(0,200,83,0.28); margin-bottom: 0; }
+    .op-btn-confirm-receipt:hover { background: rgba(0,200,83,0.18); transform: translateY(-1px); }
+    .op-security { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 11px; color: #333; margin-top: 14px; }
+    .op-security span { color: var(--green); }
+    .opcredit-badge { display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(59,130,246,0.1)); border: 1px solid rgba(139,92,246,0.35); border-radius: 20px; padding: 4px 12px; font-size: 10px; font-weight: 700; color: #a78bfa; letter-spacing: 0.3px; }
+    .op-method-icon.purple { background: rgba(139,92,246,0.12) !important; }
+    .op-method.opcredit:hover { border-color: #7c3aed !important; background: rgba(139,92,246,0.07) !important; }
+    .op-method.opcredit.selected { border-color: #7c3aed !important; background: rgba(139,92,246,0.1) !important; box-shadow: 0 0 0 3px rgba(139,92,246,0.1) !important; }
+    .escrow-timeline { display: flex; flex-direction: column; gap: 0; margin-bottom: 16px; }
+    .escrow-tl-item { display: flex; gap: 12px; align-items: flex-start; position: relative; }
+    .escrow-tl-item::before { content: ''; position: absolute; left: 11px; top: 26px; width: 2px; height: calc(100% + 4px); background: rgba(139,92,246,0.2); }
+    .escrow-tl-item:last-child::before { display: none; }
+    .escrow-tl-dot { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; margin-top: 2px; }
+    .escrow-tl-content { padding-bottom: 16px; flex: 1; }
+    .escrow-tl-title { font-size: 13px; font-weight: 700; color: #e2e8f0; margin-bottom: 2px; }
+    .escrow-tl-sub { font-size: 12px; color: #4a5568; line-height: 1.5; }
+    .escrow-success { text-align: center; padding: 8px 0; }
+    .escrow-icon { font-size: 52px; margin-bottom: 12px; }
+    .escrow-id { font-size: 11px; font-family: monospace; color: #a78bfa; background: rgba(139,92,246,0.08); border: 1px solid rgba(139,92,246,0.2); padding: 7px 14px; border-radius: 8px; display: inline-block; margin-bottom: 14px; word-break: break-all; }
+    .escrow-countdown { background: rgba(139,92,246,0.07); border: 1px solid rgba(139,92,246,0.2); border-radius: 12px; padding: 14px 16px; margin-bottom: 18px; }
+    .escrow-countdown-label { font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 4px; }
+    .escrow-countdown-days { font-size: 28px; font-weight: 900; color: #a78bfa; letter-spacing: -0.5px; }
+    .escrow-countdown-sub { font-size: 11px; color: #4a5568; margin-top: 2px; }
+    .oppay-btn {
+      display: inline-flex; align-items: center; gap: 9px;
+      padding: 12px 20px; background: linear-gradient(135deg, #f7931a, #e07d0e);
+      color: #000; border: none; border-radius: 12px;
+      font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700;
+      cursor: pointer; transition: all 0.18s;
+      box-shadow: 0 4px 16px rgba(247,147,26,0.3);
+    }
+    .oppay-btn:hover { background: linear-gradient(135deg, #ffb040, #f7931a); transform: translateY(-2px); box-shadow: 0 8px 28px rgba(247,147,26,0.45); }
+    .oppay-btn .btc-icon { font-size: 15px; }
+
+    /* ─── BACKGROUND ORBS ──────────────────────────────────────────────── */
+    .bg-orbs { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+    .orb { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.4; animation: orbFloat 20s ease-in-out infinite; }
+    .orb1 { width: 500px; height: 500px; background: radial-gradient(circle, rgba(247,147,26,0.12) 0%, transparent 70%); top: -150px; left: -100px; animation-duration: 25s; }
+    .orb2 { width: 400px; height: 400px; background: radial-gradient(circle, rgba(124,58,237,0.1) 0%, transparent 70%); bottom: 10%; right: -100px; animation-duration: 20s; animation-delay: -8s; }
+    .orb3 { width: 300px; height: 300px; background: radial-gradient(circle, rgba(0,112,243,0.08) 0%, transparent 70%); top: 40%; left: 30%; animation-duration: 30s; animation-delay: -15s; }
+    @keyframes orbFloat { 0%,100% { transform: translate(0,0) scale(1); } 33% { transform: translate(30px,-20px) scale(1.05); } 66% { transform: translate(-20px,30px) scale(0.95); } }
+
+    /* ─── NAVIGATION ───────────────────────────────────────────────────── */
+    .nav {
+      background: rgba(8,8,16,0.85); border-bottom: 1px solid rgba(255,255,255,0.06);
+      padding: 0 48px; height: 66px; display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 1000; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      transition: background 0.3s;
+    }
+    .nav-logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 20px; letter-spacing: -0.5px; text-decoration: none; color: white; }
+    .nav-logo-icon { width: 34px; height: 34px; background: linear-gradient(135deg, #f7931a, #d4780f); border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 18px; box-shadow: 0 4px 12px rgba(247,147,26,0.35); }
+    .nav-links { display: flex; gap: 32px; list-style: none; align-items: center; }
+    .nav-links a { text-decoration: none; color: #6b7280; font-size: 14px; font-weight: 500; transition: color 0.15s; }
+    .nav-links a:hover { color: white; }
+    .nav-links .nav-cta { color: var(--orange) !important; font-weight: 700; }
+    .nav-badge { background: rgba(247,147,26,0.1); color: var(--orange); border: 1px solid rgba(247,147,26,0.2); font-size: 11px; font-weight: 700; padding: 5px 12px; border-radius: 20px; letter-spacing: 0.3px; }
+
+    /* ─── HERO ──────────────────────────────────────────────────────────── */
+    .hero { padding: 110px 48px 90px; text-align: center; position: relative; z-index: 1; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(247,147,26,0.08); border: 1px solid rgba(247,147,26,0.2);
+      border-radius: 24px; padding: 7px 18px; font-size: 12px; font-weight: 600; color: var(--orange);
+      margin-bottom: 28px; animation: fadeSlideDown 0.6s ease both;
+    }
+    .hero-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--orange); animation: op-pulse 2s ease infinite; }
+    .hero h1 {
+      font-size: clamp(44px, 7vw, 76px); font-weight: 900; letter-spacing: -3px; line-height: 1.02;
+      margin-bottom: 24px; animation: fadeSlideDown 0.6s 0.1s ease both;
+    }
+    .hero h1 .accent { color: var(--orange); }
+    .hero h1 .accent2 {
+      background: linear-gradient(135deg, #f7931a, #ffd04a);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .hero p { font-size: 18px; color: #6b7280; max-width: 520px; margin: 0 auto 42px; line-height: 1.7; animation: fadeSlideDown 0.6s 0.2s ease both; }
+    .hero-btns { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; animation: fadeSlideDown 0.6s 0.3s ease both; }
+    .hero-stats { display: flex; justify-content: center; gap: 48px; margin-top: 72px; animation: fadeSlideDown 0.6s 0.4s ease both; }
+    .hero-stat-num { font-size: 28px; font-weight: 900; letter-spacing: -1px; color: white; }
+    .hero-stat-label { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    @keyframes fadeSlideDown { from { opacity: 0; transform: translateY(-16px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ─── BUTTONS ───────────────────────────────────────────────────────── */
+    .btn-primary { display: inline-flex; align-items: center; gap: 8px; padding: 15px 30px; background: linear-gradient(135deg, #f7931a, #e07d0e); color: #000; border: none; border-radius: 13px; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.2s; font-family: inherit; box-shadow: 0 4px 20px rgba(247,147,26,0.3); }
+    .btn-primary:hover { background: linear-gradient(135deg, #ffb040, #f7931a); transform: translateY(-3px); box-shadow: 0 12px 32px rgba(247,147,26,0.45); }
+    .btn-outline { display: inline-flex; align-items: center; gap: 8px; padding: 15px 30px; background: rgba(255,255,255,0.04); color: #888; border: 1.5px solid rgba(255,255,255,0.08); border-radius: 13px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: inherit; backdrop-filter: blur(8px); }
+    .btn-outline:hover { border-color: rgba(255,255,255,0.16); color: #ccc; background: rgba(255,255,255,0.07); }
+
+    /* ─── LAYOUT ────────────────────────────────────────────────────────── */
+    .container { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+    .section { padding: 96px 24px; position: relative; z-index: 1; }
+    .sec-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--orange); margin-bottom: 12px; }
+    .sec-title { font-size: clamp(28px,4vw,42px); font-weight: 800; letter-spacing: -1.2px; margin-bottom: 14px; line-height: 1.15; }
+    .sec-sub { font-size: 16px; color: #6b7280; max-width: 480px; line-height: 1.7; margin-bottom: 52px; }
+    .divider { height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent); margin: 0; }
+
+    /* ─── SCROLL REVEAL ─────────────────────────────────────────────────── */
+    .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease, transform 0.6s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+
+    /* ─── WHY SECTION ───────────────────────────────────────────────────── */
+    .why-section { background: linear-gradient(180deg, var(--bg) 0%, #090b14 100%); }
+    .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px,1fr)); gap: 18px; }
+    .card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 28px;
+      transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+      position: relative; overflow: hidden;
+    }
+    .card::before { content: ''; position: absolute; inset: 0; border-radius: 18px; background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, transparent 50%); pointer-events: none; }
+    .card:hover { border-color: rgba(247,147,26,0.3); transform: translateY(-4px); box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 0 1px rgba(247,147,26,0.05); }
+    .card-icon { font-size: 30px; margin-bottom: 16px; display: block; }
+    .card-title { font-size: 15px; font-weight: 700; color: white; margin-bottom: 8px; }
+    .card-text { font-size: 13px; color: #6b7280; line-height: 1.65; }
+
+    /* ─── HOW IT WORKS ──────────────────────────────────────────────────── */
+    .how-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px,1fr)); gap: 20px; counter-reset: steps; }
+    .how-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 28px 24px;
+      position: relative; transition: all 0.25s;
+    }
+    .how-card:hover { border-color: rgba(247,147,26,0.25); transform: translateY(-3px); }
+    .how-num {
+      counter-increment: steps; content: counter(steps);
+      width: 30px; height: 30px; background: linear-gradient(135deg, #f7931a, #d4780f);
+      color: #000; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 800; margin-bottom: 18px;
+      box-shadow: 0 4px 12px rgba(247,147,26,0.3);
+    }
+    .how-icon { font-size: 28px; margin-bottom: 12px; }
+    .how-title { font-size: 14px; font-weight: 700; color: white; margin-bottom: 8px; }
+    .how-text { font-size: 13px; color: #6b7280; line-height: 1.65; }
+
+    /* ─── DEMO SHOP ─────────────────────────────────────────────────────── */
+    .demo-section { background: var(--surface); }
+    .shop-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px,1fr)); gap: 22px; margin-bottom: 40px; }
+    .product {
+      border: 1px solid var(--border); border-radius: 20px; overflow: hidden;
+      background: var(--card); transition: all 0.25s;
+    }
+    .product:hover { border-color: rgba(247,147,26,0.35); transform: translateY(-4px); box-shadow: 0 24px 60px rgba(0,0,0,0.5); }
+    .product-img { height: 180px; display: flex; align-items: center; justify-content: center; font-size: 76px; position: relative; overflow: hidden; }
+    .product-img::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.3) 100%); }
+    .product-body { padding: 20px 22px 22px; }
+    .product-name { font-size: 15px; font-weight: 700; color: white; margin-bottom: 5px; }
+    .product-desc { font-size: 13px; color: #6b7280; margin-bottom: 18px; line-height: 1.5; }
+    .product-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .product-price { font-size: 24px; font-weight: 900; letter-spacing: -0.5px; color: white; }
+    .product-btc { font-size: 11px; color: var(--orange); margin-top: 1px; }
+
+    /* ─── EVENT LOG ─────────────────────────────────────────────────────── */
+    .log-panel { background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 18px; padding: 22px; backdrop-filter: blur(10px); }
+    .log-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .log-title { font-weight: 700; font-size: 14px; color: white; display: flex; align-items: center; gap: 8px; }
+    .log-live { width: 8px; height: 8px; border-radius: 50%; background: var(--green); animation: op-pulse 2s ease infinite; }
+    .log-clear { font-size: 12px; color: var(--muted); background: none; border: 1px solid var(--border); border-radius: 8px; padding: 5px 14px; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+    .log-clear:hover { border-color: #333; color: #aaa; }
+    .log-box { font-family: 'Cascadia Code','Fira Code','Consolas',monospace; font-size: 12.5px; min-height: 80px; max-height: 200px; overflow-y: auto; }
+    .log-empty { color: #2a2a2a; padding: 8px 0; }
+    .log-row { padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.03); display: flex; gap: 14px; align-items: flex-start; }
+    .log-row:last-child { border-bottom: none; }
+    .log-t { color: #2a3040; min-width: 80px; flex-shrink: 0; }
+    .log-ok { color: #3fb950; } .log-fail { color: #f85149; } .log-cancel { color: #d29922; }
+
+    /* ─── CODE SECTION ──────────────────────────────────────────────────── */
+    .code-wrap { background: #070b12; border: 1px solid #1a2535; border-radius: 18px; overflow: hidden; }
+    .code-tabs-bar { display: flex; background: #050910; border-bottom: 1px solid #1a2535; padding: 0 4px; }
+    .ctab { padding: 12px 22px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; font-family: inherit; background: transparent; color: #4a5568; transition: all 0.15s; border-bottom: 2px solid transparent; }
+    .ctab.active { color: var(--orange); border-bottom-color: var(--orange); }
+    .ctab:hover:not(.active) { color: #8892a4; }
+    .cblock { padding: 30px 36px; font-family: 'Cascadia Code','Fira Code','Consolas',monospace; font-size: 13px; line-height: 1.85; overflow-x: auto; color: #c9d1d9; display: none; }
+    .cblock.active { display: block; }
+    .cm { color: #4a5568; } .ct { color: #7ee787; } .ca { color: #79c0ff; } .cv { color: #a5d6ff; }
+    .cf { color: #d2a8ff; } .ck { color: #ff7b72; } .co { color: #ffa657; } .cn { color: #79c0ff; }
+
+    /* ─── FOOTER ────────────────────────────────────────────────────────── */
+    footer { background: #05060c; border-top: 1px solid var(--border); padding: 60px 24px 40px; }
+    .footer-inner { max-width: 1120px; margin: 0 auto; display: flex; justify-content: space-between; align-items: flex-start; gap: 40px; flex-wrap: wrap; }
+    .footer-brand { max-width: 260px; }
+    .footer-logo { display: flex; align-items: center; gap: 9px; font-weight: 800; font-size: 20px; letter-spacing: -0.5px; margin-bottom: 12px; }
+    .footer-logo-icon { width: 32px; height: 32px; background: linear-gradient(135deg, #f7931a, #d4780f); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 17px; }
+    .footer-desc { font-size: 13px; color: var(--muted); line-height: 1.65; }
+    .footer-links { display: flex; gap: 40px; }
+    .footer-col-title { font-size: 12px; font-weight: 700; color: white; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px; }
+    .footer-col a { display: block; font-size: 13px; color: var(--muted); text-decoration: none; margin-bottom: 10px; transition: color 0.15s; }
+    .footer-col a:hover { color: var(--orange); }
+    .footer-bottom { max-width: 1120px; margin: 40px auto 0; padding-top: 24px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; font-size: 12px; color: #252840; }
+    .footer-bottom a { color: var(--orange); text-decoration: none; }
+
+    /* ─── HAMBURGER + MOBILE NAV ─────────────────────────────────────────── */
+    .nav-ham { display: none; flex-direction: column; justify-content: space-between; width: 30px; height: 22px; background: none; border: none; cursor: pointer; padding: 0; z-index: 1100; }
+    .nav-ham span { display: block; width: 100%; height: 2px; background: var(--text); border-radius: 2px; transition: all 0.25s ease; }
+    .nav-ham.open span:nth-child(1) { transform: translateY(10px) rotate(45deg); }
+    .nav-ham.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+    .nav-ham.open span:nth-child(3) { transform: translateY(-10px) rotate(-45deg); }
+    .mob-nav { display: none; position: fixed; top: 64px; left: 0; right: 0; background: rgba(7,8,16,0.98); border-bottom: 1px solid var(--border); padding: 20px 24px 28px; flex-direction: column; gap: 6px; z-index: 900; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+    .mob-nav.open { display: flex; animation: slideDown 0.2s ease; }
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    .mob-nav a { color: var(--text); text-decoration: none; font-size: 15px; font-weight: 500; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); transition: color 0.15s; }
+    .mob-nav a:last-child { border-bottom: none; }
+    .mob-nav a:hover { color: var(--orange); }
+    .mob-nav-cta { color: var(--orange) !important; font-weight: 700 !important; }
+
+    @media (max-width: 768px) {
+      .nav { padding: 0 20px; } .nav-links { display: none; } .nav-ham { display: flex; }
+      .hero { padding: 70px 20px 60px; }
+      .section { padding: 64px 20px; }
+      .hero-stats { gap: 24px; flex-wrap: wrap; }
+      .footer-links { gap: 24px; }
+      .footer-inner { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Background orbs -->
+<div class="bg-orbs">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+</div>
+
+<!-- NAV -->
+<nav class="nav">
+  <a class="nav-logo" href="#">
+    <div class="nav-logo-icon">₿</div>
+    <span>Op<span style="color:var(--orange)">Pay</span></span>
+  </a>
+  <ul class="nav-links" id="nav-links">
+    <li><a href="#how">How It Works</a></li>
+    <li><a href="#demo">Demo</a></li>
+    <li><a href="business.html">For Business</a></li>
+    <li><a href="docs.html">Docs</a></li>
+    <li><a href="merchant.html" class="nav-cta">Merchant Dashboard →</a></li>
+  </ul>
+  <span class="nav-badge">Bitcoin · OPNet</span>
+  <button class="nav-ham" id="nav-ham" onclick="toggleMobNav()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+<!-- Mobile nav drawer -->
+<div class="mob-nav" id="mob-nav">
+  <a href="#how" onclick="closeMobNav()">How It Works</a>
+  <a href="#demo" onclick="closeMobNav()">Demo</a>
+  <a href="business.html">For Business</a>
+  <a href="docs.html">Docs</a>
+  <a href="merchant.html" class="mob-nav-cta">Merchant Dashboard →</a>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge"><div class="dot"></div> Now live on OPNet Testnet</div>
+  <h1>Accept <span class="accent2">Bitcoin</span><br/>on any website</h1>
+  <p>Drop-in payment widget for the open web. No banks, no IBAN, no KYC — just pure Bitcoin via OPNet Layer 1.</p>
+  <div class="hero-btns">
+    <button class="btn-primary" onclick="document.getElementById('demo').scrollIntoView({behavior:'smooth'})">⚡ Try Live Demo</button>
+    <button class="btn-outline" onclick="document.getElementById('code').scrollIntoView({behavior:'smooth'})">&lt;/&gt; Integration Docs</button>
+  </div>
+  <div class="hero-stats">
+    <div>
+      <div class="hero-stat-num">1 line</div>
+      <div class="hero-stat-label">to embed</div>
+    </div>
+    <div style="width:1px;background:var(--border)"></div>
+    <div>
+      <div class="hero-stat-num">2 methods</div>
+      <div class="hero-stat-label">OPNet Wallet · OpCredit</div>
+    </div>
+    <div style="width:1px;background:var(--border)"></div>
+    <div>
+      <div class="hero-stat-num">0 fees</div>
+      <div class="hero-stat-label">no middlemen</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- WHY -->
+<section class="section why-section">
+  <div class="container">
+    <div class="sec-label reveal">Why OpPay</div>
+    <div class="sec-title reveal reveal-delay-1">Bitcoin payments, made simple</div>
+    <div class="sec-sub reveal reveal-delay-2">No bank accounts. No IBAN. Just Bitcoin — fast, borderless, and unstoppable on Layer 1.</div>
+    <div class="grid-3">
+      <div class="card reveal"><span class="card-icon">🔗</span><div class="card-title">OPNet Wallet</div><div class="card-text">Connect your OPNet wallet in one click and sign the transaction — no copy-paste, no fuss.</div></div>
+      <div class="card reveal reveal-delay-1"><span class="card-icon">₿</span><div class="card-title">Native Bitcoin L1</div><div class="card-text">Payments settle on Bitcoin Layer 1. No wrapped tokens, no bridges — real BTC to the merchant.</div></div>
+      <div class="card reveal reveal-delay-2"><span class="card-icon">⚡</span><div class="card-title">Instant Callbacks</div><div class="card-text">onSuccess, onFailure, and onCancel events fire the moment the transaction confirms on-chain.</div></div>
+      <div class="card reveal"><span class="card-icon">🔌</span><div class="card-title">One Script Tag</div><div class="card-text">Embed on any website with a single &lt;script&gt; include. Works with React, Vue, plain HTML — anything.</div></div>
+      <div class="card reveal reveal-delay-1"><span class="card-icon">🔒</span><div class="card-title">OpCredit Escrow</div><div class="card-text">Anonymous buy-now-pay-later via BTC escrow. BTC locked in OPNet smart contract, released on delivery.</div></div>
+      <div class="card reveal reveal-delay-2"><span class="card-icon">🌍</span><div class="card-title">Borderless</div><div class="card-text">Accept payments from anyone in the world — no bank account, no KYC, no geographic restrictions.</div></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- HOW IT WORKS -->
+<section class="section" id="how">
+  <div class="container">
+    <div class="sec-label reveal">Flow</div>
+    <div class="sec-title reveal reveal-delay-1">How it works</div>
+    <div class="sec-sub reveal reveal-delay-2">A simple 4-step Bitcoin payment experience — just like a card payment but on-chain.</div>
+    <div class="how-grid">
+      <div class="how-card reveal">
+        <div class="how-num" style="display:flex;">1</div>
+        <div class="how-icon">🛒</div>
+        <div class="how-title">Click Pay</div>
+        <div class="how-text">The OpPay modal opens with the amount and merchant info shown in EUR and BTC.</div>
+      </div>
+      <div class="how-card reveal reveal-delay-1">
+        <div class="how-num" style="display:flex;">2</div>
+        <div class="how-icon">👛</div>
+        <div class="how-title">Choose method</div>
+        <div class="how-text">Connect your OPNet wallet for instant sign-and-pay, or use OpCredit anonymous escrow.</div>
+      </div>
+      <div class="how-card reveal reveal-delay-2">
+        <div class="how-num" style="display:flex;">3</div>
+        <div class="how-icon">🔐</div>
+        <div class="how-title">Authorize</div>
+        <div class="how-text">Review the transaction details and authorize the Bitcoin payment from your wallet.</div>
+      </div>
+      <div class="how-card reveal reveal-delay-3">
+        <div class="how-num" style="display:flex;">4</div>
+        <div class="how-icon">✅</div>
+        <div class="how-title">Confirmed</div>
+        <div class="how-text">Transaction ID returned. Merchant's onSuccess callback fires. Payment complete.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- DEMO SHOP -->
+<section class="section demo-section" id="demo">
+  <div class="container">
+    <div class="sec-label reveal">Live Demo</div>
+    <div class="sec-title reveal reveal-delay-1">Try it now</div>
+    <div class="sec-sub reveal reveal-delay-2">Click any Pay button below to go through the full Bitcoin payment flow.</div>
+
+    <div class="shop-grid">
+      <div class="product reveal">
+        <div class="product-img" style="background:linear-gradient(135deg,#0d1020,#1a1030);">🎧</div>
+        <div class="product-body">
+          <div class="product-name">Wireless Headphones</div>
+          <div class="product-desc">Premium noise-cancelling, 30h battery, Hi-Fi audio.</div>
+          <div class="product-foot">
+            <div>
+              <div class="product-price">€ 89.99</div>
+              <div class="product-btc">≈ 0.00089 BTC</div>
+            </div>
+            <button class="oppay-btn" onclick="pay(89.99, 0.00089, 'TechStore NL', 'Wireless Headphones #4821')">
+              <span class="btc-icon">₿</span> Pay
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="product reveal reveal-delay-1">
+        <div class="product-img" style="background:linear-gradient(135deg,#120d08,#1a1408);">👟</div>
+        <div class="product-body">
+          <div class="product-name">Running Shoes</div>
+          <div class="product-desc">Lightweight, size 42, perfect for daily training.</div>
+          <div class="product-foot">
+            <div>
+              <div class="product-price">€ 129.95</div>
+              <div class="product-btc">≈ 0.00129 BTC</div>
+            </div>
+            <button class="oppay-btn" onclick="pay(129.95, 0.00129, 'SportShop', 'Running Shoes size 42 #7203')">
+              <span class="btc-icon">₿</span> Pay
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="product reveal reveal-delay-2">
+        <div class="product-img" style="background:linear-gradient(135deg,#080d10,#081420);">🌐</div>
+        <div class="product-body">
+          <div class="product-name">Monthly Subscription</div>
+          <div class="product-desc">Premium plan — unlimited access, priority support.</div>
+          <div class="product-foot">
+            <div>
+              <div class="product-price">€ 19.00</div>
+              <div class="product-btc">≈ 0.000188 BTC</div>
+            </div>
+            <button class="oppay-btn" onclick="pay(19.00, 0.000188, 'GreenApp', 'Premium Monthly April 2026')">
+              <span class="btc-icon">₿</span> Pay
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="product reveal reveal-delay-3">
+        <div class="product-img" style="background:linear-gradient(135deg,#0d0d14,#0a0f20);">⚡</div>
+        <div class="product-body">
+          <div class="product-name">Custom Amount</div>
+          <div class="product-desc">Test OpPay with any amount you enter below.</div>
+          <div class="product-foot" style="flex-direction:column;align-items:stretch;gap:12px;">
+            <div style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:11px;padding:11px 16px;">
+              <span style="font-weight:700;font-size:16px;color:var(--muted);">€</span>
+              <input id="custom-amount" type="number" value="25.00" min="0.01" step="0.01"
+                style="flex:1;background:transparent;border:none;font-size:16px;font-weight:700;font-family:inherit;color:white;outline:none;"/>
+            </div>
+            <button class="oppay-btn" style="width:100%;justify-content:center;" onclick="payCustom()">
+              <span class="btc-icon">₿</span> Pay Custom Amount
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Event log -->
+    <div class="log-panel reveal">
+      <div class="log-header">
+        <div class="log-title"><div class="log-live"></div> Payment Events</div>
+        <button class="log-clear" onclick="clearLog()">Clear</button>
+      </div>
+      <div class="log-box" id="log">
+        <div class="log-empty">No events yet — click Pay to test.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- CODE -->
+<section class="section" id="code">
+  <div class="container">
+    <div class="sec-label reveal">Integration</div>
+    <div class="sec-title reveal reveal-delay-1">Add OpPay to your site</div>
+    <div class="sec-sub reveal reveal-delay-2">One script tag. Two lines of JavaScript. Works on any website or framework.</div>
+    <div class="code-wrap reveal">
+      <div class="code-tabs-bar">
+        <button class="ctab active" onclick="showTab('html')">HTML</button>
+        <button class="ctab" onclick="showTab('js')">JavaScript</button>
+        <button class="ctab" onclick="showTab('react')">React</button>
+      </div>
+      <div class="cblock active" id="tab-html"><span class="cm">&lt;!-- 1. Include in &lt;head&gt; --&gt;</span>
+<span class="ct">&lt;script</span> <span class="ca">src</span>=<span class="cv">"https://cdn.oppay.io/v1/pay.js"</span><span class="ct">&gt;&lt;/script&gt;</span>
+
+<span class="cm">&lt;!-- 2. Add a button with data attributes — zero JS required --&gt;</span>
+<span class="ct">&lt;button</span>
+  <span class="ca">data-oppay</span>
+  <span class="ca">data-oppay-amount</span>=<span class="cv">"49.99"</span>
+  <span class="ca">data-oppay-btc</span>=<span class="cv">"0.000495"</span>
+  <span class="ca">data-oppay-merchant</span>=<span class="cv">"My Shop"</span>
+  <span class="ca">class</span>=<span class="cv">"oppay-btn"</span><span class="ct">&gt;</span>
+  ₿ Pay with Bitcoin
+<span class="ct">&lt;/button&gt;</span></div>
+      <div class="cblock" id="tab-js"><span class="co">OpPay</span>.<span class="cf">open</span>({
+  <span class="ca">amount</span>:      <span class="cn">49.99</span>,          <span class="cm">// EUR amount</span>
+  <span class="ca">btc</span>:         <span class="cn">0.000495</span>,       <span class="cm">// BTC equivalent</span>
+  <span class="ca">merchant</span>:    <span class="cv">'My Shop'</span>,
+  <span class="ca">description</span>: <span class="cv">'Order #1234'</span>,
+
+  <span class="ca">onSuccess</span>: (d) =&gt; {
+    console.<span class="cf">log</span>(<span class="cv">'Paid!'</span>, d.<span class="ca">txId</span>, d.<span class="ca">method</span>);
+    <span class="cm">// d.method = 'opnet' | 'opcredit'</span>
+  },
+  <span class="ca">onFailure</span>: (d) =&gt; console.<span class="cf">log</span>(<span class="cv">'Failed:'</span>, d.<span class="ca">reason</span>),
+  <span class="ca">onCancel</span>:  ()  =&gt; console.<span class="cf">log</span>(<span class="cv">'Cancelled'</span>),
+});</div>
+      <div class="cblock" id="tab-react"><span class="ck">import</span> { <span class="co">useCallback</span> } <span class="ck">from</span> <span class="cv">'react'</span>;
+<span class="ck">import</span> <span class="cv">'oppay/pay.css'</span>;
+<span class="ck">import</span> { <span class="co">OpPay</span> } <span class="ck">from</span> <span class="cv">'oppay'</span>;
+
+<span class="ck">export function</span> <span class="cf">PayButton</span>({ amount, btc, merchant }) {
+  <span class="ck">const</span> handlePay = <span class="co">useCallback</span>(() =&gt; {
+    <span class="co">OpPay</span>.<span class="cf">open</span>({
+      amount, btc, merchant,
+      <span class="ca">onSuccess</span>: (d) =&gt; console.<span class="cf">log</span>(<span class="cv">'tx:'</span>, d.<span class="ca">txId</span>),
+    });
+  }, [amount, btc, merchant]);
+
+  <span class="ck">return</span> (
+    <span class="ct">&lt;button</span> <span class="ca">className</span>=<span class="cv">"oppay-btn"</span> <span class="ca">onClick</span>={handlePay}<span class="ct">&gt;</span>
+      ₿ Pay with Bitcoin
+    <span class="ct">&lt;/button&gt;</span>
+  );
+}</div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <div class="footer-logo">
+        <div class="footer-logo-icon">₿</div>
+        <span>Op<span style="color:var(--orange)">Pay</span></span>
+      </div>
+      <div class="footer-desc">Bitcoin & OPNet payment SDK. No banks, no middlemen — real BTC on Layer 1.</div>
+    </div>
+    <div class="footer-links">
+      <div class="footer-col">
+        <div class="footer-col-title">Product</div>
+        <a href="#demo">Live Demo</a>
+        <a href="#how">How It Works</a>
+        <a href="#code">Integration</a>
+      </div>
+      <div class="footer-col">
+        <div class="footer-col-title">Merchants</div>
+        <a href="merchant.html">Dashboard</a>
+        <a href="merchant.html">API Keys</a>
+        <a href="merchant.html">Webhooks</a>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 OpPay · Bitcoin Layer 1</span>
+    <span>⚠️ Demo only — no real BTC is transferred</span>
+  </div>
+</footer>
+
+
+<!-- ===== OPPAY SDK ===== -->
+<script>
+(function(g){'use strict';
+let overlay=null,opts={};
+function txId(){return Math.random().toString(36).slice(2,10).toUpperCase()+'...'+Math.random().toString(36).slice(2,6).toUpperCase();}
+function fmtEur(n){return new Intl.NumberFormat('nl-NL',{style:'currency',currency:'EUR'}).format(n);}
+function fmtBtc(n){return n.toFixed(8).replace(/\.?0+$/,'')+' BTC';}
+function qrHtml(){const pat=[[1,1,1,1,1,1,1,0,1,0],[1,0,0,0,0,0,1,0,0,1],[1,0,1,1,1,0,1,0,1,0],[1,0,1,1,1,0,1,0,0,1],[1,0,1,1,1,0,1,0,1,1],[1,0,0,0,0,0,1,0,1,0],[1,1,1,1,1,1,1,0,0,1],[0,0,0,0,0,0,0,0,1,0],[1,0,1,1,0,1,1,0,1,1],[0,1,0,0,1,1,0,1,0,1]];return pat.flat().map(c=>`<div class="op-qr-cell${c?' b':''}"></div>`).join('');}
+
+function modal(o){
+  const ef=fmtEur(o.amount),eb=fmtBtc(o.btc||0);
+  const addr='bc1q'+Math.random().toString(36).slice(2,12)+'opnet'+Math.random().toString(36).slice(2,8);
+  return `<div class="oppay-overlay" id="op-ov">
+<div class="oppay-modal">
+  <div class="op-header">
+    <div class="op-header-row">
+      <div class="op-logo"><div class="op-logo-icon">₿</div><div class="op-logo-text">Op<span>Pay</span></div></div>
+      <button class="op-close" id="op-x">&times;</button>
+    </div>
+    <div class="op-merchant-label">Paying to</div>
+    <div class="op-merchant-name">${o.merchant}</div>
+    <div class="op-amount-row">
+      <div class="op-amount-eur">${ef}</div>
+      <div class="op-amount-btc">₿ ${eb}</div>
+    </div>
+  </div>
+  <div class="op-dots"><div class="op-dot active"></div><div class="op-dot"></div><div class="op-dot"></div><div class="op-dot"></div></div>
+  <div class="op-body">
+    <div class="op-step op-active" id="os0">
+      <div class="op-step-title">Choose payment method</div>
+      <div class="op-step-sub">Select how you want to pay with Bitcoin</div>
+      <div class="op-methods">
+        <button class="op-method" id="m-opnet" onclick="selMethod('opnet')" type="button">
+          <div class="op-method-icon" style="background:rgba(247,147,26,0.1);">🔗</div>
+          <div class="op-method-info"><div class="op-method-name">OPNet Wallet</div><div class="op-method-desc">Connect and sign with your OPNet wallet</div></div>
+          <div class="op-method-badge">RECOMMENDED</div>
+        </button>
+        <button class="op-method opcredit" id="m-opcredit" onclick="selMethod('opcredit')" type="button">
+          <div class="op-method-icon purple">🔒</div>
+          <div class="op-method-info"><div class="op-method-name" style="color:#a78bfa;">OpCredit — Pay Later</div><div class="op-method-desc">Lock BTC in escrow · Confirm after delivery · 14 days</div></div>
+          <div class="opcredit-badge">NEW</div>
+        </button>
+      </div>
+      <button class="op-btn op-btn-orange" id="op-continue" disabled onclick="goStep1()">Continue →</button>
+      <div class="op-security"><span>🔒</span> Secured by OPNet · Bitcoin Layer 1</div>
+    </div>
+    <div class="op-step" id="os1-opnet">
+      <div class="op-step-title">Connect OPNet Wallet</div>
+      <div class="op-step-sub">Your wallet will ask you to approve the connection</div>
+      <div class="op-wallet-screen">
+        <div class="op-wallet-icon">🔗</div>
+        <div class="op-wallet-addr">
+          <div class="op-wallet-addr-label">Connected address</div>
+          <div class="op-wallet-addr-value">bc1qopnet${Math.random().toString(36).slice(2,8)}...${Math.random().toString(36).slice(2,6)}</div>
+        </div>
+        <div class="op-wallet-balance">
+          <div><div class="op-wallet-balance-label">Balance</div><div class="op-wallet-balance-val">0.08241 BTC</div></div>
+          <div style="text-align:right"><div class="op-wallet-balance-label">Network</div><div class="op-wallet-balance-btc" style="font-size:14px;font-weight:700;">OPNet Mainnet</div></div>
+        </div>
+        <button class="op-btn op-btn-orange" onclick="goConfirm()">Review Transaction →</button>
+        <button class="op-btn op-btn-ghost" onclick="setStep(0)">← Back</button>
+      </div>
+    </div>
+    <div class="op-step" id="os1-opcredit">
+      <div class="op-step-title" style="color:#a78bfa;">OpCredit — Pay Later</div>
+      <div class="op-step-sub">Bitcoin escrow · No identity needed · 100% anonymous</div>
+      <div class="escrow-timeline">
+        <div class="escrow-tl-item"><div class="escrow-tl-dot" style="background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.3);">🔒</div><div class="escrow-tl-content"><div class="escrow-tl-title">Now — BTC locked in escrow</div><div class="escrow-tl-sub">Your ${eb} is locked in an OPNet smart contract. The merchant cannot touch it yet.</div></div></div>
+        <div class="escrow-tl-item"><div class="escrow-tl-dot" style="background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);">📦</div><div class="escrow-tl-content"><div class="escrow-tl-title">Merchant ships your order</div><div class="escrow-tl-sub">The merchant sees the escrow is locked and ships your order without receiving payment yet.</div></div></div>
+        <div class="escrow-tl-item"><div class="escrow-tl-dot" style="background:rgba(0,200,83,0.15);border:1px solid rgba(0,200,83,0.3);">✓</div><div class="escrow-tl-content"><div class="escrow-tl-title">You confirm receipt → BTC released</div><div class="escrow-tl-sub">Click "Confirm Received" after delivery and BTC goes to merchant instantly.</div></div></div>
+        <div class="escrow-tl-item"><div class="escrow-tl-dot" style="background:rgba(247,147,26,0.15);border:1px solid rgba(247,147,26,0.3);">⏳</div><div class="escrow-tl-content"><div class="escrow-tl-title">Auto-release after 14 days</div><div class="escrow-tl-sub">If you do nothing, BTC auto-releases to merchant after 14 days.</div></div></div>
+      </div>
+      <div style="background:rgba(0,0,0,0.3);border:1px solid #1e2235;border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:12px;color:#4a5568;line-height:1.6;">🕵️ <strong style="color:#6b7280;">Fully anonymous.</strong> No name, email, or address required.</div>
+      <button class="op-btn op-btn-purple" onclick="goConfirm()">🔒 Lock BTC in Escrow →</button>
+      <button class="op-btn op-btn-ghost" onclick="setStep(0)">← Back</button>
+    </div>
+    <div class="op-step" id="os2">
+      <div class="op-step-title" id="confirm-title">Confirm payment</div>
+      <div class="op-step-sub" id="confirm-sub">Review your transaction before authorizing</div>
+      <div class="op-summary">
+        <div class="op-summary-row"><span>Merchant</span><span>${o.merchant}</span></div>
+        <div class="op-summary-row"><span>Description</span><span>${o.description||'Bitcoin payment'}</span></div>
+        <div class="op-summary-row"><span>Method</span><span id="confirm-method">—</span></div>
+        <div class="op-summary-row" id="confirm-extra-row" style="display:none"><span id="confirm-extra-label">—</span><span id="confirm-extra-val">—</span></div>
+        <div class="op-summary-row"><span>Network fee</span><span>~0.000003 BTC</span></div>
+        <div class="op-summary-row total"><span>Total</span><span>₿ ${eb}</span></div>
+      </div>
+      <button class="op-btn op-btn-orange" id="confirm-authorize-btn" onclick="goProcess()">🔐 Authorize &amp; Send</button>
+      <button class="op-btn op-btn-ghost" onclick="setStep(1)">← Back</button>
+    </div>
+    <div class="op-step" id="os3">
+      <div class="op-processing">
+        <div class="op-btc-spinner"><div class="op-btc-spinner-ring" id="proc-ring"></div><div class="op-btc-spinner-icon" id="proc-icon">₿</div></div>
+        <div class="op-proc-title" id="proc-title">Broadcasting transaction...</div>
+        <div class="op-proc-sub" id="proc-sub">Please wait while your payment is confirmed</div>
+        <div class="op-proc-steps" id="proc-steps">
+          <div class="op-proc-step active" id="ps1"><div class="op-proc-step-dot"></div>Signing transaction</div>
+          <div class="op-proc-step" id="ps2"><div class="op-proc-step-dot"></div>Broadcasting to Bitcoin network</div>
+          <div class="op-proc-step" id="ps3"><div class="op-proc-step-dot"></div>Waiting for OPNet confirmation</div>
+        </div>
+      </div>
+    </div>
+    <div class="op-step" id="os4"><div id="os4-content"></div></div>
+  </div>
+</div>
+</div>`;
+}
+
+let curMethod='opnet';
+g.selMethod=function(m){
+  curMethod=m;
+  document.querySelectorAll('.op-method').forEach(b=>b.classList.remove('selected'));
+  document.getElementById('m-'+m).classList.add('selected');
+  const btn=document.getElementById('op-continue');
+  btn.disabled=false;
+  if(m==='opcredit'){btn.style.background='linear-gradient(135deg,#7c3aed,#6d28d9)';btn.style.boxShadow='0 4px 16px rgba(124,58,237,0.35)';}
+  else{btn.style.background='';btn.style.boxShadow='';}
+};
+
+g.setStep=function(n){
+  ['os0','os1-opnet','os1-opcredit','os2','os3','os4'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('op-active');});
+  const dots=document.querySelectorAll('.op-dot');
+  dots.forEach((d,i)=>d.classList.toggle('active',i===Math.min(n,3)));
+  if(n===0)document.getElementById('os0').classList.add('op-active');
+  else if(n===1){const map={opnet:'os1-opnet',opcredit:'os1-opcredit'};document.getElementById(map[curMethod]||'os1-opnet').classList.add('op-active');}
+  else if(n===2)document.getElementById('os2').classList.add('op-active');
+  else if(n===3)document.getElementById('os3').classList.add('op-active');
+  else if(n===4)document.getElementById('os4').classList.add('op-active');
+};
+
+g.goStep1=function(){setStep(1);};
+
+g.goConfirm=function(){
+  const isCredit=curMethod==='opcredit';
+  document.getElementById('confirm-title').textContent=isCredit?'Lock BTC in Escrow':'Confirm payment';
+  document.getElementById('confirm-sub').textContent=isCredit?'Your BTC will be locked — merchant ships first':'Review your transaction before authorizing';
+  document.getElementById('confirm-method').textContent=curMethod==='opnet'?'🔗 OPNet Wallet':'🔒 OpCredit Escrow';
+  const extraRow=document.getElementById('confirm-extra-row');
+  if(isCredit){extraRow.style.display='';document.getElementById('confirm-extra-label').textContent='Escrow duration';document.getElementById('confirm-extra-val').textContent='14 days auto-release';document.getElementById('confirm-authorize-btn').textContent='🔒 Lock in OPNet Escrow';document.getElementById('confirm-authorize-btn').style.background='linear-gradient(135deg,#7c3aed,#6d28d9)';}
+  else{extraRow.style.display='none';document.getElementById('confirm-authorize-btn').textContent='🔐 Authorize & Send';document.getElementById('confirm-authorize-btn').style.background='';}
+  setStep(2);
+};
+
+g.goProcess=function(){
+  setStep(3);
+  const isCredit=curMethod==='opcredit';
+  if(isCredit){
+    document.getElementById('proc-ring').style.borderTopColor='#7c3aed';
+    document.getElementById('proc-icon').textContent='🔒';
+    document.getElementById('proc-title').textContent='Locking BTC in escrow...';
+    document.getElementById('proc-sub').textContent='OPNet smart contract deploying';
+    const steps=[{id:'ps1',text:'Signing escrow transaction'},{id:'ps2',text:'Deploying OPNet escrow contract'},{id:'ps3',text:'BTC locked — awaiting confirmation'}];
+    steps.forEach(s=>{const el=document.getElementById(s.id);if(el)el.lastChild.textContent=s.text;});
+  }
+  const procSteps=[{id:'ps1',delay:700},{id:'ps2',delay:1700},{id:'ps3',delay:2900}];
+  procSteps.forEach(({id,delay},i)=>{
+    setTimeout(()=>{
+      if(i>0){const prev=document.getElementById(procSteps[i-1].id);if(prev)prev.className='op-proc-step done';}
+      const el=document.getElementById(id);
+      if(el)el.className='op-proc-step '+(i===procSteps.length-1?'done':'active');
+    },delay);
+  });
+  setTimeout(()=>{
+    const ok=Math.random()>0.1;
+    const tx='0x'+Array.from({length:16},()=>Math.floor(Math.random()*16).toString(16)).join('')+'...';
+    const escrowId=isCredit?'ESC-'+Math.random().toString(36).slice(2,10).toUpperCase():null;
+    try{const txs=JSON.parse(localStorage.getItem('oppay_transactions')||'[]');txs.push({txId:tx,amount:opts.amount,btc:opts.btc||0,description:opts.description||'Payment',method:curMethod,status:isCredit&&ok?'escrowed':ok?'confirmed':'failed',escrowId,escrowRelease:isCredit&&ok?Date.now()+(14*24*60*60*1000):null,time:Date.now(),_new:true});localStorage.setItem('oppay_transactions',JSON.stringify(txs));}catch(e){}
+    isCredit?showEscrowResult(ok,tx,escrowId):showResult(ok,tx);
+  },4000);
+};
+
+function showResult(ok,tx){
+  const el=document.getElementById('os4-content');
+  if(ok){el.innerHTML=`<div class="op-result"><div class="op-result-ring ok">✓</div><div class="op-result-title ok">Payment Confirmed!</div><div class="op-result-sub">Your Bitcoin transaction was broadcast and accepted.</div><div class="op-conf-badge">✓ &nbsp;1 OPNet confirmation</div><br/><div class="op-txid">${tx}</div><button class="op-btn op-btn-green" id="r-done">← Back to shop</button></div>`;}
+  else{el.innerHTML=`<div class="op-result"><div class="op-result-ring fail">✗</div><div class="op-result-title fail">Transaction Failed</div><div class="op-result-sub">The transaction was rejected. Please try again.</div><div class="op-txid">${tx}</div><button class="op-btn op-btn-orange" id="r-retry">↺ &nbsp;Try Again</button><button class="op-btn op-btn-ghost" id="r-cancel">Cancel</button></div>`;}
+  setStep(4);
+  const done=document.getElementById('r-done');if(done)done.onclick=()=>{close();if(ok&&opts.onSuccess)opts.onSuccess({txId:tx,method:curMethod,amount:opts.amount});};
+  const retry=document.getElementById('r-retry');if(retry)retry.onclick=()=>{close();if(opts.onFailure)opts.onFailure({txId:tx,reason:'rejected'});};
+  const can=document.getElementById('r-cancel');if(can)can.onclick=()=>{close();if(opts.onFailure)opts.onFailure({txId:tx,reason:'cancelled'});};
+}
+
+function showEscrowResult(ok,tx,escrowId){
+  const el=document.getElementById('os4-content');
+  if(ok){
+    const releaseDate=new Date(Date.now()+14*24*60*60*1000).toLocaleDateString('nl-NL',{day:'2-digit',month:'long',year:'numeric'});
+    el.innerHTML=`<div class="escrow-success"><div class="escrow-icon">🔒</div><div class="op-result-title ok" style="color:#a78bfa;">BTC Locked in Escrow!</div><div class="op-result-sub">The merchant will now ship your order. Your BTC is safe.</div><div class="escrow-id">${escrowId}</div><div class="escrow-countdown"><div class="escrow-countdown-label">Auto-releases to merchant in</div><div class="escrow-countdown-days">14 days</div><div class="escrow-countdown-sub">on ${releaseDate} — or earlier when you confirm receipt</div></div><button class="op-btn op-btn-confirm-receipt" id="r-confirm-receipt">✓ &nbsp;Confirm Received (release now)</button><button class="op-btn op-btn-ghost" id="r-done" style="margin-top:10px;">← Back to shop</button></div>`;
+  }else{
+    el.innerHTML=`<div class="op-result"><div class="op-result-ring fail">✗</div><div class="op-result-title fail">Escrow Failed</div><div class="op-result-sub">Could not deploy the escrow contract. Please try again.</div><div class="op-txid">${tx}</div><button class="op-btn op-btn-purple" id="r-retry" style="margin-bottom:0">↺ &nbsp;Try Again</button><button class="op-btn op-btn-ghost" id="r-cancel">Cancel</button></div>`;
+  }
+  setStep(4);
+  const done=document.getElementById('r-done');if(done)done.onclick=()=>{close();if(ok&&opts.onSuccess)opts.onSuccess({txId:tx,method:'opcredit',escrowId,amount:opts.amount});};
+  const cr=document.getElementById('r-confirm-receipt');
+  if(cr)cr.onclick=()=>{cr.textContent='✓ Receipt confirmed — BTC released!';cr.style.background='rgba(0,200,83,0.2)';cr.disabled=true;try{const txs=JSON.parse(localStorage.getItem('oppay_transactions')||'[]');const t=txs.find(t=>t.escrowId===escrowId);if(t){t.status='confirmed';t.escrowReleased=true;localStorage.setItem('oppay_transactions',JSON.stringify(txs));}}catch(e){}setTimeout(()=>{close();if(opts.onSuccess)opts.onSuccess({txId:tx,method:'opcredit',escrowId,amount:opts.amount});},1000);};
+  const retry=document.getElementById('r-retry');if(retry)retry.onclick=()=>{close();if(opts.onFailure)opts.onFailure({txId:tx,reason:'escrow_failed'});};
+  const can=document.getElementById('r-cancel');if(can)can.onclick=()=>{close();if(opts.onFailure)opts.onFailure({txId:tx,reason:'cancelled'});};
+}
+
+function open(o){
+  if(overlay)return;
+  opts=o||{};curMethod='opnet';
+  const w=document.createElement('div');w.innerHTML=modal(o);overlay=w.firstElementChild;
+  document.body.appendChild(overlay);document.body.style.overflow='hidden';
+  requestAnimationFrame(()=>requestAnimationFrame(()=>overlay.classList.add('oppay-visible')));
+  document.getElementById('op-x').onclick=()=>{close();if(o.onCancel)o.onCancel();};
+  overlay.onclick=(e)=>{if(e.target===overlay){close();if(o.onCancel)o.onCancel();}};
+  document._opEsc=(e)=>{if(e.key==='Escape'){close();if(o.onCancel)o.onCancel();}};
+  document.addEventListener('keydown',document._opEsc);
+}
+
+function close(){
+  if(!overlay)return;
+  overlay.classList.remove('oppay-visible');
+  document.body.style.overflow='';
+  document.removeEventListener('keydown',document._opEsc);
+  setTimeout(()=>{if(overlay){overlay.remove();overlay=null;}},350);
+}
+
+g.OpPay={open,close,version:'1.0.0'};
+})(window);
+</script>
+
+<!-- PAGE LOGIC -->
+<script>
+function pay(amount,btc,merchant,description){
+  OpPay.open({
+    amount,btc,merchant,description,
+    onSuccess:(d)=>{
+      if(d.method==='opcredit'){logEvent('ok',`🔒 OpCredit · €${amount.toFixed(2)} ESCROWED → ${merchant} · ID ${d.escrowId}`);}
+      else{logEvent('ok',`₿ ${d.method.toUpperCase()} · €${amount.toFixed(2)} → ${merchant} · TX ${d.txId}`);}
+    },
+    onFailure:(d)=>logEvent('fail',`Payment failed: ${d.reason}`),
+    onCancel:()=>logEvent('cancel','Payment cancelled by user'),
+  });
+}
+
+function payCustom(){
+  const amount=parseFloat(document.getElementById('custom-amount').value);
+  if(!amount||amount<=0)return alert('Enter a valid amount.');
+  const btc=+(amount/100000).toFixed(8);
+  pay(amount,btc,'Custom Demo',`Custom payment €${amount.toFixed(2)}`);
+}
+
+function showTab(id){
+  document.querySelectorAll('.ctab').forEach((t,i)=>t.classList.toggle('active',['html','js','react'][i]===id));
+  document.querySelectorAll('.cblock').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+}
+
+function logEvent(type,msg){
+  const log=document.getElementById('log');
+  const empty=log.querySelector('.log-empty');if(empty)empty.remove();
+  const time=new Date().toLocaleTimeString('nl-NL',{hour12:false});
+  const cls={ok:'log-ok',fail:'log-fail',cancel:'log-cancel'};
+  const ico={ok:'✓',fail:'✗',cancel:'—'};
+  const row=document.createElement('div');row.className='log-row';
+  row.innerHTML=`<span class="log-t">${time}</span><span class="${cls[type]||''}">${ico[type]||'·'} ${msg}</span>`;
+  log.insertBefore(row,log.firstChild);
+}
+
+function clearLog(){document.getElementById('log').innerHTML='<div class="log-empty">No events yet — click Pay to test.</div>';}
+
+// Scroll reveal
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if(e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); } });
+}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+// Mobile nav
+function toggleMobNav(){
+  const ham=document.getElementById('nav-ham');
+  const mob=document.getElementById('mob-nav');
+  ham.classList.toggle('open');
+  mob.classList.toggle('open');
+}
+function closeMobNav(){
+  document.getElementById('nav-ham').classList.remove('open');
+  document.getElementById('mob-nav').classList.remove('open');
+}
+document.addEventListener('click',function(e){
+  const mob=document.getElementById('mob-nav');
+  const ham=document.getElementById('nav-ham');
+  if(mob&&mob.classList.contains('open')&&!mob.contains(e.target)&&!ham.contains(e.target)){closeMobNav();}
+});
+</script>
+</body>
+</html>

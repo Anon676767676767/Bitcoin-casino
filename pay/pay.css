@@ -1,0 +1,483 @@
+/* ===== OpPay SDK Styles ===== */
+:root {
+  --oppay-primary: #0070f3;
+  --oppay-primary-dark: #0051cc;
+  --oppay-success: #00c853;
+  --oppay-error: #ff1744;
+  --oppay-bg: #ffffff;
+  --oppay-overlay: rgba(0, 0, 0, 0.55);
+  --oppay-radius: 16px;
+  --oppay-font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.oppay-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--oppay-overlay);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  backdrop-filter: blur(4px);
+}
+
+.oppay-overlay.oppay-visible {
+  opacity: 1;
+}
+
+.oppay-modal {
+  background: var(--oppay-bg);
+  border-radius: var(--oppay-radius);
+  width: 100%;
+  max-width: 440px;
+  margin: 16px;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.22);
+  font-family: var(--oppay-font);
+  overflow: hidden;
+  transform: translateY(24px) scale(0.97);
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.oppay-overlay.oppay-visible .oppay-modal {
+  transform: translateY(0) scale(1);
+}
+
+/* Header */
+.oppay-header {
+  background: linear-gradient(135deg, #0070f3 0%, #0051cc 100%);
+  padding: 24px 28px 20px;
+  color: white;
+  position: relative;
+}
+
+.oppay-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.oppay-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: -0.5px;
+}
+
+.oppay-logo svg {
+  width: 32px;
+  height: 32px;
+}
+
+.oppay-close {
+  background: rgba(255,255,255,0.2);
+  border: none;
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  line-height: 1;
+  transition: background 0.15s;
+}
+
+.oppay-close:hover {
+  background: rgba(255,255,255,0.35);
+}
+
+.oppay-merchant {
+  font-size: 13px;
+  opacity: 0.8;
+  margin-bottom: 4px;
+}
+
+.oppay-amount-display {
+  font-size: 36px;
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+
+.oppay-amount-label {
+  font-size: 12px;
+  opacity: 0.7;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+
+/* Body */
+.oppay-body {
+  padding: 24px 28px 28px;
+}
+
+/* Steps */
+.oppay-step { display: none; }
+.oppay-step.oppay-active { display: block; }
+
+/* Step labels */
+.oppay-step-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111;
+  margin-bottom: 6px;
+}
+
+.oppay-step-sub {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 20px;
+}
+
+/* Bank grid */
+.oppay-banks {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.oppay-bank-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 2px solid #e8e8e8;
+  border-radius: 12px;
+  background: #fafafa;
+  cursor: pointer;
+  font-family: var(--oppay-font);
+  font-size: 13px;
+  font-weight: 500;
+  color: #222;
+  transition: all 0.15s;
+  text-align: left;
+}
+
+.oppay-bank-btn:hover {
+  border-color: var(--oppay-primary);
+  background: #f0f7ff;
+  color: var(--oppay-primary);
+}
+
+.oppay-bank-btn.selected {
+  border-color: var(--oppay-primary);
+  background: #e8f1ff;
+  color: var(--oppay-primary);
+  box-shadow: 0 0 0 3px rgba(0,112,243,0.12);
+}
+
+.oppay-bank-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+/* Description field */
+.oppay-field {
+  margin-bottom: 16px;
+}
+
+.oppay-field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 6px;
+}
+
+.oppay-field input {
+  width: 100%;
+  padding: 11px 14px;
+  border: 2px solid #e8e8e8;
+  border-radius: 10px;
+  font-family: var(--oppay-font);
+  font-size: 14px;
+  color: #111;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.oppay-field input:focus {
+  border-color: var(--oppay-primary);
+}
+
+/* Security badges */
+.oppay-security {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #888;
+  margin-top: 16px;
+  justify-content: center;
+}
+
+.oppay-security svg {
+  color: var(--oppay-success);
+}
+
+/* Progress/Loading step */
+.oppay-loading {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.oppay-spinner {
+  width: 52px;
+  height: 52px;
+  border: 4px solid #e8e8e8;
+  border-top-color: var(--oppay-primary);
+  border-radius: 50%;
+  animation: oppay-spin 0.75s linear infinite;
+  margin: 0 auto 20px;
+}
+
+@keyframes oppay-spin {
+  to { transform: rotate(360deg); }
+}
+
+.oppay-loading-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111;
+  margin-bottom: 6px;
+}
+
+.oppay-loading-sub {
+  font-size: 13px;
+  color: #888;
+}
+
+/* Bank redirect step */
+.oppay-bank-screen {
+  text-align: center;
+  padding: 8px 0;
+}
+
+.oppay-bank-logo-large {
+  font-size: 52px;
+  margin-bottom: 12px;
+}
+
+.oppay-bank-screen-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #111;
+  margin-bottom: 4px;
+}
+
+.oppay-bank-screen-sub {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 24px;
+}
+
+.oppay-bank-form {
+  background: #f6f8fa;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.oppay-bank-form-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  padding: 6px 0;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.oppay-bank-form-row:last-child {
+  border-bottom: none;
+  font-weight: 600;
+  font-size: 14px;
+  padding-top: 10px;
+}
+
+.oppay-bank-form-row span:first-child {
+  color: #666;
+}
+
+.oppay-bank-form-row span:last-child {
+  color: #111;
+}
+
+/* Result step */
+.oppay-result {
+  text-align: center;
+  padding: 16px 0;
+}
+
+.oppay-result-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  font-size: 28px;
+}
+
+.oppay-result-icon.success {
+  background: #e8fbe8;
+  color: var(--oppay-success);
+}
+
+.oppay-result-icon.error {
+  background: #ffe8e8;
+  color: var(--oppay-error);
+}
+
+.oppay-result-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.oppay-result-title.success { color: #00a040; }
+.oppay-result-title.error { color: var(--oppay-error); }
+
+.oppay-result-sub {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.oppay-tx-id {
+  font-size: 11px;
+  color: #aaa;
+  font-family: monospace;
+  background: #f4f4f4;
+  padding: 6px 12px;
+  border-radius: 8px;
+  display: inline-block;
+  margin-bottom: 24px;
+}
+
+/* Buttons */
+.oppay-btn {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  font-family: var(--oppay-font);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.oppay-btn-primary {
+  background: var(--oppay-primary);
+  color: white;
+}
+
+.oppay-btn-primary:hover:not(:disabled) {
+  background: var(--oppay-primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0,112,243,0.35);
+}
+
+.oppay-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.oppay-btn-secondary {
+  background: transparent;
+  color: #666;
+  border: 2px solid #e8e8e8;
+  margin-top: 10px;
+}
+
+.oppay-btn-secondary:hover {
+  background: #f4f4f4;
+}
+
+.oppay-btn-success {
+  background: var(--oppay-success);
+  color: white;
+}
+
+.oppay-btn-success:hover {
+  background: #00a040;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0,200,83,0.35);
+}
+
+/* Progress dots */
+.oppay-steps-indicator {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  padding-bottom: 20px;
+}
+
+.oppay-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ddd;
+  transition: all 0.2s;
+}
+
+.oppay-dot.active {
+  background: var(--oppay-primary);
+  width: 20px;
+  border-radius: 3px;
+}
+
+/* Embeddable button styles */
+.oppay-trigger-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 24px;
+  background: linear-gradient(135deg, #0070f3, #0051cc);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-family: var(--oppay-font);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  box-shadow: 0 4px 14px rgba(0,112,243,0.35);
+  letter-spacing: -0.2px;
+}
+
+.oppay-trigger-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,112,243,0.45);
+}
+
+.oppay-trigger-btn:active {
+  transform: translateY(0);
+}
+
+.oppay-trigger-btn svg {
+  width: 20px;
+  height: 20px;
+}

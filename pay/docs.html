@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>OpPay Docs — How It Works</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --orange: #f7931a; --orange-dim: rgba(247,147,26,0.1); --orange-border: rgba(247,147,26,0.2);
+      --green: #00c853; --red: #ff4444; --blue: #3b82f6; --purple: #7c3aed; --purple-light: #a78bfa;
+      --bg: #070810; --surface: #0c0e18; --card: #10131e; --border: #1b1f30;
+      --text: #f0f0f0; --muted: #4a5568; --sub: #8892a4;
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+
+    /* Orbs */
+    .bg-orbs { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+    .orb { position: absolute; border-radius: 50%; filter: blur(90px); }
+    .orb1 { width: 600px; height: 600px; background: radial-gradient(circle, rgba(247,147,26,0.07) 0%, transparent 70%); top: -200px; left: -200px; }
+    .orb2 { width: 400px; height: 400px; background: radial-gradient(circle, rgba(124,58,237,0.07) 0%, transparent 70%); bottom: 0; right: -100px; }
+
+    /* NAV */
+    .nav {
+      position: sticky; top: 0; z-index: 1000;
+      background: rgba(7,8,16,0.9); border-bottom: 1px solid var(--border);
+      padding: 0 40px; height: 64px; display: flex; align-items: center; justify-content: space-between;
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    }
+    .nav-logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 19px; letter-spacing: -0.4px; text-decoration: none; color: white; }
+    .nav-logo-icon { width: 32px; height: 32px; background: linear-gradient(135deg, #f7931a, #d4780f); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 17px; box-shadow: 0 4px 12px rgba(247,147,26,0.3); }
+    .nav-right { display: flex; align-items: center; gap: 20px; }
+    .nav-link { color: var(--muted); font-size: 14px; font-weight: 500; text-decoration: none; transition: color 0.15s; }
+    .nav-link:hover { color: white; }
+    .nav-cta { background: linear-gradient(135deg, #f7931a, #e07d0e); color: #000 !important; font-weight: 700; padding: 8px 18px; border-radius: 10px; font-size: 13px; }
+    .nav-cta:hover { opacity: 0.9; }
+    .docs-badge { background: rgba(247,147,26,0.1); color: var(--orange); border: 1px solid var(--orange-border); font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 20px; }
+
+    /* LAYOUT */
+    .docs-layout { display: flex; min-height: calc(100vh - 64px); position: relative; z-index: 1; max-width: 1280px; margin: 0 auto; }
+
+    /* Sidebar nav */
+    .docs-sidebar {
+      width: 260px; flex-shrink: 0; padding: 36px 0;
+      position: sticky; top: 64px; height: calc(100vh - 64px); overflow-y: auto;
+      border-right: 1px solid var(--border);
+    }
+    .docs-nav-section { margin-bottom: 28px; padding: 0 24px; }
+    .docs-nav-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
+    .docs-nav-link {
+      display: block; padding: 7px 12px; border-radius: 9px; font-size: 13px; font-weight: 500;
+      color: var(--sub); text-decoration: none; transition: all 0.15s; margin-bottom: 2px;
+    }
+    .docs-nav-link:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+    .docs-nav-link.active { background: var(--orange-dim); color: var(--orange); font-weight: 600; border-left: 2px solid var(--orange); padding-left: 10px; }
+
+    /* Main content */
+    .docs-main { flex: 1; padding: 52px 64px 120px; max-width: 860px; }
+    .docs-section { margin-bottom: 80px; scroll-margin-top: 88px; }
+    .section-eyebrow { font-size: 11px; font-weight: 700; color: var(--orange); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+    .section-title { font-size: clamp(24px,3.5vw,36px); font-weight: 800; letter-spacing: -1px; margin-bottom: 14px; line-height: 1.15; }
+    .section-lead { font-size: 16px; color: var(--sub); line-height: 1.75; margin-bottom: 36px; max-width: 640px; }
+    .divider { height: 1px; background: linear-gradient(90deg, var(--border), transparent); margin: 64px 0; }
+
+    /* Steps */
+    .steps { display: flex; flex-direction: column; gap: 0; }
+    .step { display: flex; gap: 24px; position: relative; padding-bottom: 36px; }
+    .step:last-child { padding-bottom: 0; }
+    .step::before { content: ''; position: absolute; left: 19px; top: 44px; width: 2px; bottom: 0; background: linear-gradient(to bottom, var(--border), transparent); }
+    .step:last-child::before { display: none; }
+    .step-num { width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, #f7931a, #d4780f); color: #000; font-weight: 800; font-size: 15px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 16px rgba(247,147,26,0.3); }
+    .step-body { flex: 1; padding-top: 6px; }
+    .step-title { font-size: 16px; font-weight: 700; color: white; margin-bottom: 6px; }
+    .step-text { font-size: 14px; color: var(--sub); line-height: 1.7; }
+    .step-tag { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; margin-top: 10px; }
+    .tag-orange { background: var(--orange-dim); color: var(--orange); border: 1px solid var(--orange-border); }
+    .tag-green  { background: rgba(0,200,83,0.1); color: var(--green); border: 1px solid rgba(0,200,83,0.2); }
+    .tag-purple { background: rgba(124,58,237,0.1); color: var(--purple-light); border: 1px solid rgba(124,58,237,0.25); }
+    .tag-blue   { background: rgba(59,130,246,0.1); color: var(--blue); border: 1px solid rgba(59,130,246,0.2); }
+
+    /* Cards */
+    .cards-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px; }
+    .cards-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-bottom: 28px; }
+    .doc-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 22px; transition: all 0.2s; }
+    .doc-card:hover { border-color: rgba(247,147,26,0.25); transform: translateY(-2px); }
+    .doc-card-icon { font-size: 28px; margin-bottom: 12px; }
+    .doc-card-title { font-size: 14px; font-weight: 700; color: white; margin-bottom: 6px; }
+    .doc-card-text { font-size: 13px; color: var(--sub); line-height: 1.65; }
+
+    /* Method cards */
+    .method-card { background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 26px; display: flex; gap: 18px; margin-bottom: 16px; transition: all 0.2s; }
+    .method-card:hover { border-color: rgba(247,147,26,0.25); transform: translateX(4px); }
+    .method-card.purple:hover { border-color: rgba(124,58,237,0.3); }
+    .method-icon { width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+    .method-icon.orange { background: rgba(247,147,26,0.12); }
+    .method-icon.purple-bg { background: rgba(124,58,237,0.12); }
+    .method-body { flex: 1; }
+    .method-name { font-size: 15px; font-weight: 700; color: white; margin-bottom: 4px; }
+    .method-desc { font-size: 13px; color: var(--sub); line-height: 1.65; margin-bottom: 10px; }
+
+    /* Code blocks */
+    .code-block { background: #04070f; border: 1px solid #1a2535; border-radius: 14px; overflow: hidden; margin: 20px 0; }
+    .code-header { background: #070c15; border-bottom: 1px solid #1a2535; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; }
+    .code-lang { font-size: 12px; font-weight: 600; color: var(--muted); }
+    .code-copy { font-size: 11px; font-weight: 600; color: var(--muted); background: none; border: 1px solid #1a2535; border-radius: 6px; padding: 4px 10px; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+    .code-copy:hover { color: var(--orange); border-color: var(--orange-border); }
+    .code-copy.copied { color: var(--green); border-color: rgba(0,200,83,0.3); }
+    .code-body { padding: 22px 24px; font-family: 'Cascadia Code','Fira Code','Consolas',monospace; font-size: 13px; line-height: 1.85; overflow-x: auto; color: #c9d1d9; }
+    .cm { color: #3a4556; } .ct { color: #7ee787; } .ca { color: #79c0ff; } .cv { color: #a5d6ff; }
+    .cf { color: #d2a8ff; } .ck { color: #ff7b72; } .co { color: #ffa657; } .cn { color: #79c0ff; }
+    .cs { color: #a5d6ff; } .ch { color: #e2a86e; }
+
+    /* Callout */
+    .callout { border-radius: 14px; padding: 18px 22px; margin: 24px 0; display: flex; gap: 14px; align-items: flex-start; }
+    .callout-info  { background: rgba(59,130,246,0.07); border: 1px solid rgba(59,130,246,0.2); }
+    .callout-warn  { background: rgba(247,147,26,0.07); border: 1px solid rgba(247,147,26,0.2); }
+    .callout-tip   { background: rgba(0,200,83,0.07); border: 1px solid rgba(0,200,83,0.18); }
+    .callout-icon  { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+    .callout-body  { flex: 1; font-size: 13px; line-height: 1.7; }
+    .callout-title { font-weight: 700; margin-bottom: 3px; }
+    .callout-info  .callout-title { color: var(--blue); }
+    .callout-warn  .callout-title { color: var(--orange); }
+    .callout-tip   .callout-title { color: var(--green); }
+    .callout-info  .callout-body  { color: #8ab4f8; }
+    .callout-warn  .callout-body  { color: #c4843a; }
+    .callout-tip   .callout-body  { color: #4ead7a; }
+
+    /* Inline code */
+    code { font-family: 'Cascadia Code','Fira Code','Consolas',monospace; font-size: 12.5px; background: rgba(247,147,26,0.08); color: var(--orange); padding: 2px 7px; border-radius: 5px; border: 1px solid rgba(247,147,26,0.15); }
+
+    /* Table */
+    .doc-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13px; }
+    .doc-table th { text-align: left; padding: 10px 14px; background: var(--surface); border-bottom: 1px solid var(--border); color: var(--muted); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; }
+    .doc-table td { padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,0.04); color: var(--sub); vertical-align: top; line-height: 1.6; }
+    .doc-table td:first-child { color: var(--orange); font-family: 'Cascadia Code',monospace; font-size: 12px; }
+    .doc-table tr:last-child td { border-bottom: none; }
+    .doc-table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; margin: 20px 0; }
+
+    /* Withdraw flow */
+    .withdraw-flow { display: flex; align-items: stretch; gap: 0; margin: 24px 0; }
+    .wf-step { flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 0; padding: 22px 18px; text-align: center; position: relative; transition: all 0.2s; }
+    .wf-step:first-child { border-radius: 14px 0 0 14px; }
+    .wf-step:last-child  { border-radius: 0 14px 14px 0; }
+    .wf-step:hover { background: #131928; }
+    .wf-step + .wf-step { border-left: none; }
+    .wf-arrow { display: flex; align-items: center; justify-content: center; padding: 0 4px; color: var(--border); font-size: 20px; flex-shrink: 0; background: var(--card); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .wf-icon { font-size: 28px; margin-bottom: 10px; }
+    .wf-title { font-size: 13px; font-weight: 700; color: white; margin-bottom: 4px; }
+    .wf-sub { font-size: 11px; color: var(--muted); line-height: 1.5; }
+
+    /* Hero banner */
+    .docs-hero { padding: 60px 64px 52px; border-bottom: 1px solid var(--border); background: linear-gradient(160deg, rgba(247,147,26,0.04) 0%, transparent 50%); position: relative; z-index: 1; max-width: 1280px; margin: 0 auto; }
+    .docs-hero-badge { display: inline-flex; align-items: center; gap: 8px; background: var(--orange-dim); border: 1px solid var(--orange-border); border-radius: 20px; padding: 6px 16px; font-size: 12px; font-weight: 600; color: var(--orange); margin-bottom: 20px; }
+    .docs-hero h1 { font-size: clamp(32px,5vw,54px); font-weight: 900; letter-spacing: -2px; line-height: 1.08; margin-bottom: 16px; }
+    .docs-hero h1 span { color: var(--orange); }
+    .docs-hero p { font-size: 16px; color: var(--sub); max-width: 540px; line-height: 1.7; margin-bottom: 28px; }
+    .hero-quick-links { display: flex; gap: 10px; flex-wrap: wrap; }
+    .quick-link { display: inline-flex; align-items: center; gap: 7px; padding: 9px 18px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; font-size: 13px; font-weight: 600; color: var(--sub); text-decoration: none; transition: all 0.18s; }
+    .quick-link:hover { border-color: var(--orange-border); color: var(--orange); background: var(--orange-dim); transform: translateY(-1px); }
+    .quick-link-icon { font-size: 15px; }
+
+    /* Endpoint rows */
+    .endpoint { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; margin-bottom: 12px; display: flex; align-items: flex-start; gap: 14px; transition: all 0.15s; }
+    .endpoint:hover { border-color: rgba(247,147,26,0.2); }
+    .ep-method { font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 6px; flex-shrink: 0; font-family: monospace; margin-top: 2px; }
+    .ep-get  { background: rgba(0,200,83,0.1); color: var(--green); }
+    .ep-post { background: rgba(59,130,246,0.1); color: var(--blue); }
+    .ep-put  { background: rgba(247,147,26,0.1); color: var(--orange); }
+    .ep-body { flex: 1; }
+    .ep-path { font-family: 'Cascadia Code',monospace; font-size: 13px; color: white; margin-bottom: 4px; }
+    .ep-desc { font-size: 12px; color: var(--sub); }
+    .ep-auth { font-size: 10px; font-weight: 700; color: var(--orange); background: var(--orange-dim); border: 1px solid var(--orange-border); padding: 2px 8px; border-radius: 12px; display: inline-block; margin-top: 4px; }
+    .ep-pub { font-size: 10px; font-weight: 700; color: var(--green); background: rgba(0,200,83,0.08); border: 1px solid rgba(0,200,83,0.2); padding: 2px 8px; border-radius: 12px; display: inline-block; margin-top: 4px; }
+
+    /* Scroll reveal */
+    .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.5s ease, transform 0.5s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* Active section highlight */
+    .active-section h2 { color: var(--orange); }
+
+    @media (max-width: 900px) {
+      .docs-sidebar { display: none; }
+      .docs-hero, .docs-main { padding-left: 24px; padding-right: 24px; }
+      .cards-2, .cards-3 { grid-template-columns: 1fr; }
+      .withdraw-flow { flex-direction: column; }
+      .wf-step { border-radius: 12px !important; margin-bottom: 8px; }
+      .wf-arrow { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="bg-orbs">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+</div>
+
+<!-- NAV -->
+<nav class="nav">
+  <a class="nav-logo" href="index.html">
+    <div class="nav-logo-icon">₿</div>
+    <span>Op<span style="color:var(--orange)">Pay</span></span>
+  </a>
+  <div class="nav-right">
+    <span class="docs-badge">Documentation</span>
+    <a href="business.html" class="nav-link">For Business</a>
+    <a href="index.html" class="nav-link">← Home</a>
+    <a href="merchant.html" class="nav-link nav-cta">Dashboard →</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="docs-hero">
+  <div class="docs-hero-badge">📖 Official Docs</div>
+  <h1>How <span>OpPay</span> works</h1>
+  <p>Everything you need to accept Bitcoin payments on your website — from integration to withdrawal. No banks, no KYC, just Bitcoin.</p>
+  <div class="hero-quick-links">
+    <a href="#overview" class="quick-link"><span class="quick-link-icon">🔍</span> Overview</a>
+    <a href="#methods" class="quick-link"><span class="quick-link-icon">₿</span> Payment Methods</a>
+    <a href="#integrate" class="quick-link"><span class="quick-link-icon">🔌</span> Integration</a>
+    <a href="#backend" class="quick-link"><span class="quick-link-icon">⚙️</span> Backend Setup</a>
+    <a href="#withdraw" class="quick-link"><span class="quick-link-icon">💸</span> Withdrawals</a>
+    <a href="#api" class="quick-link"><span class="quick-link-icon">🔑</span> API Reference</a>
+  </div>
+</div>
+
+<div class="docs-layout">
+
+  <!-- Sidebar -->
+  <aside class="docs-sidebar">
+    <div style="padding: 28px 0 0;">
+      <div class="docs-nav-section">
+        <div class="docs-nav-label">Getting Started</div>
+        <a href="#overview"  class="docs-nav-link active">What is OpPay?</a>
+        <a href="#methods"   class="docs-nav-link">Payment Methods</a>
+        <a href="#flow"      class="docs-nav-link">Payment Flow</a>
+      </div>
+      <div class="docs-nav-section">
+        <div class="docs-nav-label">For Merchants</div>
+        <a href="#integrate" class="docs-nav-link">Integration Guide</a>
+        <a href="#backend"   class="docs-nav-link">Backend Setup</a>
+        <a href="#webhooks"  class="docs-nav-link">Webhooks</a>
+        <a href="#withdraw"  class="docs-nav-link">Withdrawals</a>
+      </div>
+      <div class="docs-nav-section">
+        <div class="docs-nav-label">Reference</div>
+        <a href="#api"       class="docs-nav-link">API Reference</a>
+        <a href="#sdk"       class="docs-nav-link">SDK Options</a>
+        <a href="#faq"       class="docs-nav-link">FAQ</a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main docs content -->
+  <main class="docs-main">
+
+    <!-- ── OVERVIEW ─────────────────────────────────────────────────────── -->
+    <section class="docs-section" id="overview">
+      <div class="section-eyebrow">Getting Started</div>
+      <h2 class="section-title">What is OpPay?</h2>
+      <p class="section-lead">OpPay is a drop-in Bitcoin payment widget that any website can embed with a single script tag. It runs on the OPNet Bitcoin Layer 1 smart contract platform — no banks, no intermediaries, no KYC.</p>
+
+      <div class="cards-3 reveal">
+        <div class="doc-card">
+          <div class="doc-card-icon">🔌</div>
+          <div class="doc-card-title">One script tag</div>
+          <div class="doc-card-text">Add one line to your HTML and you have a fully functional Bitcoin payment modal.</div>
+        </div>
+        <div class="doc-card">
+          <div class="doc-card-icon">₿</div>
+          <div class="doc-card-title">Real Bitcoin L1</div>
+          <div class="doc-card-text">Payments settle on Bitcoin Layer 1 via OPNet. No wrapped tokens, no bridges.</div>
+        </div>
+        <div class="doc-card">
+          <div class="doc-card-icon">🌍</div>
+          <div class="doc-card-title">Borderless</div>
+          <div class="doc-card-text">Anyone in the world can pay — no bank account, no card, no geographic limits.</div>
+        </div>
+      </div>
+
+      <div class="callout callout-info reveal">
+        <div class="callout-icon">ℹ️</div>
+        <div class="callout-body">
+          <div class="callout-title">OPNet Testnet</div>
+          OpPay currently runs on OPNet Testnet (Signet fork). Use <code>networks.opnetTestnet</code> from <code>@btc-vision/bitcoin</code>. Mainnet launch is planned after audits.
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- ── METHODS ───────────────────────────────────────────────────────── -->
+    <section class="docs-section" id="methods">
+      <div class="section-eyebrow">Payment Methods</div>
+      <h2 class="section-title">Three ways to pay</h2>
+      <p class="section-lead">OpPay gives customers three payment options in the same modal. You don't need to configure anything — all three are available by default.</p>
+
+      <div class="method-card reveal">
+        <div class="method-icon orange">🔗</div>
+        <div class="method-body">
+          <div class="method-name">OPNet Wallet <span class="step-tag tag-orange" style="margin-top:0;margin-left:8px;vertical-align:middle;">RECOMMENDED</span></div>
+          <div class="method-desc">The customer connects their OPNet wallet (similar to MetaMask for Bitcoin). The wallet shows the transaction, the customer approves it, and the BTC is sent directly from their wallet to the merchant's address. No copy-paste required.</div>
+          <div>
+            <span class="step-tag tag-orange">Fastest</span>
+            <span class="step-tag tag-green" style="margin-left:6px;">Instant confirmation</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="method-card purple reveal">
+        <div class="method-icon purple-bg">🔒</div>
+        <div class="method-body">
+          <div class="method-name" style="color:var(--purple-light);">OpCredit — Pay Later <span class="step-tag tag-purple" style="margin-top:0;margin-left:8px;vertical-align:middle;">NEW</span></div>
+          <div class="method-desc">Inspired by Klarna. The customer locks BTC in an OPNet smart contract escrow. The merchant sees the locked funds and ships the order. After delivery the customer clicks "Confirm Received" and the BTC is released instantly. If nothing happens, BTC auto-releases after 14 days. Fully anonymous — no name, email or address required.</div>
+          <div>
+            <span class="step-tag tag-purple">Anonymous</span>
+            <span class="step-tag tag-green" style="margin-left:6px;">Escrow protected</span>
+            <span class="step-tag tag-orange" style="margin-left:6px;">14-day auto-release</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- ── FLOW ──────────────────────────────────────────────────────────── -->
+    <section class="docs-section" id="flow">
+      <div class="section-eyebrow">Payment Flow</div>
+      <h2 class="section-title">Step by step</h2>
+      <p class="section-lead">Here's exactly what happens from the moment a customer clicks Pay to when funds hit your wallet.</p>
+
+      <div class="steps reveal">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Customer clicks Pay</div>
+            <div class="step-text">Your website calls <code>OpPay.open()</code> with the amount and description. The modal opens with a smooth animation. The customer sees the EUR amount and BTC equivalent.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Your server creates a session</div>
+            <div class="step-text">Before or when the modal opens, your backend calls <code>POST /api/sessions</code> with your API key. The server derives a unique Bitcoin address for this payment (using your xpub HD wallet) and returns a <code>session_id</code>.</div>
+            <span class="step-tag tag-blue">Server-side only</span>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Customer chooses method and pays</div>
+            <div class="step-text">The customer selects OPNet Wallet or OpCredit. They authorize the transaction in their wallet, or OpCredit customers lock BTC in an OPNet smart contract escrow.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-title">OpPay monitors the address</div>
+            <div class="step-text">The OpPay backend polls the OPNet RPC every 15 seconds for a balance on the payment address. When BTC is detected (within 0.5% tolerance), the session status updates to <code>detected</code> then <code>confirmed</code>.</div>
+            <span class="step-tag tag-orange">Polling every 15s</span>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <div class="step-title">Webhook fires + dashboard updates</div>
+            <div class="step-text">Your registered webhook URL receives a signed POST request with the payment details. At the same time, your merchant dashboard updates in real time via WebSocket. The customer sees a confirmation screen.</div>
+            <span class="step-tag tag-green">Real-time via WebSocket</span>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">6</div>
+          <div class="step-body">
+            <div class="step-title">Funds available for withdrawal</div>
+            <div class="step-text">Confirmed payments appear in your dashboard balance. You can withdraw to any Bitcoin address at any time from the Withdraw page. OpCredit escrow funds are released after 14 days or when the customer confirms receipt.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- ── INTEGRATE ─────────────────────────────────────────────────────── -->
+    <section class="docs-section" id="integrate">
+      <div class="section-eyebrow">For Merchants</div>
+      <h2 class="section-title">Integration guide</h2>
+      <p class="section-lead">Adding OpPay to any website takes about 5 minutes. Here's the complete guide.</p>
+
+      <h3 style="font-size:16px;font-weight:700;margin-bottom:12px;color:white;">Step 1 — Include the script</h3>
+      <p style="font-size:14px;color:var(--sub);margin-bottom:12px;line-height:1.7;">Add one line inside your <code>&lt;head&gt;</code> tag:</p>
+      <div class="code-block reveal">
+        <div class="code-header"><span class="code-lang">HTML</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+        <div class="code-body"><span class="ct">&lt;script</span> <span class="ca">src</span>=<span class="cv">"https://cdn.oppay.io/v1/pay.js"</span><span class="ct">&gt;&lt;/script&gt;</span></div>
+      </div>
+
+      <h3 style="font-size:16px;font-weight:700;margin:28px 0 12px;color:white;">Step 2 — Create a session on your server</h3>
+      <p style="font-size:14px;color:var(--sub);margin-bottom:12px;line-height:1.7;">When a customer is ready to checkout, your <strong>server</strong> creates a payment session. Never do this on the frontend — it exposes your API key.</p>
+      <div class="code-block reveal">
+        <div class="code-header"><span class="code-lang">Node.js (your backend)</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+        <div class="code-body"><span class="ck">const</span> res = <span class="ck">await</span> fetch(<span class="cv">'http://your-oppay-server/api/sessions'</span>, {
+  method: <span class="cv">'POST'</span>,
+  headers: {
+    <span class="cv">'Authorization'</span>: <span class="cv">'Bearer op_live_your_api_key'</span>,
+    <span class="cv">'Content-Type'</span>:  <span class="cv">'application/json'</span>,
+  },
+  body: JSON.stringify({
+    amount_eur:  <span class="cn">49.99</span>,
+    description: <span class="cv">'Order #1234 — Running Shoes'</span>,
+    method:      <span class="cv">'bitcoin'</span>,  <span class="cm">// 'bitcoin' | 'opcredit'</span>
+    metadata:    { order_id: <span class="cv">'1234'</span>, user_id: <span class="cv">'u_abc'</span> },
+  }),
+});
+<span class="ck">const</span> { session_id, btc_address, amount_btc, qr_uri } = <span class="ck">await</span> res.json();</div>
+      </div>
+
+      <h3 style="font-size:16px;font-weight:700;margin:28px 0 12px;color:white;">Step 3 — Open the payment modal</h3>
+      <p style="font-size:14px;color:var(--sub);margin-bottom:12px;line-height:1.7;">Pass the <code>session_id</code> back to the frontend and open the modal:</p>
+      <div class="code-block reveal">
+        <div class="code-header"><span class="code-lang">JavaScript (frontend)</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+        <div class="code-body"><span class="ck">async function</span> <span class="cf">checkout</span>() {
+  <span class="cm">// 1. Get session from YOUR backend</span>
+  <span class="ck">const</span> { session_id, amount_btc } = <span class="ck">await</span> fetch(<span class="cv">'/api/create-payment'</span>, {
+    method: <span class="cv">'POST'</span>, body: JSON.stringify({ product_id: <span class="cv">'shoes-42'</span> }),
+  }).then(r => r.json());
+
+  <span class="cm">// 2. Open the OpPay modal</span>
+  <span class="co">OpPay</span>.<span class="cf">open</span>({
+    session_id,
+    amount:      <span class="cn">49.99</span>,      <span class="cm">// for display only</span>
+    btc:         amount_btc,
+    merchant:    <span class="cv">'My Shop'</span>,
+    description: <span class="cv">'Running Shoes #42'</span>,
+
+    onSuccess: (d) => {
+      <span class="cm">// d.txId, d.method, d.amount, d.escrowId (if opcredit)</span>
+      window.location.href = <span class="cv">'/order/success?tx='</span> + d.txId;
+    },
+    onCancel: () => console.<span class="cf">log</span>(<span class="cv">'user cancelled'</span>),
+  });
+}</div>
+      </div>
+
+      <div class="callout callout-warn reveal" style="margin-top:28px;">
+        <div class="callout-icon">⚠️</div>
+        <div class="callout-body">
+          <div class="callout-title">Never expose your API key on the frontend</div>
+          Your <code>op_live_...</code> key must only be used server-side. It gives full access to create sessions and manage your merchant account. Use environment variables and never commit it to git.
+        </div>
+      </div>
+
+      <h3 style="font-size:16px;font-weight:700;margin:36px 0 12px;color:white;">Optional — Data attributes (no-JS mode)</h3>
+      <p style="font-size:14px;color:var(--sub);margin-bottom:12px;line-height:1.7;">For simple static sites you can use data attributes — no JavaScript needed:</p>
+      <div class="code-block reveal">
+        <div class="code-header"><span class="code-lang">HTML</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+        <div class="code-body"><span class="ct">&lt;button</span>
+  <span class="ca">class</span>=<span class="cv">"oppay-btn"</span>
+  <span class="ca">data-oppay-amount</span>=<span class="cv">"29.99"</span>
+  <span class="ca">data-oppay-btc</span>=<span class="cv">"0.000299"</span>
+  <span class="ca">data-oppay-merchant</span>=<span class="cv">"My Shop"</span>
+  <span class="ca">data-oppay-description</span>=<span class="cv">"Order #5678"</span>
+  <span class="ca">onclick</span>=<span class="cv">"OpPay.open(this)"</span><span class="ct">&gt;</span>
+  ₿ Pay with Bitcoin
+<span class="ct">&lt;/button&gt;</span></div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- ── BACKEND SETUP ──────────────────────────────────────────────────── -->
+    <section class="docs-section" id="backend">
+      <div class="section-eyebrow">Server</div>
+      <h2 class="section-title">Backend setup</h2>
+      <p class="section-lead">OpPay includes a ready-to-run Node.js backend. Run it on your server or locally for development.</p>
+
+      <h3 style="font-size:16px;font-weight:700;margin-bottom:12px;color:white;">Requirements</h3>
+      <div class="cards-2 reveal">
+        <div class="doc-card">
+          <div class="doc-card-icon">🟢</div>
+          <div class="doc-card-title">Node.js v24+</div>
+          <div class="doc-card-text">Uses the built-in <code>node:sqlite</code> module — no native compilation needed on Windows, Mac, or Linux.</div>
+        </div>
+        <div class="doc-card">
+          <div class="doc-card-icon">₿</div>
+          <div class="doc-card-title">Bitcoin xpub key</div>
+          <div class="doc-card-text">An HD wallet extended public key so OpPay can derive unique addresses per payment. Or a single static payout address.</div>
+        </div>
+      </div>
+
+      <h3 style="font-size:16px;font-weight:700;margin-bottom:12px;color:white;">Install &amp; start</h3>
+      <div class="code-block reveal">
+        <div class="code-header"><span class="code-lang">Terminal</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+        <div class="code-body"><span class="cm"># Install dependencies</span>
+cd pay/backend
+npm install
+
+<span class="cm"># Configure environment</span>
+cp .env.example .env
+<span class="cm"># Edit .env — add your WEBHOOK_SECRET, etc.</span>
+
+<span class="cm"># Start the server</span>
+npm start
+<span class="cm"># → http://localhost:3001</span>
+<span class="cm"># → ws://localhost:3001</span></div>
+      </div>
+
+      <h3 style="font-size:16px;font-weight:700;margin:28px 0 12px;color:white;">Environment variables</h3>
+      <div class="doc-table-wrap reveal">
+        <table class="doc-table">
+          <thead><tr><th>Variable</th><th>Default</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>PORT</td><td>3001</td><td>HTTP port the server listens on</td></tr>
+            <tr><td>OPNET_RPC_URL</td><td>https://testnet.opnet.org</td><td>OPNet RPC endpoint for monitoring payments</td></tr>
+            <tr><td>OPNET_NETWORK</td><td>testnet</td><td>Set to <code>mainnet</code> for production</td></tr>
+            <tr><td>WEBHOOK_SECRET</td><td><em>required</em></td><td>Random string used to sign webhook payloads</td></tr>
+            <tr><td>BTC_PRICE_API</td><td>CoinGecko EUR</td><td>URL to fetch live BTC/EUR price</td></tr>
+            <tr><td>SESSION_EXPIRY_MINUTES</td><td>30</td><td>How long a payment session stays active</td></tr>
+            <tr><td>MONITOR_INTERVAL_MS</td><td>15000</td><td>How often to scan pending sessions (ms)</td></tr>
+            <tr><td>ESCROW_DAYS</td><td>14</td><td>Days before OpCredit escrow auto-releases</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 style="font-size:16px;font-weight:700;margin:28px 0 12px;color:white;">Register your merchant account</h3>
+      <p style="font-size:14px;color:var(--sub);margin-bottom:12px;line-height:1.7;">Once the server is running, register from the dashboard or via the API:</p>
+      <div class="code-block reveal">
+        <div class="code-header"><span class="code-lang">curl</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+        <div class="code-body">curl -X POST http://localhost:3001/api/auth/register \
+  -H <span class="cv">"Content-Type: application/json"</span> \
+  -d <span class="cv">'{"name":"My Shop","email":"me@shop.com","password":"secret123","payout_address":"bc1q..."}'</span>
+
+<span class="cm"># Response:</span>
+{
+  <span class="ca">"id"</span>:         <span class="cv">"uuid-..."</span>,
+  <span class="ca">"api_key"</span>:    <span class="cv">"op_live_xxxxxxxxxxxx"</span>,  <span class="cm">← save this!</span>
+  <span class="ca">"pub_key"</span>:    <span class="cv">"op_pub_xxxxxxxxxxxx"</span>,
+  <span class="ca">"name"</span>:       <span class="cv">"My Shop"</span>
+}</div>
+      </div>
+
+      <div class="callout callout-tip reveal">
+        <div class="callout-icon">💡</div>
+        <div class="callout-body">
+          <div class="callout-title">Use an xpub for unique addresses</div>
+          Set your <code>xpub</code> in account settings. OpPay will derive a fresh child address for every payment using path <code>m/0/{index}</code>, preventing address reuse and making it easy to track which payment is which.
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- ── WEBHOOKS ───────────────────────────────────────────────────────── -->
+    <section class="docs-section" id="webhooks">
+      <div class="section-eyebrow">Notifications</div>
+      <h2 class="section-title">Webhooks</h2>
+      <p class="section-lead">OpPay sends a signed POST request to your webhook URL whenever a payment is confirmed or an escrow is released.</p>
+
+      <h3 style="font-size:16px;font-weight:700;margin-bottom:12px;color:white;">Configure your webhook URL</h3>
+      <p style="font-size:14px;color:var(--sub);margin-bottom:16px;line-height:1.7;">Set your URL in the merchant dashboard under <strong>API &amp; Embed → Webhook URL</strong>, or via the API:</p>
+      <div class="code-block reveal">
+        <div class="code-header"><span class="code-lang">curl</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+        <div class="code-body">curl -X PUT http://localhost:3001/api/settings \
+  -H <span class="cv">"Authorization: Bearer op_live_your_key"</span> \
+  -H <span class="cv">"Content-Type: application/json"</span> \
+  -d <span class="cv">'{"webhook_url":"https://yourshop.com/api/oppay-webhook"}'</span></div>
+      </div>
+
+      <h3 style="font-size:16px;font-weight:700;margin:28px 0 12px;color:white;">Webhook payload</h3>
+      <div class="code-block reveal">
+        <div class="code-header"><span class="code-lang">JSON payload</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+        <div class="code-body">{
+  <span class="ca">"event"</span>:       <span class="cv">"payment.confirmed"</span>,  <span class="cm">// or "escrow.released"</span>
+  <span class="ca">"session_id"</span>:  <span class="cv">"uuid-..."</span>,
+  <span class="ca">"tx_id"</span>:       <span class="cv">"uuid-..."</span>,
+  <span class="ca">"tx_hash"</span>:     <span class="cv">"0xabc123..."</span>,
+  <span class="ca">"amount_eur"</span>:  <span class="cn">49.99</span>,
+  <span class="ca">"amount_btc"</span>:  <span class="cn">0.000495</span>,
+  <span class="ca">"method"</span>:      <span class="cv">"bitcoin"</span>,  <span class="cm">// 'opnet' | 'bitcoin' | 'opcredit'</span>
+  <span class="ca">"description"</span>: <span class="cv">"Order #1234"</span>,
+  <span class="ca">"metadata"</span>:    { <span class="ca">"order_id"</span>: <span class="cv">"1234"</span> },
+  <span class="ca">"timestamp"</span>:   <span class="cn">1712345678901</span>
+}</div>
+      </div>
+
+      <h3 style="font-size:16px;font-weight:700;margin:28px 0 12px;color:white;">Verify the signature</h3>
+      <p style="font-size:14px;color:var(--sub);margin-bottom:12px;line-height:1.7;">Every webhook includes an <code>X-OpPay-Signature</code> header. Always verify it to prevent spoofing:</p>
+      <div class="code-block reveal">
+        <div class="code-header"><span class="code-lang">Node.js — verify webhook</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+        <div class="code-body"><span class="ck">import</span> { createHmac } <span class="ck">from</span> <span class="cv">'crypto'</span>;
+
+<span class="ck">function</span> <span class="cf">verifyOpPay</span>(body, signature, secret) {
+  <span class="ck">const</span> expected = <span class="cv">'sha256='</span> + createHmac(<span class="cv">'sha256'</span>, secret)
+    .update(JSON.stringify(body)).digest(<span class="cv">'hex'</span>);
+  <span class="ck">return</span> expected === signature;
+}
+
+<span class="cm">// In your Express handler:</span>
+app.post(<span class="cv">'/api/oppay-webhook'</span>, (req, res) => {
+  <span class="ck">const</span> sig = req.headers[<span class="cv">'x-oppay-signature'</span>];
+  <span class="ck">if</span> (!<span class="cf">verifyOpPay</span>(req.body, sig, process.env.OPPAY_SECRET)) {
+    <span class="ck">return</span> res.status(<span class="cn">401</span>).json({ error: <span class="cv">'Invalid signature'</span> });
+  }
+
+  <span class="ck">const</span> { event, session_id, amount_eur, metadata } = req.body;
+  <span class="ck">if</span> (event === <span class="cv">'payment.confirmed'</span>) {
+    <span class="cm">// Mark order as paid in your database</span>
+    await markOrderPaid(metadata.order_id, amount_eur);
+  }
+  res.json({ ok: <span class="ck">true</span> });
+});</div>
+      </div>
+
+      <div class="callout callout-info reveal">
+        <div class="callout-icon">🔁</div>
+        <div class="callout-body">
+          <div class="callout-title">Automatic retries</div>
+          If your endpoint returns a non-2xx response, OpPay will retry the webhook up to 3 times — after 30 seconds, then 60 seconds. Make your handler idempotent using <code>session_id</code> or <code>tx_id</code> as a deduplication key.
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- ── WITHDRAWALS ────────────────────────────────────────────────────── -->
+    <section class="docs-section" id="withdraw">
+      <div class="section-eyebrow">Funds</div>
+      <h2 class="section-title">Withdrawals</h2>
+      <p class="section-lead">Once payments are confirmed, your BTC balance is available for withdrawal to any Bitcoin address at any time.</p>
+
+      <div class="withdraw-flow reveal">
+        <div class="wf-step">
+          <div class="wf-icon">₿</div>
+          <div class="wf-title">Payment confirmed</div>
+          <div class="wf-sub">BTC lands on your derived address</div>
+        </div>
+        <div class="wf-arrow">›</div>
+        <div class="wf-step">
+          <div class="wf-icon">📊</div>
+          <div class="wf-title">Balance updates</div>
+          <div class="wf-sub">Dashboard shows confirmed BTC balance</div>
+        </div>
+        <div class="wf-arrow">›</div>
+        <div class="wf-step">
+          <div class="wf-icon">📝</div>
+          <div class="wf-title">Request withdrawal</div>
+          <div class="wf-sub">Enter your address, click Withdraw</div>
+        </div>
+        <div class="wf-arrow">›</div>
+        <div class="wf-step">
+          <div class="wf-icon">✅</div>
+          <div class="wf-title">BTC sent</div>
+          <div class="wf-sub">Funds arrive in your wallet</div>
+        </div>
+      </div>
+
+      <h3 style="font-size:16px;font-weight:700;margin:32px 0 12px;color:white;">Via the dashboard</h3>
+      <div class="steps reveal">
+        <div class="step">
+          <div class="step-num" style="font-size:16px;">1</div>
+          <div class="step-body">
+            <div class="step-title">Open the Withdraw page</div>
+            <div class="step-text">In your merchant dashboard, click <strong>Withdraw</strong> in the left sidebar. You'll see your current confirmed BTC balance.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num" style="font-size:16px;">2</div>
+          <div class="step-body">
+            <div class="step-title">Enter your Bitcoin address</div>
+            <div class="step-text">Paste any Bitcoin address — native SegWit (<code>bc1q...</code>), legacy, or P2SH. This can be your hardware wallet, exchange deposit address, or any personal wallet.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num" style="font-size:16px;">3</div>
+          <div class="step-body">
+            <div class="step-title">Click Withdraw ₿</div>
+            <div class="step-text">The withdrawal is queued and processed. You'll see it appear in the withdrawal history with a <strong>Queued</strong> status.</div>
+            <span class="step-tag tag-green">Confirmation toast shown</span>
+          </div>
+        </div>
+      </div>
+
+      <h3 style="font-size:16px;font-weight:700;margin:32px 0 12px;color:white;">Via the API</h3>
+      <div class="code-block reveal">
+        <div class="code-header"><span class="code-lang">curl</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+        <div class="code-body"><span class="cm"># Get your confirmed balance</span>
+curl http://localhost:3001/api/transactions/stats \
+  -H <span class="cv">"Authorization: Bearer op_live_your_key"</span>
+
+<span class="cm"># Request a withdrawal</span>
+curl -X POST http://localhost:3001/api/withdraw \
+  -H <span class="cv">"Authorization: Bearer op_live_your_key"</span> \
+  -H <span class="cv">"Content-Type: application/json"</span> \
+  -d <span class="cv">'{"to_address":"bc1qyouraddress...","btc_amount":0.005}'</span></div>
+      </div>
+
+      <h3 style="font-size:16px;font-weight:700;margin:32px 0 12px;color:white;">OpCredit escrow withdrawals</h3>
+      <div class="callout callout-info reveal">
+        <div class="callout-icon">🔒</div>
+        <div class="callout-body">
+          <div class="callout-title">Escrow funds are separate</div>
+          OpCredit payments show as <strong>Escrowed</strong> in your dashboard, not Confirmed. They are locked in an OPNet smart contract. They become available for withdrawal when:<br/><br/>
+          • <strong>Customer confirms receipt</strong> — instant release, status → Confirmed<br/>
+          • <strong>14 days pass</strong> — auto-release by the backend hourly cron job
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- ── API REFERENCE ──────────────────────────────────────────────────── -->
+    <section class="docs-section" id="api">
+      <div class="section-eyebrow">Reference</div>
+      <h2 class="section-title">API Reference</h2>
+      <p class="section-lead">The OpPay backend runs at <code>http://localhost:3001</code> by default. Authenticated routes require <code>Authorization: Bearer op_live_your_key</code>.</p>
+
+      <h3 style="font-size:14px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:14px;">Auth</h3>
+      <div class="endpoint reveal">
+        <div class="ep-method ep-post">POST</div>
+        <div class="ep-body">
+          <div class="ep-path">/api/auth/register</div>
+          <div class="ep-desc">Create a new merchant account. Returns the merchant object including your <code>api_key</code>.</div>
+          <span class="ep-pub">Public</span>
+        </div>
+      </div>
+      <div class="endpoint reveal">
+        <div class="ep-method ep-post">POST</div>
+        <div class="ep-body">
+          <div class="ep-path">/api/auth/login</div>
+          <div class="ep-desc">Log in and retrieve your merchant profile and API key.</div>
+          <span class="ep-pub">Public</span>
+        </div>
+      </div>
+      <div class="endpoint reveal">
+        <div class="ep-method ep-get">GET</div>
+        <div class="ep-body">
+          <div class="ep-path">/api/auth/me</div>
+          <div class="ep-desc">Get the current authenticated merchant's profile.</div>
+          <span class="ep-auth">🔑 Auth required</span>
+        </div>
+      </div>
+
+      <h3 style="font-size:14px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin:28px 0 14px;">Sessions</h3>
+      <div class="endpoint reveal">
+        <div class="ep-method ep-post">POST</div>
+        <div class="ep-body">
+          <div class="ep-path">/api/sessions</div>
+          <div class="ep-desc">Create a payment session. Returns <code>session_id</code>, unique <code>btc_address</code>, <code>amount_btc</code>, and a <code>qr_uri</code>. Call this from your server, not the browser.</div>
+          <span class="ep-auth">🔑 Auth required</span>
+        </div>
+      </div>
+      <div class="endpoint reveal">
+        <div class="ep-method ep-get">GET</div>
+        <div class="ep-body">
+          <div class="ep-path">/api/sessions/:id</div>
+          <div class="ep-desc">Poll payment status. Returns <code>status</code>: <code>pending</code> → <code>detected</code> → <code>confirmed</code> or <code>escrowed</code>. Safe to call from the browser.</div>
+          <span class="ep-pub">Public</span>
+        </div>
+      </div>
+      <div class="endpoint reveal">
+        <div class="ep-method ep-post">POST</div>
+        <div class="ep-body">
+          <div class="ep-path">/api/sessions/:id/confirm-receipt</div>
+          <div class="ep-desc">Customer calls this to release OpCredit escrow early. Releases the BTC to the merchant immediately.</div>
+          <span class="ep-pub">Public</span>
+        </div>
+      </div>
+
+      <h3 style="font-size:14px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin:28px 0 14px;">Transactions &amp; Stats</h3>
+      <div class="endpoint reveal">
+        <div class="ep-method ep-get">GET</div>
+        <div class="ep-body">
+          <div class="ep-path">/api/transactions?limit=100&amp;offset=0&amp;status=confirmed</div>
+          <div class="ep-desc">List transactions. Supports <code>limit</code>, <code>offset</code>, and <code>status</code> filter.</div>
+          <span class="ep-auth">🔑 Auth required</span>
+        </div>
+      </div>
+      <div class="endpoint reveal">
+        <div class="ep-method ep-get">GET</div>
+        <div class="ep-body">
+          <div class="ep-path">/api/transactions/stats</div>
+          <div class="ep-desc">Get aggregate stats: total EUR, total BTC, confirmed/escrowed/failed counts, escrow balance.</div>
+          <span class="ep-auth">🔑 Auth required</span>
+        </div>
+      </div>
+
+      <h3 style="font-size:14px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin:28px 0 14px;">Settings &amp; Withdrawals</h3>
+      <div class="endpoint reveal">
+        <div class="ep-method ep-put">PUT</div>
+        <div class="ep-body">
+          <div class="ep-path">/api/settings</div>
+          <div class="ep-desc">Update merchant settings: <code>name</code>, <code>xpub</code>, <code>payout_address</code>, <code>webhook_url</code>.</div>
+          <span class="ep-auth">🔑 Auth required</span>
+        </div>
+      </div>
+      <div class="endpoint reveal">
+        <div class="ep-method ep-post">POST</div>
+        <div class="ep-body">
+          <div class="ep-path">/api/withdraw</div>
+          <div class="ep-desc">Queue a withdrawal. Body: <code>{ to_address, btc_amount }</code>.</div>
+          <span class="ep-auth">🔑 Auth required</span>
+        </div>
+      </div>
+      <div class="endpoint reveal">
+        <div class="ep-method ep-get">GET</div>
+        <div class="ep-body">
+          <div class="ep-path">/api/withdrawals</div>
+          <div class="ep-desc">List all withdrawal requests and their status.</div>
+          <span class="ep-auth">🔑 Auth required</span>
+        </div>
+      </div>
+      <div class="endpoint reveal">
+        <div class="ep-method ep-get">GET</div>
+        <div class="ep-body">
+          <div class="ep-path">/api/price</div>
+          <div class="ep-desc">Get current BTC/EUR price. Cached for 60 seconds.</div>
+          <span class="ep-pub">Public</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- ── SDK OPTIONS ────────────────────────────────────────────────────── -->
+    <section class="docs-section" id="sdk">
+      <div class="section-eyebrow">SDK</div>
+      <h2 class="section-title">OpPay.open() options</h2>
+      <p class="section-lead">All available options for the <code>OpPay.open()</code> JavaScript call.</p>
+
+      <div class="doc-table-wrap reveal">
+        <table class="doc-table">
+          <thead><tr><th>Option</th><th>Type</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>session_id</td><td>string</td><td>Session ID from <code>POST /api/sessions</code>. Enables real payment monitoring.</td></tr>
+            <tr><td>amount</td><td>number</td><td>Amount in EUR — shown in the modal header.</td></tr>
+            <tr><td>btc</td><td>number</td><td>Amount in BTC — shown as the payment total.</td></tr>
+            <tr><td>merchant</td><td>string</td><td>Your store name — shown as "Paying to".</td></tr>
+            <tr><td>description</td><td>string</td><td>Order description shown in the summary.</td></tr>
+            <tr><td>onSuccess</td><td>function</td><td>Called with <code>{ txId, method, amount, escrowId? }</code> on success.</td></tr>
+            <tr><td>onFailure</td><td>function</td><td>Called with <code>{ txId, reason }</code> if payment fails.</td></tr>
+            <tr><td>onCancel</td><td>function</td><td>Called when the user closes the modal without paying.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- ── FAQ ───────────────────────────────────────────────────────────── -->
+    <section class="docs-section" id="faq">
+      <div class="section-eyebrow">FAQ</div>
+      <h2 class="section-title">Frequently asked questions</h2>
+
+      <div style="display:flex;flex-direction:column;gap:16px;" class="reveal">
+        <details style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px 24px;cursor:pointer;">
+          <summary style="font-size:15px;font-weight:700;color:white;list-style:none;display:flex;justify-content:space-between;align-items:center;">
+            Do I need to run the backend myself?
+            <span style="color:var(--orange);font-size:18px;transition:transform 0.2s;">+</span>
+          </summary>
+          <p style="font-size:14px;color:var(--sub);margin-top:14px;line-height:1.7;">Yes, for production you need to run the OpPay backend on your own server. This gives you full control over your funds. There is no hosted version — your API keys and BTC addresses are yours alone.</p>
+        </details>
+
+        <details style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px 24px;cursor:pointer;">
+          <summary style="font-size:15px;font-weight:700;color:white;list-style:none;display:flex;justify-content:space-between;align-items:center;">
+            What is the fee for using OpPay?
+            <span style="color:var(--orange);font-size:18px;">+</span>
+          </summary>
+          <p style="font-size:14px;color:var(--sub);margin-top:14px;line-height:1.7;">OpPay itself charges no fees. You only pay the Bitcoin network fee (~0.000003 BTC per transaction) which goes to Bitcoin miners — not to OpPay. This makes it far cheaper than card processing fees (which are typically 1.5–3.5%).</p>
+        </details>
+
+        <details style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px 24px;cursor:pointer;">
+          <summary style="font-size:15px;font-weight:700;color:white;list-style:none;display:flex;justify-content:space-between;align-items:center;">
+            What happens if the customer underpays?
+            <span style="color:var(--orange);font-size:18px;">+</span>
+          </summary>
+          <p style="font-size:14px;color:var(--sub);margin-top:14px;line-height:1.7;">OpPay has a 0.5% tolerance for underpayments to account for rounding and minor BTC price fluctuations. If a payment is more than 0.5% below the expected amount, the session will not confirm automatically.</p>
+        </details>
+
+        <details style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px 24px;cursor:pointer;">
+          <summary style="font-size:15px;font-weight:700;color:white;list-style:none;display:flex;justify-content:space-between;align-items:center;">
+            How does OpCredit work for merchants?
+            <span style="color:var(--orange);font-size:18px;">+</span>
+          </summary>
+          <p style="font-size:14px;color:var(--sub);margin-top:14px;line-height:1.7;">When a customer uses OpCredit, you can see their BTC is locked in the OPNet smart contract from your dashboard (status: <strong>Escrowed</strong>). Ship the order normally. Once the customer confirms receipt, the BTC is released to your account. If they don't respond, it auto-releases after 14 days.</p>
+        </details>
+
+        <details style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px 24px;cursor:pointer;">
+          <summary style="font-size:15px;font-weight:700;color:white;list-style:none;display:flex;justify-content:space-between;align-items:center;">
+            Can I use OpPay with React, Vue, or Next.js?
+            <span style="color:var(--orange);font-size:18px;">+</span>
+          </summary>
+          <p style="font-size:14px;color:var(--sub);margin-top:14px;line-height:1.7;">Yes. The SDK is a plain JavaScript library — include it via a <code>&lt;script&gt;</code> tag and call <code>OpPay.open()</code> from any framework. For Next.js, load it with <code>next/script</code> and call from a click handler. A React npm package is planned.</p>
+        </details>
+      </div>
+    </section>
+
+    <!-- Bottom CTA -->
+    <div style="background:linear-gradient(135deg,rgba(247,147,26,0.08),rgba(124,58,237,0.06));border:1px solid var(--border);border-radius:20px;padding:40px;text-align:center;margin-top:20px;" class="reveal">
+      <div style="font-size:32px;margin-bottom:12px;">₿</div>
+      <h3 style="font-size:22px;font-weight:800;letter-spacing:-0.5px;margin-bottom:10px;">Ready to accept Bitcoin?</h3>
+      <p style="font-size:14px;color:var(--sub);margin-bottom:24px;line-height:1.7;">Start with the demo, then set up your merchant account and go live.</p>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+        <a href="index.html#demo" style="display:inline-flex;align-items:center;gap:8px;padding:13px 26px;background:linear-gradient(135deg,#f7931a,#e07d0e);color:#000;border:none;border-radius:12px;font-size:14px;font-weight:700;text-decoration:none;">⚡ Try the Demo</a>
+        <a href="merchant.html" style="display:inline-flex;align-items:center;gap:8px;padding:13px 26px;background:rgba(255,255,255,0.05);color:#ccc;border:1px solid var(--border);border-radius:12px;font-size:14px;font-weight:600;text-decoration:none;">Open Dashboard →</a>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Footer -->
+<footer style="background:#04060e;border-top:1px solid var(--border);padding:36px 40px;text-align:center;font-size:13px;color:var(--muted);position:relative;z-index:1;">
+  <span style="font-size:18px;font-weight:900;color:var(--text);">Op<span style="color:var(--orange)">Pay</span></span>
+  &nbsp;·&nbsp; Bitcoin & OPNet payment SDK
+  &nbsp;·&nbsp; <a href="index.html" style="color:var(--orange);text-decoration:none;">Home</a>
+  &nbsp;·&nbsp; <a href="merchant.html" style="color:var(--orange);text-decoration:none;">Dashboard</a>
+</footer>
+
+<script>
+// Scroll reveal
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting){ e.target.classList.add('visible'); io.unobserve(e.target); } });
+}, { threshold: 0.08, rootMargin: '0px 0px -30px 0px' });
+document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+// Active nav link on scroll
+const sections = document.querySelectorAll('.docs-section');
+const navLinks  = document.querySelectorAll('.docs-nav-link');
+const scrollObs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if(e.isIntersecting){
+      const id = e.target.id;
+      navLinks.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#'+id));
+    }
+  });
+}, { threshold: 0.3, rootMargin: '-64px 0px -40% 0px' });
+sections.forEach(s => scrollObs.observe(s));
+
+// Copy code buttons
+function copyCode(btn) {
+  const code = btn.closest('.code-block').querySelector('.code-body').innerText;
+  navigator.clipboard.writeText(code).then(() => {
+    btn.textContent = 'Copied!'; btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// Details toggle icon
+document.querySelectorAll('details').forEach(d => {
+  d.addEventListener('toggle', () => {
+    const icon = d.querySelector('summary span:last-child');
+    if(icon) icon.textContent = d.open ? '−' : '+';
+  });
+});
+</script>
+</body>
+</html>

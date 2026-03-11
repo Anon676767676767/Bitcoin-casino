@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>OpPay Merchant Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --orange: #f7931a; --orange-dim: rgba(247,147,26,0.1); --orange-border: rgba(247,147,26,0.2);
+      --green: #00c853; --red: #ff4444; --blue: #3b82f6; --purple: #7c3aed; --purple-light: #a78bfa;
+      --bg: #070810; --surface: #0c0e18; --card: #10131e; --card2: #131720; --border: #1b1f30;
+      --text: #f0f0f0; --muted: #4a5568; --sub: #8892a4;
+    }
+    html { height: 100%; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; height: 100%; }
+
+    /* ─── AUTH ─────────────────────────────────────────────────────────── */
+    #auth-screen {
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      background: radial-gradient(ellipse at 50% -10%, rgba(247,147,26,0.07) 0%, transparent 55%),
+                  radial-gradient(ellipse at 80% 100%, rgba(124,58,237,0.05) 0%, transparent 50%);
+      padding: 20px; position: relative; overflow: hidden;
+    }
+    #auth-screen::before {
+      content: ''; position: absolute; top: -200px; left: 50%; transform: translateX(-50%);
+      width: 800px; height: 600px;
+      background: radial-gradient(ellipse, rgba(247,147,26,0.05) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .auth-box {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 24px; width: 100%; max-width: 430px;
+      box-shadow: 0 40px 100px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.04);
+      overflow: hidden; animation: authIn 0.5s cubic-bezier(0.34,1.2,0.64,1) both;
+      position: relative; z-index: 1;
+    }
+    @keyframes authIn { from { opacity: 0; transform: translateY(24px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    .auth-header {
+      background: linear-gradient(160deg, #0f1220, #090b14);
+      border-bottom: 1px solid var(--border); padding: 32px 36px 26px; text-align: center; position: relative;
+    }
+    .auth-header::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(247,147,26,0.15), transparent); }
+    .auth-logo { display: flex; align-items: center; justify-content: center; gap: 11px; margin-bottom: 8px; }
+    .auth-logo-icon { width: 42px; height: 42px; background: linear-gradient(135deg, #f7931a, #d4780f); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 900; box-shadow: 0 6px 20px rgba(247,147,26,0.35); }
+    .auth-logo-text { font-size: 26px; font-weight: 900; letter-spacing: -0.5px; }
+    .auth-logo-text span { color: var(--orange); }
+    .auth-tagline { font-size: 13px; color: var(--sub); }
+    .auth-body { padding: 28px 32px 34px; }
+    .auth-tabs { display: flex; background: var(--surface); border-radius: 12px; padding: 3px; margin-bottom: 26px; border: 1px solid var(--border); }
+    .auth-tab { flex: 1; padding: 9px; text-align: center; border-radius: 9px; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--muted); transition: all 0.2s; border: none; background: transparent; font-family: inherit; }
+    .auth-tab.active { background: var(--card2); color: var(--text); box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+    .auth-form { display: none; }
+    .auth-form.active { display: block; animation: fadeIn 0.2s ease; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .field { margin-bottom: 16px; }
+    .field label { display: block; font-size: 11px; font-weight: 700; color: var(--sub); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 7px; }
+    .field input { width: 100%; padding: 12px 15px; background: var(--surface); border: 1.5px solid var(--border); border-radius: 11px; font-family: inherit; font-size: 14px; color: var(--text); outline: none; transition: border-color 0.15s, box-shadow 0.15s; }
+    .field input:focus { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(247,147,26,0.1); }
+    .field input::placeholder { color: var(--muted); }
+    .submit-btn { width: 100%; padding: 14px; background: linear-gradient(135deg, #f7931a, #e07d0e); color: #000; border: none; border-radius: 12px; font-family: inherit; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.2s; margin-top: 4px; }
+    .submit-btn:hover { background: linear-gradient(135deg, #ffb040, #f7931a); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(247,147,26,0.4); }
+    .auth-note { text-align: center; font-size: 12px; color: var(--muted); margin-top: 16px; }
+
+    /* ─── DASHBOARD ─────────────────────────────────────────────────────── */
+    #dashboard { display: none; min-height: 100vh; }
+    .layout { display: flex; min-height: 100vh; }
+
+    /* Sidebar */
+    .sidebar {
+      width: 248px; flex-shrink: 0;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      position: sticky; top: 0; height: 100vh; overflow-y: auto;
+    }
+    .sidebar-logo {
+      padding: 20px 20px 18px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .sidebar-logo-icon { width: 34px; height: 34px; background: linear-gradient(135deg, #f7931a, #d4780f); border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 900; box-shadow: 0 4px 12px rgba(247,147,26,0.3); }
+    .sidebar-logo-text { font-size: 19px; font-weight: 900; letter-spacing: -0.3px; }
+    .sidebar-logo-text span { color: var(--orange); }
+    .sidebar-nav { padding: 14px 10px; flex: 1; }
+    .nav-section-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; padding: 0 12px; margin: 16px 0 6px; }
+    .nav-section-label:first-child { margin-top: 0; }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px; padding: 10px 13px;
+      border-radius: 11px; font-size: 13px; font-weight: 500; color: var(--sub);
+      cursor: pointer; transition: all 0.18s; margin-bottom: 2px;
+      border: none; background: transparent; font-family: inherit; width: 100%; text-align: left;
+      position: relative;
+    }
+    .nav-item:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+    .nav-item.active { background: var(--orange-dim); color: var(--orange); font-weight: 600; border: 1px solid var(--orange-border); }
+    .nav-item .ni { font-size: 16px; width: 22px; text-align: center; flex-shrink: 0; }
+    .sidebar-bottom { padding: 0 10px 14px; }
+    .sidebar-user { background: var(--card2); border: 1px solid var(--border); border-radius: 14px; padding: 14px 14px; }
+    .user-row { display: flex; align-items: center; gap: 10px; }
+    .user-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--orange-dim); border: 1.5px solid var(--orange-border); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; color: var(--orange); flex-shrink: 0; }
+    .user-info { flex: 1; min-width: 0; }
+    .user-name { font-size: 13px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-plan { font-size: 11px; color: var(--muted); margin-top: 1px; }
+    .logout-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px; padding: 6px; border-radius: 8px; transition: all 0.15s; }
+    .logout-btn:hover { color: var(--red); background: rgba(255,68,68,0.1); }
+
+    /* Main */
+    .main { flex: 1; overflow-y: auto; background: var(--bg); }
+    .topbar {
+      background: rgba(10,12,24,0.9); border-bottom: 1px solid var(--border);
+      padding: 14px 32px; display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 50; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    }
+    .topbar-title { font-size: 15px; font-weight: 700; color: var(--text); }
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+    .server-badge { font-size: 12px; color: var(--muted); padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border); }
+    .live-badge { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--green); background: rgba(0,200,83,0.08); border: 1px solid rgba(0,200,83,0.18); padding: 5px 13px; border-radius: 20px; }
+    .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: livePulse 2s ease infinite; }
+    @keyframes livePulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.7)} }
+
+    /* Pages */
+    .page { display: none; padding: 28px 32px; animation: pageIn 0.22s ease; }
+    .page.active { display: block; }
+    @keyframes pageIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Stats grid */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px,1fr)); gap: 16px; margin-bottom: 28px; }
+    .stat-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 22px 24px;
+      transition: border-color 0.2s, transform 0.2s; position: relative; overflow: hidden;
+    }
+    .stat-card::before { content: ''; position: absolute; inset: 0; border-radius: 16px; background: linear-gradient(135deg, rgba(255,255,255,0.015) 0%, transparent 50%); pointer-events: none; }
+    .stat-card:hover { transform: translateY(-2px); }
+    .stat-card.highlight { border-color: var(--orange-border); background: linear-gradient(160deg, rgba(247,147,26,0.06), var(--card)); }
+    .stat-card.highlight::after { content: ''; position: absolute; top: 0; right: 0; width: 80px; height: 80px; background: radial-gradient(circle, rgba(247,147,26,0.1) 0%, transparent 70%); pointer-events: none; }
+    .stat-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+    .stat-value { font-size: 28px; font-weight: 900; letter-spacing: -1px; color: var(--text); margin-bottom: 4px; line-height: 1; }
+    .stat-sub { font-size: 12px; color: var(--sub); }
+    .stat-card.highlight .stat-value { color: var(--orange); }
+    .stat-card.purple-card { border-color: rgba(124,58,237,0.25); background: linear-gradient(160deg, rgba(124,58,237,0.06), var(--card)); }
+    .stat-card.purple-card .stat-value { color: var(--purple-light); }
+    .stat-card.purple-card .stat-label { color: var(--purple-light); opacity: 0.8; }
+
+    /* Section header */
+    .section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .section-title { font-size: 14px; font-weight: 700; color: var(--text); }
+
+    /* Filters */
+    .filter-row { display: flex; gap: 6px; }
+    .filter-btn { padding: 6px 14px; border-radius: 9px; font-size: 12px; font-weight: 600; border: 1px solid var(--border); background: transparent; color: var(--sub); cursor: pointer; font-family: inherit; transition: all 0.15s; }
+    .filter-btn.active { background: var(--orange-dim); border-color: var(--orange-border); color: var(--orange); }
+    .filter-btn:hover:not(.active) { border-color: #2a3048; color: var(--text); }
+
+    /* Table */
+    .table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead th { background: var(--surface); padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: var(--muted); border-bottom: 1px solid var(--border); }
+    tbody tr { border-bottom: 1px solid rgba(255,255,255,0.03); transition: background 0.12s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: rgba(255,255,255,0.025); }
+    tbody td { padding: 13px 16px; color: var(--text); vertical-align: middle; }
+    .td-muted { color: var(--sub); font-size: 12px; }
+    .td-mono { font-family: 'Cascadia Code','Fira Code','Consolas',monospace; font-size: 11px; color: var(--orange); }
+    .badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+    .badge-ok { background: rgba(0,200,83,0.1); color: var(--green); border: 1px solid rgba(0,200,83,0.2); }
+    .badge-pending { background: rgba(247,147,26,0.1); color: var(--orange); border: 1px solid var(--orange-border); }
+    .badge-fail { background: rgba(255,68,68,0.1); color: var(--red); border: 1px solid rgba(255,68,68,0.2); }
+    .badge-escrow { background: rgba(124,58,237,0.1); color: var(--purple-light); border: 1px solid rgba(124,58,237,0.25); }
+    .method-tag { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; }
+    .empty-table { text-align: center; padding: 64px 20px; color: var(--muted); }
+    .empty-icon { font-size: 44px; margin-bottom: 14px; opacity: 0.5; }
+    .empty-text { font-size: 14px; font-weight: 600; color: var(--sub); }
+    .empty-sub { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+    /* Cards */
+    .content-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 20px; }
+    .content-card-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+
+    /* API key */
+    .api-key-row { display: flex; align-items: center; gap: 10px; }
+    .api-key-val { flex: 1; background: var(--surface); border: 1.5px solid var(--border); border-radius: 11px; padding: 12px 15px; font-family: 'Cascadia Code','Fira Code','Consolas',monospace; font-size: 13px; color: var(--orange); letter-spacing: 0.5px; }
+    .copy-btn { padding: 11px 18px; background: var(--orange-dim); border: 1px solid var(--orange-border); color: var(--orange); border-radius: 11px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.15s; font-family: inherit; }
+    .copy-btn:hover { background: rgba(247,147,26,0.18); transform: translateY(-1px); }
+    .copy-btn.copied { background: rgba(0,200,83,0.1); border-color: rgba(0,200,83,0.25); color: var(--green); }
+
+    /* Embed */
+    .embed-block { background: #04070f; border: 1px solid #1a2535; border-radius: 13px; padding: 22px 24px; font-family: 'Cascadia Code','Fira Code','Consolas',monospace; font-size: 12.5px; line-height: 1.85; overflow-x: auto; color: #c9d1d9; }
+    .em { color: #3a4556; } .et { color: #7ee787; } .ea { color: #79c0ff; } .ev { color: #a5d6ff; }
+    .ef { color: #d2a8ff; } .eo { color: #ffa657; } .en { color: #79c0ff; }
+
+    /* Withdraw */
+    .withdraw-balance { font-size: 40px; font-weight: 900; letter-spacing: -1.5px; color: var(--orange); margin-bottom: 4px; }
+    .withdraw-form { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 18px; }
+    .withdraw-input { flex: 1; min-width: 220px; padding: 12px 15px; background: var(--surface); border: 1.5px solid var(--border); border-radius: 11px; font-family: 'Cascadia Code','Fira Code','Consolas',monospace; font-size: 14px; color: var(--text); outline: none; transition: border-color 0.15s; }
+    .withdraw-input:focus { border-color: var(--orange); }
+    .withdraw-btn { padding: 12px 26px; background: linear-gradient(135deg, #f7931a, #e07d0e); color: #000; border: none; border-radius: 11px; font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+    .withdraw-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(247,147,26,0.4); }
+
+    /* Settings fields */
+    .settings-field { margin-bottom: 18px; }
+    .settings-field label { display: block; font-size: 11px; font-weight: 700; color: var(--sub); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 7px; }
+    .settings-field input { width: 100%; padding: 12px 15px; background: var(--surface); border: 1.5px solid var(--border); border-radius: 11px; font-family: inherit; font-size: 14px; color: var(--text); outline: none; transition: border-color 0.15s; }
+    .settings-field input:focus { border-color: var(--orange); }
+    .save-btn { padding: 12px 26px; background: linear-gradient(135deg, #f7931a, #e07d0e); color: #000; border: none; border-radius: 11px; font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+    .save-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(247,147,26,0.4); }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 28px; right: 28px;
+      background: var(--card2); border: 1px solid var(--border);
+      border-radius: 14px; padding: 14px 20px;
+      display: flex; align-items: center; gap: 12px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
+      font-size: 13px; font-weight: 600; color: var(--text);
+      transform: translateY(100px) scale(0.95); opacity: 0;
+      transition: all 0.3s cubic-bezier(0.34,1.4,0.64,1);
+      z-index: 9999; max-width: 340px;
+    }
+    .toast.show { transform: translateY(0) scale(1); opacity: 1; }
+    .toast-icon { font-size: 20px; flex-shrink: 0; }
+    .toast-close { margin-left: 8px; color: var(--muted); font-size: 16px; cursor: pointer; background: none; border: none; padding: 0; line-height: 1; }
+    .toast-close:hover { color: var(--text); }
+
+    /* New row flash */
+    @keyframes newrow { from { background: rgba(247,147,26,0.12); } to { background: transparent; } }
+    .new-row { animation: newrow 2.5s ease forwards; }
+
+    /* View all link */
+    .view-all { font-size: 13px; color: var(--orange); text-decoration: none; font-weight: 600; transition: opacity 0.15s; }
+    .view-all:hover { opacity: 0.7; }
+
+    /* Danger zone */
+    .danger-card { background: var(--card); border: 1px solid rgba(255,68,68,0.18); border-radius: 16px; padding: 24px; }
+    .danger-title { font-size: 14px; font-weight: 700; color: var(--red); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+    .danger-btn { padding: 10px 20px; background: rgba(255,68,68,0.1); border: 1px solid rgba(255,68,68,0.25); color: var(--red); border-radius: 10px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+    .danger-btn:hover { background: rgba(255,68,68,0.18); }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #1e2535; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #2a3048; }
+
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .page { padding: 20px 16px; }
+      .topbar { padding: 12px 16px; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== AUTH ===== -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <div class="auth-header">
+      <div class="auth-logo">
+        <div class="auth-logo-icon">₿</div>
+        <div class="auth-logo-text">Op<span>Pay</span></div>
+      </div>
+      <div class="auth-tagline">Bitcoin payment infrastructure for merchants</div>
+    </div>
+    <div class="auth-body">
+      <div class="auth-tabs">
+        <button class="auth-tab active" onclick="switchTab('login')">Sign In</button>
+        <button class="auth-tab" onclick="switchTab('register')">Create Account</button>
+      </div>
+
+      <div class="auth-form active" id="form-login">
+        <div class="field"><label>Email</label><input type="email" id="login-email" placeholder="you@yourshop.com" /></div>
+        <div class="field"><label>Password</label><input type="password" id="login-pw" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()" /></div>
+        <button class="submit-btn" onclick="doLogin()">Sign In →</button>
+        <div class="auth-note">Demo: use any email + password to sign in</div>
+      </div>
+
+      <div class="auth-form" id="form-register">
+        <div class="field"><label>Business Name</label><input type="text" id="reg-name" placeholder="My Online Shop" /></div>
+        <div class="field"><label>Email</label><input type="email" id="reg-email" placeholder="you@yourshop.com" /></div>
+        <div class="field"><label>Bitcoin Payout Address</label><input type="text" id="reg-btc" placeholder="bc1q..." /></div>
+        <div class="field"><label>Password</label><input type="password" id="reg-pw" placeholder="Min. 8 characters" /></div>
+        <button class="submit-btn" onclick="doRegister()">Create Merchant Account →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DASHBOARD ===== -->
+<div id="dashboard">
+  <div class="layout">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-icon">₿</div>
+        <div class="sidebar-logo-text">Op<span>Pay</span></div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-section-label">Main</div>
+        <button class="nav-item active" onclick="showPage('overview')"><span class="ni">📊</span> Overview</button>
+        <button class="nav-item" onclick="showPage('transactions')"><span class="ni">💸</span> Transactions</button>
+        <div class="nav-section-label">Funds</div>
+        <button class="nav-item" onclick="showPage('withdraw')"><span class="ni">₿</span> Withdraw</button>
+        <div class="nav-section-label">Developer</div>
+        <button class="nav-item" onclick="showPage('api')"><span class="ni">🔑</span> API &amp; Embed</button>
+        <button class="nav-item" onclick="showPage('settings')"><span class="ni">⚙️</span> Settings</button>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="sidebar-user">
+          <div class="user-row">
+            <div class="user-avatar" id="user-avatar">M</div>
+            <div class="user-info">
+              <div class="user-name" id="user-name">Merchant</div>
+              <div class="user-plan">Pro Plan · Active</div>
+            </div>
+            <button class="logout-btn" onclick="doLogout()" title="Sign out">⎋</button>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <div class="main">
+      <div class="topbar">
+        <div class="topbar-title" id="topbar-title">Overview</div>
+        <div class="topbar-right">
+          <div id="server-badge" class="server-badge"></div>
+          <div class="live-badge"><div class="live-dot"></div> Live</div>
+        </div>
+      </div>
+
+      <!-- OVERVIEW -->
+      <div class="page active" id="page-overview">
+        <div class="stats-grid">
+          <div class="stat-card highlight">
+            <div class="stat-label">Total Received</div>
+            <div class="stat-value" id="stat-total">€ 0.00</div>
+            <div class="stat-sub" id="stat-btc">0.000000 BTC</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Transactions</div>
+            <div class="stat-value" id="stat-count">0</div>
+            <div class="stat-sub" id="stat-today">0 today</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Success Rate</div>
+            <div class="stat-value" id="stat-rate">—</div>
+            <div class="stat-sub">Last 30 days</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Pending</div>
+            <div class="stat-value" id="stat-pending">0</div>
+            <div class="stat-sub">Awaiting confirmation</div>
+          </div>
+          <div class="stat-card purple-card">
+            <div class="stat-label">OpCredit Escrow</div>
+            <div class="stat-value" id="stat-escrow">€ 0.00</div>
+            <div class="stat-sub" id="stat-escrow-count">0 orders locked</div>
+          </div>
+        </div>
+
+        <div class="section-head">
+          <div class="section-title">Recent Transactions</div>
+          <a href="#" class="view-all" onclick="showPage('transactions');return false;">View all →</a>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Date / Time</th><th>Description</th><th>Method</th><th>Amount</th><th>Status</th><th>TX Hash</th></tr></thead>
+            <tbody id="recent-tbody">
+              <tr><td colspan="6"><div class="empty-table"><div class="empty-icon">₿</div><div class="empty-text">No transactions yet</div><div class="empty-sub">Transactions from your OpPay buttons will appear here in real time</div></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TRANSACTIONS -->
+      <div class="page" id="page-transactions">
+        <div class="section-head">
+          <div class="section-title">All Transactions</div>
+          <div class="filter-row">
+            <button class="filter-btn active" onclick="filterTx('all',this)">All</button>
+            <button class="filter-btn" onclick="filterTx('confirmed',this)">Confirmed</button>
+            <button class="filter-btn" onclick="filterTx('escrowed',this)" style="color:var(--purple-light);">🔒 OpCredit</button>
+            <button class="filter-btn" onclick="filterTx('failed',this)">Failed</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Date / Time</th><th>Description</th><th>Method</th><th>EUR</th><th>BTC</th><th>Status</th><th>TX Hash</th></tr></thead>
+            <tbody id="all-tbody">
+              <tr><td colspan="7"><div class="empty-table"><div class="empty-icon">📡</div><div class="empty-text">No transactions yet</div><div class="empty-sub">Go to the <a href="index.html" style="color:var(--orange)">demo shop</a> and make a test payment</div></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- WITHDRAW -->
+      <div class="page" id="page-withdraw">
+        <div class="content-card">
+          <div class="content-card-title">₿ Available Balance</div>
+          <div class="withdraw-balance" id="w-balance">€ 0.00</div>
+          <div class="stat-sub" id="w-balance-btc" style="margin-top:4px;">0.000000 BTC available for withdrawal</div>
+          <div class="withdraw-form">
+            <input class="withdraw-input" type="text" id="w-addr" placeholder="Your Bitcoin address (bc1q...)" />
+            <button class="withdraw-btn" onclick="doWithdraw()">Withdraw ₿</button>
+          </div>
+        </div>
+        <div class="content-card">
+          <div class="content-card-title">⚡ Withdrawal History</div>
+          <div id="withdraw-history" style="font-size:13px;color:var(--muted);padding:8px 0;">No withdrawals yet.</div>
+        </div>
+      </div>
+
+      <!-- API & EMBED -->
+      <div class="page" id="page-api">
+        <div class="content-card">
+          <div class="content-card-title">🔑 Your API Key</div>
+          <div class="api-key-row">
+            <div class="api-key-val" id="api-key-display">op_live_••••••••••••••••</div>
+            <button class="copy-btn" id="reveal-btn" onclick="revealKey()">Reveal</button>
+            <button class="copy-btn" id="copy-btn" onclick="copyKey()" style="display:none">Copy</button>
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-top:12px;">⚠️ Keep this key secret. Never expose it in client-side JavaScript.</div>
+        </div>
+
+        <div class="content-card">
+          <div class="content-card-title">🔌 Embed on Your Website</div>
+          <div style="font-size:13px;color:var(--sub);margin-bottom:16px;">Copy this snippet and paste it into your website's HTML. Replace the amount and description for each product.</div>
+          <div class="embed-block" id="embed-block">
+<span class="em">&lt;!-- 1. Add to &lt;head&gt; --&gt;</span>
+<span class="et">&lt;script</span> <span class="ea">src</span>=<span class="ev">"https://cdn.oppay.io/v1/pay.js"</span><span class="et">&gt;&lt;/script&gt;</span>
+
+<span class="em">&lt;!-- 2. Payment button --&gt;</span>
+<span class="et">&lt;button</span>
+  <span class="ea">class</span>=<span class="ev">"oppay-btn"</span>
+  <span class="ea">data-oppay-key</span>=<span class="ev" id="embed-key">"op_live_YOUR_KEY"</span>
+  <span class="ea">data-oppay-amount</span>=<span class="ev">"49.99"</span>
+  <span class="ea">data-oppay-description</span>=<span class="ev">"Product name / Order #ID"</span>
+  <span class="ea">onclick</span>=<span class="ev">"OpPay.open(this)"</span><span class="et">&gt;</span>
+  ₿ Pay with Bitcoin
+<span class="et">&lt;/button&gt;</span>
+
+<span class="em">/* Optional JS callbacks */</span>
+<span class="et">&lt;script&gt;</span>
+  document.addEventListener(<span class="ev">'oppay:success'</span>, (e) =&gt; {
+    console.log(<span class="ev">'Paid!'</span>, e.detail.txId, e.detail.amount);
+  });
+<span class="et">&lt;/script&gt;</span></div>
+          <button class="copy-btn" onclick="copyEmbed()" style="margin-top:14px;" id="copy-embed-btn">Copy Code</button>
+        </div>
+
+        <div class="content-card">
+          <div class="content-card-title">📡 Webhook URL</div>
+          <div style="font-size:13px;color:var(--sub);margin-bottom:14px;">OpPay will POST to this URL on every confirmed payment.</div>
+          <div class="api-key-row">
+            <input type="text" id="webhook-url" placeholder="https://yourshop.com/api/oppay-webhook"
+              style="flex:1;padding:12px 15px;background:var(--surface);border:1.5px solid var(--border);border-radius:11px;font-family:monospace;font-size:13px;color:var(--text);outline:none;transition:border-color 0.15s;"/>
+            <button class="copy-btn" onclick="saveWebhook()">Save</button>
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-top:10px;">Payload: <code style="color:var(--orange)">{ txId, amount, btc, method, description, timestamp }</code></div>
+        </div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="page" id="page-settings">
+        <div class="content-card">
+          <div class="content-card-title">⚙️ Account Settings</div>
+          <div class="settings-field"><label>Business Name</label><input type="text" id="s-name" placeholder="Your shop name" /></div>
+          <div class="settings-field"><label>Payout Bitcoin Address</label><input type="text" id="s-btc" placeholder="bc1q..." style="font-family:monospace;color:var(--orange);" /></div>
+          <div class="settings-field" style="margin-bottom:24px;"><label>Email</label><input type="email" id="s-email" /></div>
+          <button class="save-btn" onclick="saveSettings()">Save Changes</button>
+        </div>
+        <div class="danger-card">
+          <div class="danger-title">⚠️ Danger Zone</div>
+          <div style="font-size:13px;color:var(--sub);margin-bottom:16px;">Permanently delete all transaction history and reset your account.</div>
+          <button class="danger-btn" onclick="clearAll()">Clear All Data</button>
+        </div>
+      </div>
+
+    </div><!-- /main -->
+  </div><!-- /layout -->
+</div><!-- /dashboard -->
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <div class="toast-icon" id="toast-icon">✓</div>
+  <div id="toast-msg">Done!</div>
+  <button class="toast-close" onclick="document.getElementById('toast').classList.remove('show')">&times;</button>
+</div>
+
+<script>
+const API_BASE = 'http://localhost:3001/api';
+const WS_URL   = 'ws://localhost:3001';
+
+let merchant = null;
+let txFilter = 'all';
+let cachedTxs = [];
+let ws = null;
+let serverOnline = false;
+
+const STORE_KEY = 'oppay_merchant';
+const TX_KEY    = 'oppay_transactions';
+
+async function api(path, opts = {}) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (merchant?.api_key) headers['Authorization'] = 'Bearer ' + merchant.api_key;
+  const res = await fetch(API_BASE + path, { ...opts, headers: { ...headers, ...opts.headers } });
+  if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || res.statusText); }
+  return res.json();
+}
+
+async function checkServer() {
+  try { await fetch(API_BASE + '/health', { signal: AbortSignal.timeout(2000) }); serverOnline = true; }
+  catch { serverOnline = false; }
+  return serverOnline;
+}
+
+function loadMerchantLocal() { try { return JSON.parse(localStorage.getItem(STORE_KEY)); } catch(e) { return null; } }
+function saveMerchantLocal(m) { localStorage.setItem(STORE_KEY, JSON.stringify(m)); }
+function loadTxLocal() { try { return JSON.parse(localStorage.getItem(TX_KEY)) || []; } catch(e) { return []; } }
+
+function switchTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach((t,i) => t.classList.toggle('active', ['login','register'][i]===tab));
+  document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+  document.getElementById('form-'+tab).classList.add('active');
+}
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pw    = document.getElementById('login-pw').value;
+  if (!email || !pw) return toast('⚠️', 'Fill in email and password');
+  const online = await checkServer();
+  if (online) {
+    try {
+      const m = await api('/auth/login', { method: 'POST', body: JSON.stringify({ email, password: pw }) });
+      merchant = m; saveMerchantLocal(m); enterDashboard();
+    } catch (err) { toast('✗', err.message); }
+  } else {
+    let m = loadMerchantLocal();
+    if (!m || m.email !== email) {
+      m = { name: email.split('@')[0], email, payout_address: '', api_key: 'op_live_demo_' + Math.random().toString(36).slice(2), id: 'demo' };
+      saveMerchantLocal(m);
+    }
+    merchant = m;
+    toast('⚠️', 'Server offline — running in demo mode');
+    enterDashboard();
+  }
+}
+
+async function doRegister() {
+  const name  = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const btc   = document.getElementById('reg-btc').value.trim();
+  const pw    = document.getElementById('reg-pw').value;
+  if (!name || !email || !pw) return toast('⚠️', 'Fill in all required fields');
+  const online = await checkServer();
+  if (online) {
+    try {
+      const m = await api('/auth/register', { method: 'POST', body: JSON.stringify({ name, email, password: pw, payout_address: btc }) });
+      merchant = m; saveMerchantLocal(m); enterDashboard();
+    } catch (err) { toast('✗', err.message); }
+  } else {
+    merchant = { name, email, payout_address: btc, api_key: 'op_live_demo_' + Math.random().toString(36).slice(2), id: 'demo' };
+    saveMerchantLocal(merchant);
+    toast('⚠️', 'Server offline — running in demo mode');
+    enterDashboard();
+  }
+}
+
+function enterDashboard() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('dashboard').style.display   = 'block';
+  document.getElementById('user-name').textContent    = merchant.name;
+  document.getElementById('user-avatar').textContent  = merchant.name[0].toUpperCase();
+  document.getElementById('s-name').value  = merchant.name;
+  document.getElementById('s-btc').value   = merchant.payout_address || merchant.btc || '';
+  document.getElementById('s-email').value = merchant.email;
+  const btcAddr = merchant.payout_address || merchant.btc || '';
+  if (btcAddr) document.getElementById('w-addr').value = btcAddr;
+  const badge = document.getElementById('server-badge');
+  if (badge) badge.textContent = serverOnline ? '🟢 Server connected' : '🟡 Demo mode';
+  updateEmbedKey();
+  refreshDashboard();
+  if (serverOnline) connectWebSocket(); else startLocalPolling();
+}
+
+function doLogout() {
+  merchant = null;
+  if (ws) { ws.close(); ws = null; }
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'flex';
+}
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach((n,i) => {
+    n.classList.toggle('active', ['overview','transactions','withdraw','api','settings'][i]===id);
+  });
+  const titles = {overview:'Overview', transactions:'Transactions', withdraw:'Withdraw BTC', api:'API & Embed', settings:'Settings'};
+  document.getElementById('topbar-title').textContent = titles[id] || id;
+  if (id==='overview'||id==='transactions') refreshDashboard();
+  if (id==='withdraw') loadWithdrawals();
+}
+
+async function refreshDashboard() {
+  let txs = [];
+  if (serverOnline && merchant?.api_key && !merchant.api_key.includes('demo')) {
+    try {
+      const [txData, stats] = await Promise.all([
+        api('/transactions?limit=100'),
+        api('/transactions/stats'),
+      ]);
+      txs = txData.map(t => ({
+        ...t,
+        status: t.escrow_status === 'locked' ? 'escrowed' : t.escrow_status === 'released' ? 'confirmed' : (t.confirmations >= 1 ? 'confirmed' : 'pending'),
+        time: t.created_at, amount: t.eur_amount, btc: t.btc_amount, txId: t.tx_hash,
+      }));
+      cachedTxs = txs;
+      document.getElementById('stat-total').textContent   = fmtEur(stats.total_eur || 0);
+      document.getElementById('stat-btc').textContent     = (stats.total_btc || 0).toFixed(8) + ' BTC';
+      document.getElementById('stat-count').textContent   = stats.confirmed_count || 0;
+      const today = txs.filter(t => new Date(t.time).toDateString() === new Date().toDateString()).length;
+      document.getElementById('stat-today').textContent   = today + ' today';
+      const total = (stats.confirmed_count||0) + (stats.failed_count||0);
+      document.getElementById('stat-rate').textContent    = total ? Math.round((stats.confirmed_count||0)/total*100)+'%' : '—';
+      document.getElementById('stat-pending').textContent = txs.filter(t=>t.status==='pending').length;
+      document.getElementById('stat-escrow').textContent  = fmtEur(stats.escrow_eur || 0);
+      document.getElementById('stat-escrow-count').textContent = (stats.escrowed_count||0) + ' orders locked';
+      document.getElementById('w-balance').textContent    = fmtEur(stats.total_eur || 0);
+      document.getElementById('w-balance-btc').textContent = (stats.total_btc||0).toFixed(8) + ' BTC available for withdrawal';
+    } catch (err) {
+      console.warn('API error, falling back to local:', err.message);
+      txs = loadTxLocal();
+    }
+  } else {
+    txs = loadTxLocal();
+    const confirmed = txs.filter(t => t.status==='confirmed');
+    const escrowed  = txs.filter(t => t.status==='escrowed');
+    const totalEur  = confirmed.reduce((s,t) => s + (t.amount||t.eur_amount||0), 0);
+    const totalBtc  = confirmed.reduce((s,t) => s + (t.btc||t.btc_amount||0), 0);
+    const escrowEur = escrowed.reduce((s,t)  => s + (t.amount||t.eur_amount||0), 0);
+    const today     = txs.filter(t => new Date(t.time||t.created_at).toDateString() === new Date().toDateString()).length;
+    document.getElementById('stat-total').textContent   = fmtEur(totalEur);
+    document.getElementById('stat-btc').textContent     = totalBtc.toFixed(8) + ' BTC';
+    document.getElementById('stat-count').textContent   = confirmed.length;
+    document.getElementById('stat-today').textContent   = today + ' today';
+    document.getElementById('stat-rate').textContent    = txs.length ? Math.round(confirmed.length/txs.length*100)+'%' : '—';
+    document.getElementById('stat-pending').textContent = txs.filter(t=>t.status==='pending').length;
+    document.getElementById('stat-escrow').textContent  = fmtEur(escrowEur);
+    document.getElementById('stat-escrow-count').textContent = escrowed.length + ' orders locked';
+    document.getElementById('w-balance').textContent    = fmtEur(totalEur);
+    document.getElementById('w-balance-btc').textContent = totalBtc.toFixed(8) + ' BTC available for withdrawal';
+  }
+  renderTable('recent-tbody', txs.slice(0, 10), 6);
+  renderTable('all-tbody', filterList(txs), 7);
+}
+
+function filterList(txs) {
+  if (txFilter === 'confirmed') return txs.filter(t => t.status==='confirmed');
+  if (txFilter === 'failed')    return txs.filter(t => t.status==='failed');
+  if (txFilter === 'escrowed')  return txs.filter(t => t.status==='escrowed');
+  return txs;
+}
+
+function filterTx(f, btn) {
+  txFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  refreshDashboard();
+}
+
+function renderTable(tbodyId, txs, cols) {
+  const tbody = document.getElementById(tbodyId);
+  if (!txs.length) {
+    tbody.innerHTML = `<tr><td colspan="${cols}"><div class="empty-table"><div class="empty-icon">₿</div><div class="empty-text">No transactions yet</div><div class="empty-sub">Go to the <a href="index.html" style="color:var(--orange)">demo shop</a> and make a test payment</div></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = [...txs].reverse().map(tx => txRow(tx, cols)).join('');
+}
+
+function txRow(tx, cols) {
+  const time = new Date(tx.time).toLocaleString('nl-NL', {day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
+  const badge = tx.status==='confirmed'
+    ? '<span class="badge badge-ok">✓ Confirmed</span>'
+    : tx.status==='escrowed'
+    ? '<span class="badge badge-escrow">🔒 Escrowed</span>'
+    : tx.status==='pending'
+    ? '<span class="badge badge-pending">⏳ Pending</span>'
+    : '<span class="badge badge-fail">✗ Failed</span>';
+  const method = tx.method==='opcredit'
+    ? '<span class="method-tag" style="color:var(--purple-light);">🔒 OpCredit</span>'
+    : tx.method==='opnet'
+    ? '<span class="method-tag">🔗 OPNet</span>'
+    : '<span class="method-tag">₿ Bitcoin</span>';
+  const txHash = `<span class="td-mono">${(tx.txId||'').slice(0,18)}...</span>`;
+  if (cols===6) {
+    return `<tr class="${tx._new?'new-row':''}"><td class="td-muted">${time}</td><td class="td-muted">${tx.description||'Payment'}</td><td>${method}</td><td style="font-weight:700">${fmtEur(tx.amount)}</td><td>${badge}</td><td>${txHash}</td></tr>`;
+  }
+  return `<tr class="${tx._new?'new-row':''}"><td class="td-muted">${time}</td><td class="td-muted">${tx.description||'Payment'}</td><td>${method}</td><td style="font-weight:700">${fmtEur(tx.amount)}</td><td class="td-mono" style="font-size:11px">${(tx.btc||0).toFixed(8)}</td><td>${badge}</td><td>${txHash}</td></tr>`;
+}
+
+function connectWebSocket() {
+  if (ws) ws.close();
+  ws = new WebSocket(WS_URL);
+  ws.onopen = () => {
+    ws.send(JSON.stringify({ type: 'auth', api_key: merchant.api_key }));
+  };
+  ws.onmessage = (e) => {
+    try {
+      const msg = JSON.parse(e.data);
+      if (msg.type === 'payment' && msg.data) {
+        const d = msg.data;
+        if (d.status === 'escrowed') toast('🔒', `OpCredit: ${fmtEur(d.amount_eur)} locked in escrow`);
+        else toast('₿', `Payment received: ${fmtEur(d.amount_eur)} — ${d.method?.toUpperCase()}`);
+        refreshDashboard();
+      } else if (msg.type === 'escrow_released') {
+        toast('✓', `Escrow released: ${(msg.data?.amount_btc||0).toFixed(8)} BTC`);
+        refreshDashboard();
+      }
+    } catch {}
+  };
+  ws.onclose = () => { setTimeout(() => { if (merchant) connectWebSocket(); }, 5000); };
+  ws.onerror = () => ws.close();
+}
+
+let lastTxCount = 0;
+function startLocalPolling() {
+  lastTxCount = loadTxLocal().length;
+  setInterval(() => {
+    const txs = loadTxLocal();
+    if (txs.length > lastTxCount) {
+      const newTxs = txs.slice(lastTxCount);
+      newTxs.forEach(tx => {
+        if (tx.status === 'escrowed') toast('🔒', `OpCredit: ${fmtEur(tx.amount||tx.eur_amount||0)} locked in escrow`);
+        else toast('₿', `New payment: ${fmtEur(tx.amount||tx.eur_amount||0)} — ${tx.status}`);
+      });
+      lastTxCount = txs.length;
+      refreshDashboard();
+    }
+  }, 1500);
+}
+
+let keyRevealed = false;
+function revealKey() {
+  if (!merchant) return;
+  document.getElementById('api-key-display').textContent = merchant.api_key || merchant.apiKey || '—';
+  document.getElementById('reveal-btn').style.display = 'none';
+  document.getElementById('copy-btn').style.display   = '';
+  keyRevealed = true;
+}
+
+function copyKey() {
+  const key = merchant?.api_key || merchant?.apiKey;
+  if (!key) return;
+  navigator.clipboard.writeText(key).then(() => {
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = 'Copied!'; btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+    toast('✓', 'API key copied!');
+  });
+}
+
+function updateEmbedKey() {
+  const key = merchant?.api_key || merchant?.apiKey || 'op_live_YOUR_KEY';
+  const el = document.getElementById('embed-key');
+  if (el) el.textContent = `"${key.slice(0, 16)}..."`;
+}
+
+function copyEmbed() {
+  const code = document.getElementById('embed-block').innerText;
+  navigator.clipboard.writeText(code).then(() => {
+    const btn = document.getElementById('copy-embed-btn');
+    btn.textContent = 'Copied!'; btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy Code'; btn.classList.remove('copied'); }, 2000);
+    toast('✓', 'Embed code copied!');
+  });
+}
+
+async function saveWebhook() {
+  const url = document.getElementById('webhook-url').value.trim();
+  if (!url) return;
+  if (serverOnline) {
+    try { await api('/settings', { method: 'PUT', body: JSON.stringify({ webhook_url: url }) }); }
+    catch (err) { return toast('✗', err.message); }
+  }
+  toast('✓', 'Webhook URL saved!');
+}
+
+async function doWithdraw() {
+  const addr = document.getElementById('w-addr').value.trim();
+  if (!addr) return toast('⚠️', 'Enter a Bitcoin payout address');
+  if (serverOnline) {
+    try {
+      const stats = await api('/transactions/stats');
+      const btc   = stats.total_btc || 0;
+      if (btc < 0.000001) return toast('⚠️', 'No confirmed balance to withdraw');
+      await api('/withdraw', { method: 'POST', body: JSON.stringify({ to_address: addr, btc_amount: btc }) });
+      await loadWithdrawals();
+      toast('₿', `Withdrawal of ${btc.toFixed(8)} BTC queued!`);
+    } catch (err) { toast('✗', err.message); }
+  } else {
+    toast('⚠️', 'Connect the server to process real withdrawals');
+  }
+}
+
+async function loadWithdrawals() {
+  if (!serverOnline) return;
+  try {
+    const withdrawals = await api('/withdrawals');
+    const el = document.getElementById('withdraw-history');
+    if (!withdrawals.length) { el.innerHTML = '<div style="font-size:13px;color:var(--muted);padding:8px 0;">No withdrawals yet.</div>'; return; }
+    el.innerHTML = withdrawals.map(w => `
+      <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);font-size:13px;flex-wrap:wrap;gap:8px;align-items:center;">
+        <span class="td-muted">${new Date(w.created_at).toLocaleString('nl-NL')}</span>
+        <span class="td-mono">${w.to_address.slice(0,20)}...</span>
+        <span style="font-weight:700">${(w.btc_amount||0).toFixed(8)} BTC</span>
+        <span class="badge badge-ok">✓ Queued</span>
+      </div>`).join('');
+  } catch {}
+}
+
+async function saveSettings() {
+  if (!merchant) return;
+  const name   = document.getElementById('s-name').value.trim()  || merchant.name;
+  const btc    = document.getElementById('s-btc').value.trim();
+  const webhook= document.getElementById('webhook-url')?.value?.trim();
+  if (serverOnline) {
+    try {
+      const m = await api('/settings', { method: 'PUT', body: JSON.stringify({ name, payout_address: btc, webhook_url: webhook }) });
+      merchant = { ...merchant, ...m };
+    } catch (err) { return toast('✗', err.message); }
+  } else {
+    merchant.name = name; merchant.payout_address = btc; merchant.btc = btc;
+  }
+  saveMerchantLocal(merchant);
+  document.getElementById('user-name').textContent   = merchant.name;
+  document.getElementById('user-avatar').textContent = merchant.name[0].toUpperCase();
+  toast('✓', 'Settings saved!');
+}
+
+function clearAll() {
+  if (!confirm('Delete all local demo data? This cannot be undone.')) return;
+  localStorage.removeItem(TX_KEY);
+  lastTxCount = 0;
+  refreshDashboard();
+  toast('🗑️', 'All data cleared');
+}
+
+let toastTimer = null;
+function toast(icon, msg) {
+  document.getElementById('toast-icon').textContent = icon;
+  document.getElementById('toast-msg').textContent  = msg;
+  const el = document.getElementById('toast');
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+function fmtEur(n) {
+  return new Intl.NumberFormat('nl-NL', {style:'currency', currency:'EUR'}).format(n||0);
+}
+
+window.addEventListener('DOMContentLoaded', async () => {
+  await checkServer();
+  const m = loadMerchantLocal();
+  if (m) {
+    if (serverOnline && m.api_key && !m.api_key.includes('demo')) {
+      try {
+        const fresh = await api('/auth/me');
+        merchant = fresh; saveMerchantLocal(fresh);
+      } catch { merchant = m; }
+    } else { merchant = m; }
+    enterDashboard();
+  }
+});
+</script>
+</body>
+</html>
