@@ -923,6 +923,12 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
 <script>
 // ── OpPay deposit integration ─────────────────────────────────────────────────
 
+// ── OpPay merchant config ─────────────────────────────────────────────────────
+// Set CASINO_PUBKEY to your pub_key from http://localhost:3001/pay/merchant.html
+// Leave empty to run in demo mode (deposits not tracked on dashboard)
+var CASINO_PUBKEY = '';
+var CASINO_API    = 'http://localhost:3001';
+
 var _oppayBtcEur = 95000; // fallback BTC/EUR price
 var _oppayPopup  = null;
 
@@ -1027,6 +1033,10 @@ function payWithOpPay() {
     sat:        sat,
     return_url: location.href.split('#')[0].split('?')[0],
   });
+  if (CASINO_PUBKEY) {
+    params.set('merchant_key', CASINO_PUBKEY);
+    params.set('api', CASINO_API);
+  }
 
   var url = 'pay/checkout.html?' + params.toString();
   var pw = 520, ph = 720;

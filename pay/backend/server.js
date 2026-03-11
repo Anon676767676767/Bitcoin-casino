@@ -16,6 +16,10 @@ import { getAdminStats, getAdminMerchants, getAdminRecentTransactions } from './
 import { requireAuth, hashPassword, verifyPassword } from './auth.js';
 import { deriveAddress, isValidAddress } from './derive.js';
 import { startMonitor, setPushCallback, confirmEscrowReceipt } from './monitor.js';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname  = dirname(__filename);
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
@@ -30,6 +34,12 @@ const EXPIRY_MINUTES = parseInt(process.env.SESSION_EXPIRY_MINUTES || '30');
 
 app.use(cors());
 app.use(express.json());
+
+// Serve the whole project as static files
+// casino → http://localhost:3001/
+// merchant dashboard → http://localhost:3001/pay/merchant.html
+// checkout → http://localhost:3001/pay/checkout.html
+app.use(express.static(join(__dirname, '../..')));
 
 // ─── WebSocket ────────────────────────────────────────────────────────────────
 
@@ -400,6 +410,67 @@ app.post('/api/sessions/:id/confirm-return', requireAuth, async (req, res) => {
  */
 app.get('/api/returns', requireAuth, (req, res) => {
   res.json(db.getReturnRequestsByMerchant(req.merchant.id));
+});
+
+/**
+ * POST /api/sessions/demo-confirm
+ * Called by checkout.html after a simulated payment.
+ * Creates a session + transaction in the DB as immediately confirmed.
+ * Identified by merchant pub_key (public-safe — no secret).
+ */
+app.post('/api/sessions/demo-confirm', async (req, res) => {
+  try {
+    const { pub_key, sat, description } = req.body;
+    if (!pub_key || !sat) return res.status(400).json({ error: 'pub_key and sat required' });
+
+    const merchant = db.getMerchantByApiKey(pub_key);
+    if (!merchant) return res.status(404).json({ error: 'Merchant not found — check pub_key' });
+
+    const btcPrice  = await getBtcPrice('eur');
+    const btcAmount = parseFloat((parseInt(sat) / 1e8).toFixed(8));
+    const eurAmount = parseFloat((btcAmount * btcPrice).toFixed(2));
+    const txHash    = '0x' + Array.from({length: 32}, () => Math.floor(Math.random() * 16).toString(16)).join('');
+
+    const session = db.createSession({
+      merchantId:    merchant.id,
+      amountEur:     eurAmount,
+      amountBtc:     btcAmount,
+      btcAddress:    merchant.payout_address || 'bc1q_demo_address',
+      description:   description || 'Casino Deposit',
+      method:        'bitcoin',
+      expiryMinutes: 5,
+    });
+
+    db.updateSessionStatus(session.id, 'confirmed', { txHash, confirmedAt: Date.now() });
+
+    const tx = db.createTransaction({
+      sessionId:      session.id,
+      merchantId:     merchant.id,
+      txHash,
+      btcAmount,
+      eurAmount,
+      confirmations:  1,
+      method:         'bitcoin',
+      isEscrow:       false,
+      platformFeeBtc: parseFloat((btcAmount * 0.001).toFixed(8)),
+    });
+
+    pushToMerchant(merchant.id, 'payment', {
+      session_id:  session.id,
+      tx_id:       tx.id,
+      tx_hash:     txHash,
+      amount_eur:  eurAmount,
+      amount_btc:  btcAmount,
+      method:      'bitcoin',
+      status:      'confirmed',
+      timestamp:   Date.now(),
+    });
+
+    res.json({ ok: true, tx_id: tx.id, session_id: session.id, btc: btcAmount, eur: eurAmount });
+  } catch (err) {
+    console.error('[demo-confirm]', err.message);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ─── Admin API ────────────────────────────────────────────────────────────────

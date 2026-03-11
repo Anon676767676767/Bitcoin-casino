@@ -320,16 +320,17 @@
 // ── URL params ────────────────────────────────────────────────────────────────
 const p = new URLSearchParams(location.search);
 const PAY = {
-  session:   p.get('session') || '',
-  amount:    parseFloat(p.get('amount')) || 0,
-  currency:  (p.get('currency') || 'EUR').toUpperCase(),
-  btc:       parseFloat(p.get('btc')) || 0,
-  merchant:  p.get('merchant') || 'Unknown Merchant',
-  desc:      p.get('desc') || 'Bitcoin payment',
-  returnUrl: p.get('return_url') || '',
-  orderId:   p.get('order_id') || '',
-  sat:       parseInt(p.get('sat')) || 0,  // sats to credit back (for casino demo)
-  apiBase:   p.get('api') || '',
+  session:     p.get('session') || '',
+  amount:      parseFloat(p.get('amount')) || 0,
+  currency:    (p.get('currency') || 'EUR').toUpperCase(),
+  btc:         parseFloat(p.get('btc')) || 0,
+  merchant:    p.get('merchant') || 'Unknown Merchant',
+  desc:        p.get('desc') || 'Bitcoin payment',
+  returnUrl:   p.get('return_url') || '',
+  orderId:     p.get('order_id') || '',
+  sat:         parseInt(p.get('sat')) || 0,  // sats to credit back (for casino demo)
+  merchantKey: p.get('merchant_key') || '',
+  apiBase:     p.get('api') || 'http://localhost:3001',
 };
 
 // ── Demo BTC address ──────────────────────────────────────────────────────────
@@ -455,6 +456,15 @@ function showSuccess() {
   // Write result to localStorage — casino detects via storage event (popup) or page load (same-tab)
   if (PAY.sat > 0) {
     try { localStorage.setItem('oppay_result', JSON.stringify({sat: PAY.sat, ts: Date.now(), status: 'confirmed'})); } catch(e) {}
+  }
+
+  // Record to OpPay backend if merchant key is configured
+  if (PAY.merchantKey && PAY.sat > 0) {
+    fetch(PAY.apiBase + '/api/sessions/demo-confirm', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ pub_key: PAY.merchantKey, sat: PAY.sat, description: PAY.desc }),
+    }).catch(() => {}); // fire and forget — dashboard updates via WebSocket
   }
 
   // Always show the redirect bar + start 3-second countdown
