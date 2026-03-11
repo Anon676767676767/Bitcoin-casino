@@ -878,30 +878,89 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
 <div class="mbg" id="depm" onclick="if(event.target===this)cdep()">
   <div class="mbox">
     <button class="mx" onclick="cdep()">✕</button>
-    <h2 style="margin-bottom:5px;color:var(--or)">💰 Add Funds</h2>
-    <div id="wlt-section" style="display:none;background:rgba(52,211,153,.07);border:1px solid rgba(52,211,153,.25);border-radius:8px;padding:9px 11px;margin-bottom:10px;font-size:11px">
-      <div style="color:#34d399;font-weight:800;margin-bottom:3px">🔗 Wallet Connected</div>
-      <div style="color:#9ca3af;word-break:break-all;font-family:monospace;font-size:10px" id="wlt-addr"></div>
-      <div style="color:#f7931a;font-weight:700;margin-top:3px;font-size:10px" id="wlt-bal2"></div>
+    <h2 style="margin-bottom:8px;color:var(--or)">💰 Add Funds</h2>
+    <!-- OpPay branding -->
+    <div style="background:rgba(247,147,26,.07);border:1px solid rgba(247,147,26,.2);border-radius:10px;padding:10px 13px;margin-bottom:12px;display:flex;align-items:center;gap:10px;">
+      <div style="font-size:28px;line-height:1;">₿</div>
+      <div>
+        <div style="color:var(--or);font-weight:800;font-size:12px;">Powered by OpPay</div>
+        <div style="color:var(--mut);font-size:11px;line-height:1.5;">Bitcoin Layer 1 · OPNet Wallet QR · BTC Address · OpCredit Escrow</div>
+      </div>
     </div>
-    <div style="background:rgba(247,147,26,.07);border:1px solid rgba(247,147,26,.22);border-radius:8px;padding:9px 11px;margin-bottom:10px;font-size:11px">
-      <div style="color:var(--or);font-weight:800;margin-bottom:3px">₿ Deposit with Bitcoin via OpPay</div>
-      <div style="color:var(--mut);line-height:1.6">Real BTC accepted · Live rates from CoinGecko · EUR, USD, GBP, JPY, CHF, AUD, CAD · Scan QR or use hosted checkout</div>
-      <a href="pay/checkout.html" target="_blank" style="display:inline-block;margin-top:6px;padding:4px 10px;background:linear-gradient(135deg,var(--or),var(--or2));color:#000;border-radius:5px;font-weight:800;font-size:11px;text-decoration:none">Pay with Bitcoin →</a>
-    </div>
-    <p style="font-size:11px;color:var(--mut);margin-bottom:2px">Demo mode — select amount to add</p>
+    <!-- Amount picker with live EUR prices -->
+    <p style="font-size:11px;color:var(--mut);margin-bottom:6px;">Select deposit amount:</p>
     <div class="dams">
-      <div class="da on" onclick="sd(this,100000)"><div class="das">100k sat</div><div class="dab">0.001 BTC</div></div>
-      <div class="da" onclick="sd(this,500000)"><div class="das">500k sat</div><div class="dab">0.005 BTC</div></div>
-      <div class="da" onclick="sd(this,1000000)"><div class="das">1M sat</div><div class="dab">0.01 BTC</div></div>
-      <div class="da" onclick="sd(this,5000000)"><div class="das">5M sat</div><div class="dab">0.05 BTC</div></div>
-      <div class="da" onclick="sd(this,10000000)"><div class="das">10M sat</div><div class="dab">0.1 BTC</div></div>
-      <div class="da" onclick="sd(this,50000000)"><div class="das">50M sat</div><div class="dab">0.5 BTC</div></div>
+      <div class="da on" onclick="sd(this,100000)"><div class="das">100k sat</div><div class="dab" id="dep-eur-100">0.001 BTC</div></div>
+      <div class="da" onclick="sd(this,500000)"><div class="das">500k sat</div><div class="dab" id="dep-eur-500">0.005 BTC</div></div>
+      <div class="da" onclick="sd(this,1000000)"><div class="das">1M sat</div><div class="dab" id="dep-eur-1m">0.01 BTC</div></div>
+      <div class="da" onclick="sd(this,5000000)"><div class="das">5M sat</div><div class="dab" id="dep-eur-5m">0.05 BTC</div></div>
+      <div class="da" onclick="sd(this,10000000)"><div class="das">10M sat</div><div class="dab" id="dep-eur-10m">0.1 BTC</div></div>
+      <div class="da" onclick="sd(this,50000000)"><div class="das">50M sat</div><div class="dab" id="dep-eur-50m">0.5 BTC</div></div>
     </div>
-    <button class="dcf" onclick="cfdep()">✅ Add to Balance</button>
+    <!-- Pay via OpPay (all 3 methods) -->
+    <button class="dcf" onclick="payWithOpPay()" style="background:linear-gradient(135deg,#f7931a,#d4780f);color:#000;font-weight:800;margin-bottom:8px;">₿ Pay with Bitcoin →</button>
+    <button class="dcf" onclick="cfdep()" style="background:rgba(255,255,255,.05);color:var(--mut);border:1px solid rgba(255,255,255,.09);font-size:12px;padding:10px;">⚡ Add Demo Funds (no payment)</button>
+    <div style="font-size:10px;color:var(--mut);text-align:center;margin-top:8px;line-height:1.6;">OpPay checkout opens — choose OPNet Wallet QR, Bitcoin Address, or OpCredit Escrow</div>
   </div>
 </div>
 <div id="toasts"></div>
 
 <script src="casino.js"></script>
+<script>
+// ── OpPay deposit integration ─────────────────────────────────────────────────
+
+// 1. Handle return from checkout.html (?status=confirmed&sat=X)
+(function checkOpPayReturn() {
+  const u = new URLSearchParams(location.search);
+  if (u.get('status') === 'confirmed') {
+    const sat = parseInt(u.get('sat') || '0');
+    if (sat > 0) {
+      setTimeout(function() {
+        BAL += sat;
+        clampBal();
+        updBal();
+        cdep();
+        toast('₿ ' + sat.toLocaleString() + ' sat deposited via OpPay! 🎉', 'ok');
+      }, 400);
+    }
+    history.replaceState({}, '', location.pathname);
+  }
+})();
+
+// 2. Fetch live BTC price and update EUR labels in deposit picker
+var _oppayBtcEur = 95000; // fallback
+(async function fetchDepositPrices() {
+  try {
+    var r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=eur', {signal: AbortSignal.timeout(5000)});
+    var d = await r.json();
+    _oppayBtcEur = d.bitcoin.eur;
+    var pairs = [[100000,'100'],[500000,'500'],[1000000,'1m'],[5000000,'5m'],[10000000,'10m'],[50000000,'50m']];
+    pairs.forEach(function(pair) {
+      var el = document.getElementById('dep-eur-' + pair[1]);
+      if (el) {
+        var eur = (pair[0] / 1e8 * _oppayBtcEur);
+        el.textContent = '≈ €' + (eur >= 1000 ? (eur/1000).toFixed(1)+'k' : eur.toFixed(0));
+      }
+    });
+  } catch(e) { /* keep fallback */ }
+})();
+
+// 3. Open OpPay checkout with selected sat amount
+function payWithOpPay() {
+  var sat = depAmt || 100000;
+  var btc = sat / 1e8;
+  var eur = parseFloat((btc * _oppayBtcEur).toFixed(2));
+  var returnUrl = location.href.split('?')[0];
+  var params = new URLSearchParams({
+    amount:   eur,
+    currency: 'EUR',
+    btc:      btc.toFixed(8),
+    merchant: 'BitOPNet Casino',
+    desc:     'Casino Deposit \u2014 ' + sat.toLocaleString() + ' sat',
+    sat:      sat,
+    return_url: returnUrl,
+  });
+  window.location.href = 'pay/checkout.html?' + params.toString();
+}
+</script>
 </body></html>
