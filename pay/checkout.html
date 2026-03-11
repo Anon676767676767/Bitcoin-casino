@@ -366,6 +366,7 @@ const PAY = {
   returnUrl: p.get('return_url') || '',
   orderId:   p.get('order_id') || '',
   sat:       parseInt(p.get('sat')) || 0,  // sats to credit back (for casino demo)
+  noEscrow:  p.get('no_escrow') === '1',   // hide OpCredit (e.g. casino deposit)
   apiBase:   p.get('api') || '',
 };
 
@@ -404,6 +405,10 @@ function fmtFiat(n) {
   if (PAY.merchant) {
     document.getElementById('return-label').textContent = PAY.merchant;
     document.getElementById('redir-merchant').textContent = PAY.merchant;
+  }
+  // Hide OpCredit option when no_escrow=1 (e.g. casino deposit — pay later makes no sense)
+  if (PAY.noEscrow) {
+    document.querySelector('[onclick="selectMethod(\'opcredit\')"]').style.display = 'none';
   }
 })();
 
@@ -500,7 +505,8 @@ function showSuccess() {
 
   if (PAY.returnUrl) {
     document.getElementById('redirect-bar').style.display='block';
-    let count = 5;
+    let count = 3;
+    document.getElementById('redir-count').textContent = count;
     _redirectTimer = setInterval(() => {
       count--;
       document.getElementById('redir-count').textContent = count;
@@ -513,15 +519,17 @@ function showSuccess() {
 function returnNow() {
   if (_redirectTimer) clearInterval(_redirectTimer);
   if (!PAY.returnUrl) { history.back(); return; }
-  const ret = new URL(PAY.returnUrl, location.href);
-  if (PAY.session) ret.searchParams.set('session_id', PAY.session);
-  ret.searchParams.set('status', 'confirmed');
-  ret.searchParams.set('tx', txHash || 'confirmed');
-  ret.searchParams.set('btc', PAY.btc);
-  ret.searchParams.set('currency', PAY.currency);
-  if (PAY.sat)    ret.searchParams.set('sat', PAY.sat);  // for casino demo
-  if (PAY.orderId)ret.searchParams.set('order_id', PAY.orderId);
-  window.location.href = ret.toString();
+  // Build return params — avoid new URL() to stay compatible with file:// paths
+  const params = new URLSearchParams();
+  if (PAY.session) params.set('session_id', PAY.session);
+  params.set('status', 'confirmed');
+  params.set('tx', txHash || 'confirmed');
+  params.set('btc', PAY.btc);
+  params.set('currency', PAY.currency);
+  if (PAY.sat)     params.set('sat', PAY.sat);
+  if (PAY.orderId) params.set('order_id', PAY.orderId);
+  const sep = PAY.returnUrl.includes('?') ? '&' : '?';
+  window.location.href = PAY.returnUrl + sep + params.toString();
 }
 
 function goBack() {

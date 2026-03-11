@@ -952,12 +952,13 @@ function payWithOpPay() {
   var eur = parseFloat((btc * _oppayBtcEur).toFixed(2));
   var returnUrl = location.href.split('?')[0];
   var params = new URLSearchParams({
-    amount:   eur,
-    currency: 'EUR',
-    btc:      btc.toFixed(8),
-    merchant: 'BitOPNet Casino',
-    desc:     'Casino Deposit \u2014 ' + sat.toLocaleString() + ' sat',
-    sat:      sat,
+    amount:    eur,
+    currency:  'EUR',
+    btc:       btc.toFixed(8),
+    merchant:  'BitOPNet Casino',
+    desc:      'Casino Deposit \u2014 ' + sat.toLocaleString() + ' sat',
+    sat:       sat,
+    no_escrow: '1',
     return_url: returnUrl,
   });
   window.location.href = 'pay/checkout.html?' + params.toString();
