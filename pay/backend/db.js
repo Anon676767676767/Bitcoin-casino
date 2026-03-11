@@ -140,9 +140,10 @@ export function nextAddressIndex(merchantId) {
 export function createSession({ merchantId, amountEur, amountBtc, currency = 'EUR', amountLocal, btcAddress, addressIndex, description, method, metadata, expiryMinutes = 30 }) {
   const id  = uuid();
   const now = Date.now();
-  // Add currency columns if they don't exist yet (safe migration)
+  // Add columns if they don't exist yet (safe migration)
   try { db.exec('ALTER TABLE sessions ADD COLUMN currency TEXT NOT NULL DEFAULT \'EUR\''); } catch {}
   try { db.exec('ALTER TABLE sessions ADD COLUMN amount_local REAL'); } catch {}
+  try { db.exec('ALTER TABLE sessions ADD COLUMN return_requested_at INTEGER'); } catch {}
   db.prepare(`
     INSERT INTO sessions (id, merchant_id, amount_eur, amount_btc, currency, amount_local, btc_address, address_index, description, method, status, expires_at, created_at, metadata)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)
@@ -161,14 +162,33 @@ export function getPendingSessions() {
 export function updateSessionStatus(id, status, extra = {}) {
   const fields = ['status = ?'];
   const vals   = [status];
-  if (extra.txHash)      { fields.push('tx_hash = ?');       vals.push(extra.txHash); }
-  if (extra.confirmedAt) { fields.push('confirmed_at = ?');  vals.push(extra.confirmedAt); }
+  if (extra.txHash)             { fields.push('tx_hash = ?');              vals.push(extra.txHash); }
+  if (extra.confirmedAt)        { fields.push('confirmed_at = ?');         vals.push(extra.confirmedAt); }
+  if (extra.returnRequestedAt)  { fields.push('return_requested_at = ?');  vals.push(extra.returnRequestedAt); }
   vals.push(id);
   db.prepare(`UPDATE sessions SET ${fields.join(', ')} WHERE id = ?`).run(...vals);
 }
 
 export function expireOldSessions() {
   db.prepare(`UPDATE sessions SET status = 'expired' WHERE status = 'pending' AND expires_at <= ?`).run(Date.now());
+}
+
+export function getReturnRequestsByMerchant(merchantId) {
+  return db.prepare(`
+    SELECT * FROM sessions
+    WHERE merchant_id = ? AND status = 'return_requested'
+    ORDER BY return_requested_at ASC
+  `).all(merchantId);
+}
+
+// Returns return_requested sessions where merchant has NOT responded within cutoff ms
+export function getReturnRequestsPastTimeout(cutoff) {
+  return db.prepare(`
+    SELECT s.*, m.webhook_url, m.id AS mid
+    FROM sessions s
+    JOIN merchants m ON m.id = s.merchant_id
+    WHERE s.status = 'return_requested' AND s.return_requested_at <= ?
+  `).all(cutoff);
 }
 
 // ─── Transactions ─────────────────────────────────────────────────────────────

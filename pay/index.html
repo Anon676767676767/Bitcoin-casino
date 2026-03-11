@@ -955,11 +955,47 @@ function showEscrowResult(ok,tx,escrowId){
     setTimeout(()=>{close();if(opts.onSuccess)opts.onSuccess({txId:tx,method:'opcredit',escrowId,amount:opts.amount,currency:opts.currency||'EUR'});},1000);
   };
   const ret=document.getElementById('r-return');
-  if(ret)ret.onclick=()=>{
-    ret.textContent='↩ Dispute submitted — BTC will be refunded';ret.style.color='#fbbf24';ret.style.borderColor='rgba(251,191,36,0.3)';ret.style.background='rgba(251,191,36,0.08)';ret.disabled=true;
+  if(ret)ret.onclick=async()=>{
+    // Step 1: Tell server the customer wants to return — does NOT immediately refund.
+    // The merchant must physically receive the goods back and then confirm via their dashboard.
+    ret.disabled=true;
+    ret.textContent='⏳ Submitting return request...';
+    const sessionId=opts.session_id||null;
+    const apiBase=opts._apiBase||'';
+    if(sessionId){
+      try{
+        const r=await fetch(`${apiBase}/api/sessions/${sessionId}/refund`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({reason:'customer_return'})});
+        const d=await r.json();
+        if(!r.ok){ret.textContent='↩ Return Order (get BTC refund)';ret.disabled=false;alert(d.error||'Could not submit return');return;}
+      }catch(e){ret.textContent='↩ Return Order (get BTC refund)';ret.disabled=false;return;}
+    }
+    // Show pending state — merchant must confirm receipt before BTC is returned
+    ret.textContent='⏳ Return requested — awaiting merchant confirmation';
+    ret.style.color='#fbbf24';ret.style.borderColor='rgba(251,191,36,0.3)';ret.style.background='rgba(251,191,36,0.08)';
     if(cr)cr.style.display='none';
-    try{const txs=JSON.parse(localStorage.getItem('oppay_transactions')||'[]');const t=txs.find(t=>t.escrowId===escrowId);if(t){t.status='disputed';t.escrowRefunded=true;localStorage.setItem('oppay_transactions',JSON.stringify(txs));}}catch(e){}
-    setTimeout(()=>{close();if(opts.onFailure)opts.onFailure({txId:tx,reason:'returned',escrowId});},1500);
+    // Info box explaining what happens next
+    const infoBox=document.createElement('div');
+    infoBox.style.cssText='font-size:12px;color:#9aa3b2;text-align:center;margin-top:10px;padding:10px 12px;background:rgba(251,191,36,0.05);border:1px solid rgba(251,191,36,0.15);border-radius:10px;line-height:1.7;';
+    infoBox.innerHTML='📦 Ship the product back to the merchant.<br>Once they confirm receipt of the goods, your BTC will be refunded.<br><strong style="color:#fbbf24">Auto-approved after 7 days if merchant does not respond.</strong>';
+    ret.parentNode.insertBefore(infoBox,ret.nextSibling);
+    try{const txs=JSON.parse(localStorage.getItem('oppay_transactions')||'[]');const t=txs.find(t=>t.escrowId===escrowId);if(t){t.status='return_requested';localStorage.setItem('oppay_transactions',JSON.stringify(txs));}}catch(e){}
+    // Poll for merchant confirmation (status becomes 'refunded' when merchant confirms)
+    if(sessionId){
+      const pollTimer=setInterval(async()=>{
+        try{
+          const r=await fetch(`${apiBase}/api/sessions/${sessionId}`);
+          const s=await r.json();
+          if(s.status==='refunded'){
+            clearInterval(pollTimer);
+            ret.textContent='✓ Merchant confirmed — BTC returned to your wallet';
+            ret.style.color='#00c853';ret.style.borderColor='rgba(0,200,83,0.3)';ret.style.background='rgba(0,200,83,0.08)';
+            infoBox.innerHTML='✅ Your BTC has been returned. Check your wallet.';
+            try{const txs=JSON.parse(localStorage.getItem('oppay_transactions')||'[]');const t=txs.find(t=>t.escrowId===escrowId);if(t){t.status='refunded';localStorage.setItem('oppay_transactions',JSON.stringify(txs));}}catch(e){}
+            setTimeout(()=>{close();if(opts.onFailure)opts.onFailure({txId:tx,reason:'returned',escrowId});},2000);
+          }
+        }catch(e){}
+      },5000);
+    }
   };
   const retry=document.getElementById('r-retry');if(retry)retry.onclick=()=>{close();if(opts.onFailure)opts.onFailure({txId:tx,reason:'escrow_failed'});};
   const can=document.getElementById('r-cancel');if(can)can.onclick=()=>{close();if(opts.onFailure)opts.onFailure({txId:tx,reason:'cancelled'});};

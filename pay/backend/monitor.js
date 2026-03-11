@@ -7,14 +7,16 @@
  */
 import {
   getPendingSessions, updateSessionStatus, createTransaction,
-  getEscrowsDueForRelease, releaseEscrow, expireOldSessions, getSession
+  getEscrowsDueForRelease, releaseEscrow, expireOldSessions, getSession,
+  getReturnRequestsPastTimeout,
 } from './db.js';
 import { sendWebhook } from './webhook.js';
 
-const RPC_URL       = process.env.OPNET_RPC_URL || 'https://testnet.opnet.org';
-const INTERVAL_MS   = parseInt(process.env.MONITOR_INTERVAL_MS || '15000');
-const ESCROW_DAYS   = parseInt(process.env.ESCROW_DAYS || '14');
-const TOLERANCE     = 0.005; // 0.5% underpayment tolerance
+const RPC_URL            = process.env.OPNET_RPC_URL || 'https://testnet.opnet.org';
+const INTERVAL_MS        = parseInt(process.env.MONITOR_INTERVAL_MS || '15000');
+const ESCROW_DAYS        = parseInt(process.env.ESCROW_DAYS || '14');
+const RETURN_TIMEOUT_DAYS = parseInt(process.env.RETURN_TIMEOUT_DAYS || '7');
+const TOLERANCE          = 0.005; // 0.5% underpayment tolerance
 
 // WebSocket push callback — set by server.js
 let pushCallback = null;
@@ -59,9 +61,11 @@ async function getUTXOs(address) {
 export function startMonitor() {
   console.log(`[monitor] Starting — polling every ${INTERVAL_MS / 1000}s`);
   expireOldSessions();
-  setInterval(scanPending,  INTERVAL_MS);
-  setInterval(processEscrowReleases, 60 * 60 * 1000); // hourly
-  processEscrowReleases(); // run once on start
+  setInterval(scanPending,            INTERVAL_MS);
+  setInterval(processEscrowReleases,  60 * 60 * 1000); // hourly
+  setInterval(processReturnTimeouts,  60 * 60 * 1000); // hourly
+  processEscrowReleases();  // run once on start
+  processReturnTimeouts();  // run once on start
 }
 
 async function scanPending() {
@@ -151,6 +155,38 @@ async function processEscrowReleases() {
       console.log(`[monitor] Escrow released — tx ${tx.id} → ${tx.payout_address}`);
     } catch (err) {
       console.error(`[monitor] Escrow release error for tx ${tx.id}:`, err.message);
+    }
+  }
+}
+
+// ─── Return request timeout (auto-approve if merchant ignores for N days) ─────
+
+/**
+ * If a merchant hasn't confirmed a return within RETURN_TIMEOUT_DAYS days,
+ * we automatically approve it. This protects customers from bad merchants who
+ * try to pocket both the goods AND the BTC by ignoring the return request.
+ */
+async function processReturnTimeouts() {
+  const cutoff  = Date.now() - RETURN_TIMEOUT_DAYS * 86_400_000;
+  const timedOut = getReturnRequestsPastTimeout(cutoff);
+  if (!timedOut.length) return;
+  console.log(`[monitor] Auto-approving ${timedOut.length} timed-out return request(s) (merchant did not respond within ${RETURN_TIMEOUT_DAYS} days)`);
+
+  for (const session of timedOut) {
+    try {
+      updateSessionStatus(session.id, 'refunded');
+      await sendWebhook(session.mid, {
+        id: session.id, session_id: session.id,
+        btc_amount: session.amount_btc, eur_amount: session.amount_eur, method: 'opcredit',
+      }, session, 'return.auto_approved');
+      push(session.mid, 'return.auto_approved', {
+        session_id: session.id,
+        reason:     'merchant_did_not_respond',
+        message:    `Return auto-approved after ${RETURN_TIMEOUT_DAYS} days — BTC will be returned to customer`,
+      });
+      console.log(`[monitor] Return auto-approved — session ${session.id} (merchant ${session.mid} timed out)`);
+    } catch (err) {
+      console.error(`[monitor] Return timeout error for session ${session.id}:`, err.message);
     }
   }
 }

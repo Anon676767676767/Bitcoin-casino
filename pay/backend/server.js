@@ -216,15 +216,18 @@ app.get('/api/sessions/:id', (req, res) => {
   const session = db.getSession(req.params.id);
   if (!session) return res.status(404).json({ error: 'Session not found' });
   res.json({
-    session_id:  session.id,
-    status:      session.status,
-    method:      session.method,
-    amount_eur:  session.amount_eur,
-    amount_btc:  session.amount_btc,
-    btc_address: session.btc_address,
-    tx_hash:     session.tx_hash,
-    expires_at:  session.expires_at,
-    confirmed_at: session.confirmed_at,
+    session_id:           session.id,
+    status:               session.status,
+    method:               session.method,
+    amount_eur:           session.amount_eur,
+    amount_btc:           session.amount_btc,
+    currency:             session.currency || 'EUR',
+    amount:               session.amount_local ?? session.amount_eur,
+    btc_address:          session.btc_address,
+    tx_hash:              session.tx_hash,
+    expires_at:           session.expires_at,
+    confirmed_at:         session.confirmed_at,
+    return_requested_at:  session.return_requested_at || null,
   });
 });
 
@@ -305,27 +308,97 @@ app.get('/api/price', async (req, res) => {
   res.json({ ...cachedPrices, currency: cur, price: cachedPrices[cur] ?? cachedPrices.eur, timestamp: lastPriceFetch });
 });
 
-// ── Refund (OpCredit return) ───────────────────────────────────────────────────
+// ── OpCredit Return Flow ───────────────────────────────────────────────────────
 
 /**
  * POST /api/sessions/:id/refund
- * Merchant OR buyer can dispute OpCredit escrow to refund BTC to buyer.
- * In production this would call the OPNet smart contract dispute function.
+ * STEP 1 — Customer requests a return.
+ * Does NOT immediately refund. Sets status to 'return_requested' and notifies
+ * the merchant. Merchant must physically receive the goods and then call
+ * POST /api/sessions/:id/confirm-return to release BTC back to customer.
+ * Safety net: if merchant ignores for RETURN_TIMEOUT_DAYS (default 7) days →
+ * auto-refund via monitor.js. This prevents merchants from blocking refunds.
  */
 app.post('/api/sessions/:id/refund', async (req, res) => {
   try {
     const session = db.getSession(req.params.id);
     if (!session) return res.status(404).json({ error: 'Session not found' });
     if (session.method !== 'opcredit') return res.status(400).json({ error: 'Refunds only apply to OpCredit sessions' });
-    if (session.status === 'confirmed') return res.status(400).json({ error: 'Escrow already released to merchant — cannot refund' });
-    if (session.status === 'refunded') return res.status(400).json({ error: 'Already refunded' });
+    if (session.status !== 'escrowed') {
+      const msgs = {
+        confirmed:       'Escrow already released to merchant — cannot refund',
+        refunded:        'Already refunded',
+        return_requested:'Return already requested — awaiting merchant confirmation',
+        expired:         'Session has expired',
+      };
+      return res.status(400).json({ error: msgs[session.status] || `Cannot request return — status is '${session.status}'` });
+    }
 
-    db.updateSessionStatus(session.id, 'refunded');
-    pushToMerchant(session.merchant_id, 'session.refunded', { session_id: session.id, reason: req.body.reason || 'customer_return' });
-    res.json({ ok: true, message: 'Escrow disputed — BTC will be returned to buyer', session_id: session.id });
+    const now = Date.now();
+    db.updateSessionStatus(session.id, 'return_requested', { returnRequestedAt: now });
+
+    // Notify merchant in real-time via WebSocket
+    pushToMerchant(session.merchant_id, 'return.requested', {
+      session_id:   session.id,
+      reason:       req.body.reason || 'customer_return',
+      amount_btc:   session.amount_btc,
+      amount_eur:   session.amount_eur,
+      requested_at: now,
+    });
+
+    // Fire webhook so merchant backend can also be notified
+    const { sendWebhook } = await import('./webhook.js');
+    const evtTx = { id: session.id, session_id: session.id, btc_amount: session.amount_btc, eur_amount: session.amount_eur, method: 'opcredit' };
+    sendWebhook(session.merchant_id, evtTx, session, 'return.requested').catch(() => {});
+
+    res.json({
+      ok:         true,
+      status:     'return_requested',
+      message:    'Return requested — the merchant will be notified. Once they confirm receipt of the returned goods, your BTC will be refunded. Auto-approved after 7 days if merchant does not respond.',
+      session_id: session.id,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+/**
+ * POST /api/sessions/:id/confirm-return  ← MERCHANT AUTH REQUIRED
+ * STEP 2 — Merchant confirms goods were physically received back.
+ * Only after this does status become 'refunded' and BTC is returned to customer.
+ * A customer cannot fake this step — it requires the merchant's API key.
+ */
+app.post('/api/sessions/:id/confirm-return', requireAuth, async (req, res) => {
+  try {
+    const session = db.getSession(req.params.id);
+    if (!session) return res.status(404).json({ error: 'Session not found' });
+    if (session.merchant_id !== req.merchant.id) return res.status(403).json({ error: 'Not your session' });
+    if (session.status !== 'return_requested') {
+      return res.status(400).json({ error: `Session is not awaiting return confirmation — status: '${session.status}'` });
+    }
+
+    db.updateSessionStatus(session.id, 'refunded');
+
+    // Push so customer browser (polling /api/sessions/:id) sees the update
+    pushToMerchant(session.merchant_id, 'return.confirmed', { session_id: session.id });
+
+    const { sendWebhook } = await import('./webhook.js');
+    const evtTx = { id: session.id, session_id: session.id, btc_amount: session.amount_btc, eur_amount: session.amount_eur, method: 'opcredit' };
+    sendWebhook(session.merchant_id, evtTx, session, 'return.confirmed').catch(() => {});
+
+    console.log(`[server] Return confirmed by merchant ${req.merchant.id} — session ${session.id} refunded`);
+    res.json({ ok: true, message: 'Return confirmed — BTC will be returned to customer', session_id: session.id });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * GET /api/returns  ← MERCHANT AUTH REQUIRED
+ * Lists all pending return requests so merchants can process them from their dashboard.
+ */
+app.get('/api/returns', requireAuth, (req, res) => {
+  res.json(db.getReturnRequestsByMerchant(req.merchant.id));
 });
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
