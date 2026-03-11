@@ -247,6 +247,186 @@
     /* ─── SCROLL REVEAL ─────────────────────────────────────────────────── */
     .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease, transform 0.6s ease; }
     .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* ─── ENHANCED ANIMATIONS ───────────────────────────────────────────── */
+    @keyframes shimmer {
+      0%   { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+    @keyframes floatY {
+      0%,100% { transform: translateY(0px) rotate(-1deg); }
+      50%      { transform: translateY(-18px) rotate(1deg); }
+    }
+    @keyframes glowPulse {
+      0%,100% { box-shadow: 0 0 20px rgba(247,147,26,0.1), 0 20px 60px rgba(0,0,0,0.5); }
+      50%      { box-shadow: 0 0 40px rgba(247,147,26,0.22), 0 20px 60px rgba(0,0,0,0.5); }
+    }
+    @keyframes borderGlow {
+      0%,100% { border-color: rgba(247,147,26,0.15); }
+      50%      { border-color: rgba(247,147,26,0.45); }
+    }
+    @keyframes gradientShift {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    @keyframes tickerScroll {
+      0%   { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    /* ─── ENHANCED REVEAL ──────────────────────────────────────────────── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      filter: blur(4px);
+      transition: opacity 0.7s cubic-bezier(0.22,1,0.36,1),
+                  transform 0.7s cubic-bezier(0.22,1,0.36,1),
+                  filter 0.7s cubic-bezier(0.22,1,0.36,1);
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); filter: blur(0); }
+
+    /* ─── SHIMMER TEXT ─────────────────────────────────────────────────── */
+    .hero h1 .accent2 {
+      background: linear-gradient(135deg, #f7931a 0%, #ffd04a 30%, #f7931a 60%, #ff9a2a 100%);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: shimmer 3s linear infinite;
+    }
+
+    /* ─── HERO SPLIT LAYOUT ────────────────────────────────────────────── */
+    .hero { padding: 100px 48px 80px; position: relative; z-index: 1; }
+    .hero-inner { display: flex; align-items: center; justify-content: space-between; gap: 60px; max-width: 1120px; margin: 0 auto; }
+    .hero-left { flex: 1; max-width: 560px; text-align: left; }
+    .hero-right { flex: 0 0 auto; }
+    .hero-left .hero-badge { margin-bottom: 28px; }
+    .hero-left h1 { animation: fadeSlideDown 0.6s 0.1s ease both; }
+    .hero-left p { animation: fadeSlideDown 0.6s 0.2s ease both; margin: 0 0 42px; }
+    .hero-left .hero-btns { justify-content: flex-start; }
+    .hero-stats { max-width: 1120px; margin: 72px auto 0; display: flex; justify-content: flex-start; gap: 48px; animation: fadeSlideDown 0.6s 0.4s ease both; }
+    @media (max-width: 900px) {
+      .hero-inner { flex-direction: column; text-align: center; gap: 40px; }
+      .hero-left { max-width: 100%; text-align: center; }
+      .hero-left .hero-btns { justify-content: center; }
+      .hero-stats { justify-content: center; }
+    }
+
+    /* ─── FLOATING MOCK WIDGET ─────────────────────────────────────────── */
+    .hero-mock {
+      width: 340px;
+      background: #0f111a;
+      border: 1px solid rgba(247,147,26,0.25);
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 40px 100px rgba(0,0,0,0.7), 0 0 0 1px rgba(247,147,26,0.06);
+      animation: floatY 6s ease-in-out infinite, glowPulse 4s ease-in-out infinite, fadeSlideDown 0.8s 0.4s ease both;
+      flex-shrink: 0;
+    }
+    .hm-header { background: linear-gradient(160deg,#14100a,#0a0c14); padding: 18px 20px 16px; border-bottom: 1px solid #1e2235; }
+    .hm-logo-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .hm-logo { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 14px; }
+    .hm-logo-icon { width: 24px; height: 24px; background: linear-gradient(135deg,#f7931a,#d4780f); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+    .hm-close { width: 24px; height: 24px; background: rgba(255,255,255,0.06); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #555; }
+    .hm-merchant { font-size: 10px; color: #4a5568; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 2px; }
+    .hm-amount { font-size: 30px; font-weight: 900; letter-spacing: -1px; color: white; }
+    .hm-btc { font-size: 11px; color: var(--orange); background: rgba(247,147,26,0.1); padding: 3px 10px; border-radius: 20px; border: 1px solid rgba(247,147,26,0.2); display: inline-block; margin-top: 6px; }
+    .hm-dots { display: flex; justify-content: center; gap: 5px; padding: 10px 0 2px; }
+    .hm-dot { width: 5px; height: 5px; border-radius: 50%; background: #252840; }
+    .hm-dot.active { background: var(--orange); width: 20px; border-radius: 3px; }
+    .hm-body { padding: 18px 18px 20px; }
+    .hm-method {
+      display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+      border-radius: 12px; border: 1.5px solid rgba(247,147,26,0.35);
+      background: rgba(247,147,26,0.06); margin-bottom: 8px; cursor: pointer;
+    }
+    .hm-method.dim { border-color: #1e2235; background: #12141f; }
+    .hm-m-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+    .hm-m-name { font-size: 12px; font-weight: 700; color: white; }
+    .hm-m-desc { font-size: 10px; color: #4a5568; }
+    .hm-btn { width: 100%; padding: 12px; background: linear-gradient(135deg,#f7931a,#e07d0e); color: #000; border: none; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer; margin-top: 4px; }
+
+    /* ─── WORKS WITH BAR ───────────────────────────────────────────────── */
+    .platforms-bar { background: rgba(255,255,255,0.02); border-top: 1px solid rgba(255,255,255,0.04); border-bottom: 1px solid rgba(255,255,255,0.04); padding: 18px 0; overflow: hidden; position: relative; z-index: 1; }
+    .platforms-track { display: flex; gap: 0; width: max-content; animation: tickerScroll 25s linear infinite; }
+    .platforms-track:hover { animation-play-state: paused; }
+    .platform-item { display: flex; align-items: center; gap: 9px; padding: 0 32px; color: #4a5568; font-size: 13px; font-weight: 600; white-space: nowrap; transition: color 0.2s; }
+    .platform-item:hover { color: #8892a4; }
+    .platform-icon { font-size: 18px; }
+    .platforms-label { position: absolute; left: 24px; top: 50%; transform: translateY(-50%); font-size: 11px; font-weight: 700; color: #252840; text-transform: uppercase; letter-spacing: 0.6px; background: var(--bg); padding: 0 12px; z-index: 2; }
+
+    /* ─── ENHANCED CARDS ───────────────────────────────────────────────── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 28px;
+      transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    .card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 18px;
+      background: radial-gradient(400px circle at var(--mouse-x,50%) var(--mouse-y,50%), rgba(247,147,26,0.04), transparent 60%);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .card:hover::after { opacity: 1; }
+    .card:hover {
+      border-color: rgba(247,147,26,0.35);
+      transform: translateY(-6px);
+      box-shadow: 0 24px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(247,147,26,0.08);
+    }
+    .card-icon { font-size: 32px; margin-bottom: 16px; display: block; }
+
+    /* ─── ENHANCED BACKGROUND ──────────────────────────────────────────── */
+    .bg-orbs .orb { filter: blur(100px); opacity: 0.5; }
+    .orb1 { animation-duration: 18s !important; }
+    .orb2 { animation-duration: 22s !important; }
+    .orb3 { animation-duration: 28s !important; }
+
+    /* ─── HOW-CARD CONNECTOR LINE ──────────────────────────────────────── */
+    .how-grid { position: relative; }
+    .how-card { position: relative; }
+    .how-card:not(:last-child)::after {
+      content: '→';
+      position: absolute;
+      right: -18px;
+      top: 38px;
+      color: rgba(247,147,26,0.3);
+      font-size: 20px;
+      font-weight: 900;
+      z-index: 2;
+    }
+    @media (max-width: 768px) { .how-card::after { display: none; } }
+
+    /* ─── SMOOTH NAV ───────────────────────────────────────────────────── */
+    .nav { transition: background 0.3s, backdrop-filter 0.3s; }
+    .nav.scrolled { background: rgba(6,7,14,0.97); }
+
+    /* ─── PRODUCT CARD ENHANCEMENTS ────────────────────────────────────── */
+    .product { transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s; }
+    .product:hover { transform: translateY(-6px); box-shadow: 0 24px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(247,147,26,0.1); }
+
+    /* ─── BTN GLOW PULSE ───────────────────────────────────────────────── */
+    .btn-primary { position: relative; overflow: hidden; }
+    .btn-primary::before {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      background: linear-gradient(135deg, #f7931a, #ffd04a, #f7931a);
+      border-radius: 15px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      z-index: -1;
+    }
+    .btn-primary:hover::before { opacity: 0.3; }
+    .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(247,147,26,0.5); }
     .reveal-delay-1 { transition-delay: 0.1s; }
     .reveal-delay-2 { transition-delay: 0.2s; }
     .reveal-delay-3 { transition-delay: 0.3s; }
@@ -406,12 +586,52 @@
 
 <!-- HERO -->
 <section class="hero">
-  <div class="hero-badge"><div class="dot"></div> Now live on OPNet Testnet</div>
-  <h1>Accept <span class="accent2">Bitcoin</span><br/>on any website</h1>
-  <p>Drop-in payment widget for the open web. No banks, no IBAN, no KYC — just pure Bitcoin via OPNet Layer 1.</p>
-  <div class="hero-btns">
-    <button class="btn-primary" onclick="document.getElementById('demo').scrollIntoView({behavior:'smooth'})">⚡ Try Live Demo</button>
-    <button class="btn-outline" onclick="document.getElementById('code').scrollIntoView({behavior:'smooth'})">&lt;/&gt; Integration Docs</button>
+  <div class="hero-inner">
+    <!-- Left: text -->
+    <div class="hero-left">
+      <div class="hero-badge" style="animation:fadeSlideDown 0.6s ease both;"><div class="dot"></div> Now live on OPNet Testnet · Bitcoin L1</div>
+      <h1>Accept <span class="accent2">Bitcoin</span><br/>on any website</h1>
+      <p style="font-size:18px;color:#6b7280;max-width:480px;line-height:1.7;animation:fadeSlideDown 0.6s 0.2s ease both;">Drop in one script tag. Works with Shopify, WooCommerce, React, plain HTML — any store, anywhere in the world. No bank, no KYC, no borders.</p>
+      <div class="hero-btns" style="animation:fadeSlideDown 0.6s 0.3s ease both;">
+        <button class="btn-primary" onclick="document.getElementById('demo').scrollIntoView({behavior:'smooth'})">⚡ Try Live Demo</button>
+        <button class="btn-outline" onclick="document.getElementById('code').scrollIntoView({behavior:'smooth'})">&lt;/&gt; See the Code</button>
+      </div>
+    </div>
+    <!-- Right: floating payment modal mockup -->
+    <div class="hero-right">
+      <div class="hero-mock">
+        <div class="hm-header">
+          <div class="hm-logo-row">
+            <div class="hm-logo"><div class="hm-logo-icon">₿</div> Op<span style="color:var(--orange)">Pay</span></div>
+            <div class="hm-close">✕</div>
+          </div>
+          <div class="hm-merchant">Paying to · My Shop</div>
+          <div class="hm-amount">€ 89.99</div>
+          <div class="hm-btc">≈ ₿ 0.000894</div>
+        </div>
+        <div class="hm-dots">
+          <div class="hm-dot active"></div>
+          <div class="hm-dot"></div>
+          <div class="hm-dot"></div>
+        </div>
+        <div class="hm-body">
+          <div style="font-size:11px;font-weight:700;color:#4a5568;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:10px;">Choose payment method</div>
+          <div class="hm-method">
+            <div class="hm-m-icon" style="background:rgba(247,147,26,0.12);">📱</div>
+            <div><div class="hm-m-name">OPNet Wallet App</div><div class="hm-m-desc">Scan QR — iDEAL style</div></div>
+          </div>
+          <div class="hm-method dim">
+            <div class="hm-m-icon" style="background:rgba(255,255,255,0.04);">₿</div>
+            <div><div class="hm-m-name">Bitcoin Address</div><div class="hm-m-desc">Copy & pay from any wallet</div></div>
+          </div>
+          <div class="hm-method dim">
+            <div class="hm-m-icon" style="background:rgba(124,58,237,0.12);">🔒</div>
+            <div><div class="hm-m-name">OpCredit Escrow</div><div class="hm-m-desc">Buy now, confirm on delivery</div></div>
+          </div>
+          <button class="hm-btn">Continue →</button>
+        </div>
+      </div>
+    </div>
   </div>
   <div class="hero-stats">
     <div>
@@ -425,13 +645,50 @@
     </div>
     <div style="width:1px;background:var(--border)"></div>
     <div>
-      <div class="hero-stat-num">0 fees</div>
-      <div class="hero-stat-label">no middlemen</div>
+      <div class="hero-stat-num">7 currencies</div>
+      <div class="hero-stat-label">live BTC rates</div>
+    </div>
+    <div style="width:1px;background:var(--border)"></div>
+    <div>
+      <div class="hero-stat-num">0% fees</div>
+      <div class="hero-stat-label">from OpPay</div>
     </div>
   </div>
 </section>
 
 <div class="divider"></div>
+
+<!-- PLATFORMS BAR -->
+<div class="platforms-bar">
+  <span class="platforms-label">Works with</span>
+  <div class="platforms-track" id="platforms-track">
+    <span class="platform-item"><span class="platform-icon">🛍️</span> Shopify</span>
+    <span class="platform-item"><span class="platform-icon">🔧</span> WooCommerce</span>
+    <span class="platform-item"><span class="platform-icon">⚛️</span> React / Next.js</span>
+    <span class="platform-item"><span class="platform-icon">🟢</span> Vue / Nuxt</span>
+    <span class="platform-item"><span class="platform-icon">🟠</span> Laravel</span>
+    <span class="platform-item"><span class="platform-icon">🔷</span> Angular</span>
+    <span class="platform-item"><span class="platform-icon">🏪</span> BigCommerce</span>
+    <span class="platform-item"><span class="platform-icon">🌐</span> Plain HTML</span>
+    <span class="platform-item"><span class="platform-icon">🖤</span> Squarespace</span>
+    <span class="platform-item"><span class="platform-icon">📦</span> Node.js</span>
+    <span class="platform-item"><span class="platform-icon">🐍</span> Django / Flask</span>
+    <span class="platform-item"><span class="platform-icon">💎</span> Ruby on Rails</span>
+    <!-- duplicate for seamless loop -->
+    <span class="platform-item"><span class="platform-icon">🛍️</span> Shopify</span>
+    <span class="platform-item"><span class="platform-icon">🔧</span> WooCommerce</span>
+    <span class="platform-item"><span class="platform-icon">⚛️</span> React / Next.js</span>
+    <span class="platform-item"><span class="platform-icon">🟢</span> Vue / Nuxt</span>
+    <span class="platform-item"><span class="platform-icon">🟠</span> Laravel</span>
+    <span class="platform-item"><span class="platform-icon">🔷</span> Angular</span>
+    <span class="platform-item"><span class="platform-icon">🏪</span> BigCommerce</span>
+    <span class="platform-item"><span class="platform-icon">🌐</span> Plain HTML</span>
+    <span class="platform-item"><span class="platform-icon">🖤</span> Squarespace</span>
+    <span class="platform-item"><span class="platform-icon">📦</span> Node.js</span>
+    <span class="platform-item"><span class="platform-icon">🐍</span> Django / Flask</span>
+    <span class="platform-item"><span class="platform-icon">💎</span> Ruby on Rails</span>
+  </div>
+</div>
 
 <!-- WHY -->
 <section class="section why-section">
@@ -1260,6 +1517,11 @@ const io = new IntersectionObserver((entries) => {
   entries.forEach(e => { if(e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); } });
 }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
 document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+// ─── Nav scroll effect ────────────────────────────────────────────────────────
+window.addEventListener('scroll', () => {
+  document.querySelector('.nav').classList.toggle('scrolled', window.scrollY > 20);
+}, { passive: true });
 
 // Mobile nav
 function toggleMobNav(){
