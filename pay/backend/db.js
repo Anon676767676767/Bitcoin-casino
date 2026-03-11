@@ -85,6 +85,16 @@ function createSchema() {
     CREATE INDEX IF NOT EXISTS idx_tx_merchant         ON transactions(merchant_id);
     CREATE INDEX IF NOT EXISTS idx_tx_escrow           ON transactions(escrow_status, escrow_release_at);
   `);
+  // Safe migrations for columns added after initial release
+  const migrations = [
+    `ALTER TABLE sessions     ADD COLUMN currency             TEXT NOT NULL DEFAULT 'EUR'`,
+    `ALTER TABLE sessions     ADD COLUMN amount_local         REAL`,
+    `ALTER TABLE sessions     ADD COLUMN return_requested_at  INTEGER`,
+    `ALTER TABLE transactions ADD COLUMN platform_fee_btc     REAL NOT NULL DEFAULT 0`,
+  ];
+  for (const sql of migrations) {
+    try { db.exec(sql); } catch {}
+  }
 }
 
 // ─── Merchants ────────────────────────────────────────────────────────────────

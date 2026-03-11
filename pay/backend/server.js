@@ -174,7 +174,7 @@ app.post('/api/sessions', requireAuth, async (req, res) => {
     const merchant  = req.merchant;
     const btcPrice  = await getBtcPrice(cur);
     const amountBtc = parseFloat((fiatAmount / btcPrice).toFixed(8));
-    const amount_eur = cur === 'eur' ? fiatAmount : parseFloat((fiatAmount / (await getBtcPrice('eur') / btcPrice)).toFixed(2));
+    const eurAmount = cur === 'eur' ? fiatAmount : parseFloat((fiatAmount / (await getBtcPrice('eur') / btcPrice)).toFixed(2));
 
     // Derive unique address
     let btcAddress, addressIndex;
@@ -190,7 +190,7 @@ app.post('/api/sessions', requireAuth, async (req, res) => {
 
     const session = db.createSession({
       merchantId:     merchant.id,
-      amountEur:      amount_eur,
+      amountEur:      eurAmount,
       amountBtc,
       currency:       cur.toUpperCase(),
       amountLocal:    fiatAmount,
