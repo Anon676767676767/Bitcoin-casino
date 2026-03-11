@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>OpPay — Bitcoin Payment SDK</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -80,6 +81,20 @@
     .op-method-badge { font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 20px; background: rgba(247,147,26,0.14); color: var(--orange); border: 1px solid rgba(247,147,26,0.28); white-space: nowrap; }
     .op-wallet-screen { text-align: center; }
     .op-wallet-icon { font-size: 52px; margin-bottom: 14px; }
+    /* ── iDEAL-style OPNet QR scan card ── */
+    .op-ideal-card { display:flex; flex-direction:column; align-items:center; gap:14px; padding:8px 0 4px; }
+    .op-ideal-qr-box { background:#fff; border-radius:18px; padding:14px; box-shadow:0 0 0 1px rgba(247,147,26,0.2), 0 8px 32px rgba(247,147,26,0.18); position:relative; }
+    .op-ideal-qr-box canvas, .op-ideal-qr-box img { display:block; border-radius:6px; }
+    .op-ideal-qr-logo { position:absolute; inset:50% auto auto 50%; transform:translate(-50%,-50%); width:32px; height:32px; background:linear-gradient(135deg,#f7931a,#d4780f); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:900; color:#fff; box-shadow:0 2px 8px rgba(247,147,26,0.5); border:3px solid #fff; pointer-events:none; }
+    .op-ideal-amount { display:flex; align-items:baseline; gap:8px; }
+    .op-ideal-btc { font-size:20px; font-weight:800; color:var(--orange); }
+    .op-ideal-fiat { font-size:13px; color:var(--muted); }
+    .op-ideal-status { display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; color:var(--sub); }
+    .op-ideal-pulse { width:9px; height:9px; background:var(--orange); border-radius:50%; animation:oppulse 1.4s ease-in-out infinite; flex-shrink:0; }
+    @keyframes oppulse { 0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.4;transform:scale(0.7);} }
+    .op-ideal-howto { background:rgba(0,0,0,0.25); border:1px solid #1e2235; border-radius:12px; padding:11px 14px; width:100%; display:grid; grid-template-columns:1fr 1fr; gap:5px 10px; }
+    .op-ideal-step { font-size:11px; color:var(--muted); display:flex; align-items:flex-start; gap:6px; line-height:1.4; }
+    .op-ideal-num { width:16px; height:16px; background:rgba(247,147,26,0.15); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:800; color:var(--orange); flex-shrink:0; margin-top:1px; }
     .op-wallet-addr { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; margin-bottom: 14px; text-align: left; }
     .op-wallet-addr-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 5px; }
     .op-wallet-addr-value { font-family: monospace; font-size: 12px; color: var(--orange); word-break: break-all; line-height: 1.5; }
@@ -681,7 +696,7 @@
 <!-- ===== OPPAY SDK ===== -->
 <script>
 (function(g){'use strict';
-let overlay=null,opts={};
+let overlay=null,opts={},_demoAddr='',_qrPollTimer=null;
 // Supported currencies: code → { locale, label, rate vs EUR }
 const CURRENCIES={
   EUR:{locale:'nl-NL',label:'EUR',symbol:'€',rate:1},
@@ -700,6 +715,7 @@ function modal(o){
   const cur=o.currency||'EUR';
   const ef=fmtAmount(o.amount,cur),eb=fmtBtc(o.btc||0);
   const addr='bc1q'+Math.random().toString(36).slice(2,12)+'opnet'+Math.random().toString(36).slice(2,8);
+  _demoAddr=addr; // stored for QR generation after modal is in DOM
   const shortAddr=addr.slice(0,12)+'…'+addr.slice(-6);
   return `<div class="oppay-overlay" id="op-ov">
 <div class="oppay-modal">
@@ -722,9 +738,9 @@ function modal(o){
       <div class="op-step-sub">Select how you want to pay with Bitcoin</div>
       <div class="op-methods">
         <button class="op-method" id="m-opnet" onclick="selMethod('opnet')" type="button">
-          <div class="op-method-icon" style="background:rgba(247,147,26,0.1);">🔗</div>
-          <div class="op-method-info"><div class="op-method-name">OPNet Wallet</div><div class="op-method-desc">Connect and sign with your OPNet wallet</div></div>
-          <div class="op-method-badge">FASTEST</div>
+          <div class="op-method-icon" style="background:rgba(247,147,26,0.1);">📱</div>
+          <div class="op-method-info"><div class="op-method-name">OPNet Wallet App</div><div class="op-method-desc">Scan QR with OPNet app — no browser connection</div></div>
+          <div class="op-method-badge">SAFEST</div>
         </button>
         <button class="op-method" id="m-btcaddr" onclick="selMethod('btcaddr')" type="button">
           <div class="op-method-icon" style="background:rgba(247,147,26,0.08);">₿</div>
@@ -741,21 +757,29 @@ function modal(o){
       <div class="op-security"><span>🔒</span> Secured by OPNet · Bitcoin Layer 1</div>
     </div>
     <div class="op-step" id="os1-opnet">
-      <div class="op-step-title">Connect OPNet Wallet</div>
-      <div class="op-step-sub">Your wallet will ask you to approve the connection</div>
-      <div class="op-wallet-screen">
-        <div class="op-wallet-icon">🔗</div>
-        <div class="op-wallet-addr">
-          <div class="op-wallet-addr-label">Connected address</div>
-          <div class="op-wallet-addr-value">bc1qopnet${Math.random().toString(36).slice(2,8)}...${Math.random().toString(36).slice(2,6)}</div>
+      <div class="op-step-title">Scan with OPNet App</div>
+      <div class="op-step-sub">Like iDEAL — open the app, tap scan, point at this code</div>
+      <div class="op-ideal-card">
+        <div class="op-ideal-qr-box">
+          <div id="op-opnet-qr"></div>
+          <div class="op-ideal-qr-logo">₿</div>
         </div>
-        <div class="op-wallet-balance">
-          <div><div class="op-wallet-balance-label">Balance</div><div class="op-wallet-balance-val">0.08241 BTC</div></div>
-          <div style="text-align:right"><div class="op-wallet-balance-label">Network</div><div class="op-wallet-balance-btc" style="font-size:14px;font-weight:700;">OPNet Mainnet</div></div>
+        <div class="op-ideal-amount">
+          <span class="op-ideal-btc">₿ ${eb}</span>
+          <span class="op-ideal-fiat">${ef}</span>
         </div>
-        <button class="op-btn op-btn-orange" onclick="goConfirm()">Review Transaction →</button>
-        <button class="op-btn op-btn-ghost" onclick="setStep(0)">← Back</button>
+        <div class="op-ideal-status" id="op-opnet-status">
+          <div class="op-ideal-pulse"></div>Waiting for payment...
+        </div>
+        <div class="op-ideal-howto">
+          <div class="op-ideal-step"><div class="op-ideal-num">1</div>Open OPNet wallet app</div>
+          <div class="op-ideal-step"><div class="op-ideal-num">2</div>Tap the scan button</div>
+          <div class="op-ideal-step"><div class="op-ideal-num">3</div>Point at this QR code</div>
+          <div class="op-ideal-step"><div class="op-ideal-num">4</div>Confirm in app — done!</div>
+        </div>
       </div>
+      <button id="op-opnet-deeplink" class="op-btn op-btn-ghost" style="margin-bottom:8px;">📱 Already on phone? Open OPNet App →</button>
+      <button class="op-btn op-btn-ghost" onclick="if(_qrPollTimer){clearInterval(_qrPollTimer);_qrPollTimer=null;}setStep(0);">← Back</button>
     </div>
     <div class="op-step" id="os1-btcaddr">
       <div class="op-step-title">Send Bitcoin to this address</div>
@@ -849,7 +873,7 @@ g.setStep=function(n){
   else if(n===4)document.getElementById('os4').classList.add('op-active');
 };
 
-g.goStep1=function(){setStep(1);};
+g.goStep1=function(){setStep(1);if(curMethod==='opnet')startOpnetQrFlow();};
 
 g.goConfirm=function(){
   const isCredit=curMethod==='opcredit';
@@ -1001,6 +1025,77 @@ function showEscrowResult(ok,tx,escrowId){
   const can=document.getElementById('r-cancel');if(can)can.onclick=()=>{close();if(opts.onFailure)opts.onFailure({txId:tx,reason:'cancelled'});};
 }
 
+// ─── OPNet QR scan flow (iDEAL-style) ────────────────────────────────────────
+async function startOpnetQrFlow(){
+  if(_qrPollTimer){clearInterval(_qrPollTimer);_qrPollTimer=null;}
+
+  // Resolve the payment address: use real session data if available, else demo address
+  let btcAddress=opts.btc_address||_demoAddr;
+  const sessionId=opts.session_id||null;
+  const apiBase=opts._apiBase||'';
+
+  if(sessionId){
+    try{
+      const r=await fetch(`${apiBase}/api/sessions/${sessionId}`);
+      const s=await r.json();
+      if(s.btc_address)btcAddress=s.btc_address;
+    }catch(e){}
+  }
+
+  // Payment URI — standard Bitcoin URI, recognised by OPNet wallet
+  const uri=`bitcoin:${btcAddress}?amount=${opts.btc||0}&label=${encodeURIComponent(opts.merchant||'OpPay')}&message=${encodeURIComponent(opts.description||'Bitcoin payment')}`;
+
+  // Render QR code (white background so it's scannable)
+  const container=document.getElementById('op-opnet-qr');
+  if(container){
+    container.innerHTML='';
+    if(window.QRCode){
+      new QRCode(container,{text:uri,width:172,height:172,colorDark:'#1a0a00',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
+    }else{
+      // Fallback: use img-based QR from public API
+      const img=document.createElement('img');
+      img.src=`https://api.qrserver.com/v1/create-qr-code/?size=172x172&data=${encodeURIComponent(uri)}`;
+      img.width=172;img.height=172;img.style.borderRadius='4px';
+      container.appendChild(img);
+    }
+  }
+
+  // Deep-link button for mobile users already on their phone
+  const dl=document.getElementById('op-opnet-deeplink');
+  if(dl)dl.onclick=()=>{window.location.href=uri;};
+
+  // Status helper
+  const setStatus=(html,color)=>{const el=document.getElementById('op-opnet-status');if(el){el.innerHTML=html;if(color)el.style.color=color;}};
+
+  // Poll session if we have a real session_id
+  if(sessionId){
+    _qrPollTimer=setInterval(async()=>{
+      try{
+        const r=await fetch(`${apiBase}/api/sessions/${sessionId}`);
+        const s=await r.json();
+        if(s.status==='detected'){
+          setStatus('<div class="op-ideal-pulse" style="background:#fbbf24;"></div>Payment detected — confirming on Bitcoin network...','#fbbf24');
+        }else if(s.status==='confirmed'){
+          clearInterval(_qrPollTimer);_qrPollTimer=null;
+          setStatus('<div class="op-ideal-pulse" style="background:#00c853;"></div>Payment confirmed!','#00c853');
+          setTimeout(()=>{setStep(3);setTimeout(()=>showResult(true,s.tx_hash||'confirmed'),1200);},500);
+        }
+      }catch(e){}
+    },5000);
+  }else{
+    // Demo simulation: auto-pay after random 5-9s
+    const t1=Math.random()*4000+5000;
+    setTimeout(()=>{
+      setStatus('<div class="op-ideal-pulse" style="background:#fbbf24;"></div>Payment detected — confirming...','#fbbf24');
+      setTimeout(()=>{
+        const tx='0x'+Array.from({length:16},()=>Math.floor(Math.random()*16).toString(16)).join('');
+        setStatus('<div class="op-ideal-pulse" style="background:#00c853;"></div>Payment confirmed!','#00c853');
+        setTimeout(()=>{setStep(3);setTimeout(()=>showResult(true,tx),1200);},600);
+      },2000);
+    },t1);
+  }
+}
+
 function open(o){
   if(overlay)return;
   opts=o||{};curMethod='opnet';
@@ -1015,6 +1110,7 @@ function open(o){
 
 function close(){
   if(!overlay)return;
+  if(_qrPollTimer){clearInterval(_qrPollTimer);_qrPollTimer=null;}
   overlay.classList.remove('oppay-visible');
   document.body.style.overflow='';
   document.removeEventListener('keydown',document._opEsc);
