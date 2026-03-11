@@ -890,12 +890,12 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
     <!-- Amount picker with live EUR prices -->
     <p style="font-size:11px;color:var(--mut);margin-bottom:6px;">Select deposit amount:</p>
     <div class="dams">
-      <div class="da on" onclick="sd(this,100000)"><div class="das">100k sat</div><div class="dab" id="dep-eur-100">0.001 BTC</div></div>
-      <div class="da" onclick="sd(this,500000)"><div class="das">500k sat</div><div class="dab" id="dep-eur-500">0.005 BTC</div></div>
-      <div class="da" onclick="sd(this,1000000)"><div class="das">1M sat</div><div class="dab" id="dep-eur-1m">0.01 BTC</div></div>
-      <div class="da" onclick="sd(this,5000000)"><div class="das">5M sat</div><div class="dab" id="dep-eur-5m">0.05 BTC</div></div>
-      <div class="da" onclick="sd(this,10000000)"><div class="das">10M sat</div><div class="dab" id="dep-eur-10m">0.1 BTC</div></div>
-      <div class="da" onclick="sd(this,50000000)"><div class="das">50M sat</div><div class="dab" id="dep-eur-50m">0.5 BTC</div></div>
+      <div class="da on" data-sat="100000" onclick="sd(this,100000)"><div class="das">100k sat</div><div class="dab" id="dep-eur-100">0.001 BTC</div></div>
+      <div class="da" data-sat="500000" onclick="sd(this,500000)"><div class="das">500k sat</div><div class="dab" id="dep-eur-500">0.005 BTC</div></div>
+      <div class="da" data-sat="1000000" onclick="sd(this,1000000)"><div class="das">1M sat</div><div class="dab" id="dep-eur-1m">0.01 BTC</div></div>
+      <div class="da" data-sat="5000000" onclick="sd(this,5000000)"><div class="das">5M sat</div><div class="dab" id="dep-eur-5m">0.05 BTC</div></div>
+      <div class="da" data-sat="10000000" onclick="sd(this,10000000)"><div class="das">10M sat</div><div class="dab" id="dep-eur-10m">0.1 BTC</div></div>
+      <div class="da" data-sat="50000000" onclick="sd(this,50000000)"><div class="das">50M sat</div><div class="dab" id="dep-eur-50m">0.5 BTC</div></div>
     </div>
     <!-- Pay via OpPay (all 3 methods) -->
     <button class="dcf" onclick="payWithOpPay()" style="background:linear-gradient(135deg,#f7931a,#d4780f);color:#000;font-weight:800;margin-bottom:8px;">₿ Pay with Bitcoin →</button>
@@ -947,7 +947,9 @@ var _oppayBtcEur = 95000; // fallback
 
 // 3. Open OpPay checkout with selected sat amount
 function payWithOpPay() {
-  var sat = depAmt || 100000;
+  // Read sat from the selected .da tile (data-sat) — more reliable than depAmt global
+  var tile = document.querySelector('.da.on');
+  var sat = (tile && parseInt(tile.dataset.sat)) || depAmt || 100000;
   var btc = sat / 1e8;
   var eur = parseFloat((btc * _oppayBtcEur).toFixed(2));
   var returnUrl = location.href.split('?')[0];

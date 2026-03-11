@@ -230,7 +230,7 @@
         </div>
         <div class="mc-arrow">→</div>
       </button>
-      <button class="method-card" onclick="selectMethod('opcredit')">
+      <button class="method-card" id="method-opcredit" onclick="selectMethod('opcredit')">
         <div class="mc-icon purple">🔒</div>
         <div class="mc-info">
           <div class="mc-name">OpCredit Escrow</div>
@@ -248,7 +248,7 @@
     <!-- 3a: OPNet Wallet QR -->
     <div id="m-opnet">
       <div class="section-title">Scan with OPNet Wallet App</div>
-      <div class="section-sub">Open the OPNet Wallet app on your phone and scan this QR</div>
+      <div class="section-sub">Open the OPNet Wallet app on your phone and scan this QR code</div>
       <div class="qr-center">
         <div class="qr-box">
           <div id="qrcode"></div>
@@ -260,7 +260,7 @@
         </div>
         <div class="qr-pulse">
           <span class="pulse-dot"></span>
-          Waiting for payment on Bitcoin network...
+          Waiting for scan...
         </div>
         <div class="qr-howto">
           <div class="qr-step"><div class="qr-num">1</div>Open the OPNet Wallet app</div>
@@ -269,13 +269,14 @@
           <div class="qr-step"><div class="qr-num">4</div>Confirm in the app</div>
         </div>
       </div>
+      <button class="btn btn-green" style="margin-top:14px;" onclick="simulatePayment()">✓ I've scanned &amp; paid — continue →</button>
       <button class="btn btn-ghost" onclick="setStep(2)">← Change payment method</button>
     </div>
 
     <!-- 3b: Bitcoin Address -->
     <div id="m-btcaddr" style="display:none;">
       <div class="section-title">Send Bitcoin to this address</div>
-      <div class="section-sub">Copy the address and send the exact amount from any wallet</div>
+      <div class="section-sub">Copy the address, send the exact amount, then click continue</div>
       <div class="amount-box">
         <div class="amount-fiat" id="addr-amount">—</div>
         <div class="amount-btc" id="addr-btc">—</div>
@@ -285,14 +286,11 @@
         <div class="addr-val" id="btc-addr-val">—</div>
       </div>
       <button class="copy-btn" id="copy-addr-btn" onclick="copyAddr()">📋 Copy Address</button>
-      <a id="open-wallet-link" href="#" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:11px;color:var(--sub);font-family:inherit;font-size:13px;font-weight:700;text-decoration:none;margin-bottom:16px;transition:all 0.15s;">
+      <a id="open-wallet-link" href="#" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:11px;color:var(--sub);font-family:inherit;font-size:13px;font-weight:700;text-decoration:none;margin-bottom:12px;transition:all 0.15s;">
         ↗ Open in Wallet App
       </a>
-      <div class="addr-monitor">
-        <span class="pulse-dot" style="background:var(--orange);"></span>
-        Monitoring Bitcoin network — payment detected automatically
-      </div>
-      <button class="btn btn-ghost" style="margin-top:16px;" onclick="setStep(2)">← Change payment method</button>
+      <button class="btn btn-green" onclick="simulatePayment()">✓ I've sent the payment — continue →</button>
+      <button class="btn btn-ghost" onclick="setStep(2)">← Change payment method</button>
     </div>
 
     <!-- 3c: OpCredit -->
@@ -408,7 +406,8 @@ function fmtFiat(n) {
   }
   // Hide OpCredit option when no_escrow=1 (e.g. casino deposit — pay later makes no sense)
   if (PAY.noEscrow) {
-    document.querySelector('[onclick="selectMethod(\'opcredit\')"]').style.display = 'none';
+    var el = document.getElementById('method-opcredit');
+    if (el) el.style.display = 'none';
   }
 })();
 
@@ -433,8 +432,6 @@ function selectMethod(method) {
       new QRCode(qrEl, { text: BTC_URI, width: 180, height: 180, colorDark:'#000', colorLight:'#fff', correctLevel: QRCode.CorrectLevel.M });
     }
     setStep(3);
-    // After 8s demo: auto-proceed to processing (simulating a scan)
-    setTimeout(() => simulatePayment(), 8000);
 
   } else if (method === 'btcaddr') {
     document.getElementById('m-btcaddr').style.display='block';
@@ -443,8 +440,6 @@ function selectMethod(method) {
     document.getElementById('btc-addr-val').textContent = DEMO_ADDR;
     document.getElementById('open-wallet-link').href    = BTC_URI;
     setStep(3);
-    // After 10s demo: auto-proceed (simulating payment detected)
-    setTimeout(() => simulatePayment(), 10000);
 
   } else if (method === 'opcredit') {
     document.getElementById('m-opcredit').style.display='block';
