@@ -101,16 +101,18 @@ async function checkSession(session) {
 
       updateSessionStatus(session.id, newStatus, { txHash, confirmedAt: Date.now() });
 
+      const btcAmt = balanceSat / 1e8;
       const tx = createTransaction({
-        sessionId:    session.id,
-        merchantId:   session.merchant_id,
+        sessionId:      session.id,
+        merchantId:     session.merchant_id,
         txHash,
-        btcAmount:    balanceSat / 1e8,
-        eurAmount:    session.amount_eur,
-        confirmations: confs,
-        method:       session.method,
+        btcAmount:      btcAmt,
+        eurAmount:      session.amount_eur,
+        confirmations:  confs,
+        method:         session.method,
         isEscrow,
-        escrowDays:   ESCROW_DAYS,
+        escrowDays:     ESCROW_DAYS,
+        platformFeeBtc: parseFloat((btcAmt * 0.001).toFixed(8)), // 0.1% platform fee
       });
 
       console.log(`[monitor] ${newStatus.toUpperCase()} — session ${session.id} | ${tx.btc_amount} BTC | ${txHash}`);

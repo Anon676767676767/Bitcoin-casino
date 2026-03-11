@@ -12,6 +12,7 @@ import { createServer } from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
 import { openDb } from './db.js';
 import * as db  from './db.js';
+import { getAdminStats, getAdminMerchants, getAdminRecentTransactions } from './db.js';
 import { requireAuth, hashPassword, verifyPassword } from './auth.js';
 import { deriveAddress, isValidAddress } from './derive.js';
 import { startMonitor, setPushCallback, confirmEscrowReceipt } from './monitor.js';
@@ -399,6 +400,43 @@ app.post('/api/sessions/:id/confirm-return', requireAuth, async (req, res) => {
  */
 app.get('/api/returns', requireAuth, (req, res) => {
   res.json(db.getReturnRequestsByMerchant(req.merchant.id));
+});
+
+// ─── Admin API ────────────────────────────────────────────────────────────────
+
+const ADMIN_KEY = process.env.ADMIN_KEY || null;
+
+function requireAdmin(req, res, next) {
+  if (!ADMIN_KEY) return res.status(503).json({ error: 'Admin not configured — set ADMIN_KEY in .env' });
+  const auth = req.headers['authorization'] || '';
+  const key  = auth.startsWith('Bearer ') ? auth.slice(7) : req.headers['x-admin-key'];
+  if (key !== ADMIN_KEY) return res.status(401).json({ error: 'Invalid admin key' });
+  next();
+}
+
+/** POST /api/admin/auth — validate admin key, return ok */
+app.post('/api/admin/auth', (req, res) => {
+  if (!ADMIN_KEY) return res.status(503).json({ error: 'Admin not configured' });
+  const { key } = req.body;
+  if (key !== ADMIN_KEY) return res.status(401).json({ error: 'Invalid admin key' });
+  res.json({ ok: true });
+});
+
+/** GET /api/admin/stats — platform-wide stats */
+app.get('/api/admin/stats', requireAdmin, (req, res) => {
+  res.json(getAdminStats());
+});
+
+/** GET /api/admin/merchants — all merchants with volume */
+app.get('/api/admin/merchants', requireAdmin, (req, res) => {
+  const { limit = 50, offset = 0 } = req.query;
+  res.json(getAdminMerchants({ limit: parseInt(limit), offset: parseInt(offset) }));
+});
+
+/** GET /api/admin/transactions — recent transactions across all merchants */
+app.get('/api/admin/transactions', requireAdmin, (req, res) => {
+  const { limit = 100 } = req.query;
+  res.json(getAdminRecentTransactions({ limit: parseInt(limit) }));
 });
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

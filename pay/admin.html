@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>OpPay Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    :root{--bg:#06070f;--card:#0c0e1a;--card2:#0f1120;--border:#1a1d2e;--text:#f0f0f0;--muted:#4a5568;--sub:#8892a4;
+          --orange:#f7931a;--green:#00c853;--red:#ff4444;--blue:#3b82f6;--gold:#fbbf24;--purple:#7c3aed;}
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+    /* ── Login ── */
+    #login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;
+      background:radial-gradient(ellipse at 50% -10%,rgba(247,147,26,0.08) 0%,transparent 55%);}
+    .login-box{background:var(--card);border:1px solid var(--border);border-radius:20px;width:100%;max-width:380px;padding:36px 32px;
+      box-shadow:0 40px 80px rgba(0,0,0,0.6);}
+    .login-logo{text-align:center;margin-bottom:28px;}
+    .login-logo-icon{width:52px;height:52px;background:linear-gradient(135deg,#f7931a,#d4780f);border-radius:14px;
+      display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 12px;
+      box-shadow:0 6px 20px rgba(247,147,26,0.3);}
+    .login-title{font-size:22px;font-weight:900;margin-bottom:4px;}
+    .login-sub{font-size:12px;color:var(--muted);}
+    .login-field{margin-bottom:18px;}
+    .login-field label{display:block;font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:7px;}
+    .login-field input{width:100%;padding:12px 16px;background:rgba(255,255,255,0.04);border:1.5px solid var(--border);
+      border-radius:10px;font-family:inherit;font-size:14px;color:var(--text);outline:none;transition:border-color 0.15s;}
+    .login-field input:focus{border-color:var(--orange);}
+    .login-btn{width:100%;padding:13px;background:linear-gradient(135deg,var(--orange),#d4780f);color:#fff;
+      border:none;border-radius:11px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+    .login-btn:hover{opacity:0.9;}
+    .login-err{color:var(--red);font-size:12px;text-align:center;margin-top:10px;display:none;}
+
+    /* ── Dashboard layout ── */
+    #dashboard{display:none;min-height:100vh;}
+    .top-bar{height:52px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;
+      padding:0 24px;gap:14px;position:sticky;top:0;z-index:100;}
+    .top-logo{font-size:17px;font-weight:900;display:flex;align-items:center;gap:8px;}
+    .top-logo-icon{width:28px;height:28px;background:linear-gradient(135deg,#f7931a,#d4780f);border-radius:7px;
+      display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;}
+    .top-badge{font-size:10px;font-weight:700;background:rgba(251,191,36,0.15);color:var(--gold);
+      border:1px solid rgba(251,191,36,0.25);border-radius:20px;padding:2px 9px;letter-spacing:0.3px;}
+    .top-right{margin-left:auto;display:flex;align-items:center;gap:12px;}
+    .top-refresh{background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--sub);
+      padding:6px 14px;border-radius:8px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s;}
+    .top-refresh:hover{border-color:var(--orange);color:var(--text);}
+    .top-logout{background:rgba(255,68,68,0.08);border:1px solid rgba(255,68,68,0.2);color:#f87171;
+      padding:6px 14px;border-radius:8px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;}
+
+    .dash-body{padding:28px 28px 48px;max-width:1400px;margin:0 auto;}
+
+    /* ── Stat cards ── */
+    .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:28px;}
+    .stat-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px 22px;position:relative;overflow:hidden;}
+    .stat-card::before{content:'';position:absolute;top:-30px;right:-20px;width:100px;height:100px;
+      border-radius:50%;opacity:0.06;pointer-events:none;}
+    .stat-card.green::before{background:var(--green);}
+    .stat-card.orange::before{background:var(--orange);}
+    .stat-card.gold::before{background:var(--gold);}
+    .stat-card.blue::before{background:var(--blue);}
+    .stat-card.red::before{background:var(--red);}
+    .stat-icon{font-size:24px;margin-bottom:10px;}
+    .stat-val{font-size:26px;font-weight:900;letter-spacing:-0.5px;margin-bottom:3px;}
+    .stat-val.green{color:var(--green);}
+    .stat-val.orange{color:var(--orange);}
+    .stat-val.gold{color:var(--gold);}
+    .stat-val.blue{color:var(--blue);}
+    .stat-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;}
+    .stat-sub{font-size:11px;color:var(--muted);margin-top:4px;}
+
+    /* ── Sections ── */
+    .section{margin-bottom:32px;}
+    .section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+    .section-title{font-size:16px;font-weight:800;}
+    .section-count{font-size:12px;color:var(--muted);background:rgba(255,255,255,0.05);
+      border:1px solid var(--border);border-radius:20px;padding:2px 10px;}
+
+    /* ── Table ── */
+    .tbl-wrap{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+    table{width:100%;border-collapse:collapse;}
+    thead{background:rgba(255,255,255,0.03);}
+    th{padding:11px 16px;text-align:left;font-size:11px;font-weight:700;color:var(--muted);
+      text-transform:uppercase;letter-spacing:0.4px;border-bottom:1px solid var(--border);}
+    td{padding:12px 16px;font-size:13px;border-bottom:1px solid rgba(255,255,255,0.04);}
+    tr:last-child td{border-bottom:none;}
+    tr:hover td{background:rgba(255,255,255,0.02);}
+    .mono{font-family:monospace;font-size:11px;color:var(--sub);}
+    .badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;}
+    .badge-green{background:rgba(0,200,83,0.1);color:var(--green);border:1px solid rgba(0,200,83,0.2);}
+    .badge-orange{background:rgba(247,147,26,0.1);color:var(--orange);border:1px solid rgba(247,147,26,0.2);}
+    .badge-red{background:rgba(255,68,68,0.1);color:var(--red);border:1px solid rgba(255,68,68,0.2);}
+    .badge-purple{background:rgba(124,58,237,0.1);color:#a78bfa;border:1px solid rgba(124,58,237,0.2);}
+
+    /* ── Fee withdrawal box ── */
+    .fee-box{background:linear-gradient(135deg,rgba(251,191,36,0.06),rgba(247,147,26,0.04));
+      border:1px solid rgba(251,191,36,0.2);border-radius:16px;padding:22px 24px;margin-bottom:28px;
+      display:flex;align-items:center;gap:20px;flex-wrap:wrap;}
+    .fee-box-icon{font-size:40px;flex-shrink:0;}
+    .fee-box-info{flex:1;}
+    .fee-box-title{font-size:16px;font-weight:800;color:var(--gold);margin-bottom:4px;}
+    .fee-box-sub{font-size:13px;color:var(--sub);}
+    .fee-box-amount{font-size:28px;font-weight:900;color:var(--gold);}
+    .fee-note{font-size:11px;color:var(--muted);margin-top:4px;}
+
+    /* ── Empty state ── */
+    .empty{text-align:center;padding:40px;color:var(--muted);font-size:13px;}
+
+    /* ── Tabs ── */
+    .tab-bar{display:flex;gap:4px;background:rgba(255,255,255,0.04);border:1px solid var(--border);
+      border-radius:10px;padding:3px;margin-bottom:16px;width:fit-content;}
+    .tab{padding:7px 16px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;
+      color:var(--muted);border:none;background:transparent;font-family:inherit;transition:all 0.15s;}
+    .tab.active{background:var(--card2);color:var(--text);box-shadow:0 2px 8px rgba(0,0,0,0.3);}
+  </style>
+</head>
+<body>
+
+<!-- ── Login Screen ── -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-logo-icon">&#x20BF;</div>
+      <div class="login-title">OpPay Admin</div>
+      <div class="login-sub">Operator portal — private access only</div>
+    </div>
+    <div class="login-field">
+      <label>Admin Key</label>
+      <input type="password" id="admin-key-input" placeholder="Enter your admin key..." onkeydown="if(event.key==='Enter')doLogin()"/>
+    </div>
+    <button class="login-btn" onclick="doLogin()">Sign In &rarr;</button>
+    <div class="login-err" id="login-err">Invalid admin key. Try again.</div>
+  </div>
+</div>
+
+<!-- ── Dashboard ── -->
+<div id="dashboard">
+  <div class="top-bar">
+    <div class="top-logo">
+      <div class="top-logo-icon">&#x20BF;</div>
+      OpPay Admin
+    </div>
+    <span class="top-badge">OPERATOR</span>
+    <div class="top-right">
+      <span id="last-refresh" style="font-size:11px;color:var(--muted);"></span>
+      <button class="top-refresh" onclick="loadAll()">&#x21BB; Refresh</button>
+      <button class="top-logout" onclick="logout()">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="dash-body">
+
+    <!-- Platform fee highlight -->
+    <div class="fee-box">
+      <div class="fee-box-icon">&#x1F4B0;</div>
+      <div class="fee-box-info">
+        <div class="fee-box-title">Your Platform Revenue (0.1% fee)</div>
+        <div class="fee-box-sub">Earned from all confirmed transactions across all merchants</div>
+      </div>
+      <div>
+        <div class="fee-box-amount" id="fee-btc">&#x20BF; &mdash;</div>
+        <div class="fee-note" id="fee-eur">Loading...</div>
+      </div>
+    </div>
+
+    <!-- Stat cards -->
+    <div class="stat-grid">
+      <div class="stat-card orange">
+        <div class="stat-icon">&#x1F3EA;</div>
+        <div class="stat-val orange" id="s-merchants">&mdash;</div>
+        <div class="stat-label">Total Merchants</div>
+        <div class="stat-sub" id="s-new-merchants">&mdash; new this week</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-icon">&#x20BF;</div>
+        <div class="stat-val green" id="s-btc">&mdash;</div>
+        <div class="stat-label">Total BTC Volume</div>
+        <div class="stat-sub" id="s-eur">&mdash;</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-icon">&#x2713;</div>
+        <div class="stat-val blue" id="s-confirmed">&mdash;</div>
+        <div class="stat-label">Confirmed Transactions</div>
+        <div class="stat-sub" id="s-total-tx">&mdash; total transactions</div>
+      </div>
+      <div class="stat-card red">
+        <div class="stat-icon">&#x21A9;</div>
+        <div class="stat-val red" id="s-returns">&mdash;</div>
+        <div class="stat-label">Pending Returns</div>
+        <div class="stat-sub">awaiting merchant confirmation</div>
+      </div>
+    </div>
+
+    <!-- Tab navigation -->
+    <div class="tab-bar">
+      <button class="tab active" onclick="showTab('merchants',this)">&#x1F3EA; Merchants</button>
+      <button class="tab" onclick="showTab('transactions',this)">&#x20BF; Transactions</button>
+    </div>
+
+    <!-- Merchants section -->
+    <div class="section" id="tab-merchants">
+      <div class="section-head">
+        <div class="section-title">All Merchants</div>
+        <span class="section-count" id="merchant-count">&mdash;</span>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Merchant</th>
+              <th>Email</th>
+              <th>Signed Up</th>
+              <th>Transactions</th>
+              <th>Volume (BTC)</th>
+              <th>Volume (EUR)</th>
+            </tr>
+          </thead>
+          <tbody id="merchants-tbody">
+            <tr><td colspan="6" class="empty">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Transactions section -->
+    <div class="section" id="tab-transactions" style="display:none">
+      <div class="section-head">
+        <div class="section-title">Recent Transactions &mdash; All Merchants</div>
+        <span class="section-count" id="tx-count">&mdash;</span>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Merchant</th>
+              <th>Session</th>
+              <th>BTC Amount</th>
+              <th>EUR Amount</th>
+              <th>Platform Fee</th>
+              <th>Method</th>
+              <th>Status</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody id="tx-tbody">
+            <tr><td colspan="8" class="empty">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const API = '';  // same origin — change to 'http://localhost:3001' if serving separately
+let adminKey = sessionStorage.getItem('oppay_admin_key') || '';
+
+// ── Auto-login if key saved ──────────────────────────────────────────────────
+if (adminKey) tryAuth(adminKey);
+
+async function doLogin() {
+  const key = document.getElementById('admin-key-input').value.trim();
+  if (!key) return;
+  const ok = await tryAuth(key);
+  if (!ok) {
+    document.getElementById('login-err').style.display = 'block';
+    document.getElementById('admin-key-input').select();
+  }
+}
+
+async function tryAuth(key) {
+  try {
+    const r = await fetch(`${API}/api/admin/auth`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key }),
+    });
+    if (!r.ok) return false;
+    adminKey = key;
+    sessionStorage.setItem('oppay_admin_key', key);
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    loadAll();
+    return true;
+  } catch(e) { return false; }
+}
+
+function logout() {
+  sessionStorage.removeItem('oppay_admin_key');
+  adminKey = '';
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('admin-key-input').value = '';
+}
+
+// ── API helper ───────────────────────────────────────────────────────────────
+async function adminFetch(path) {
+  const r = await fetch(`${API}${path}`, { headers: { 'Authorization': `Bearer ${adminKey}` } });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+// ── Load all data ─────────────────────────────────────────────────────────────
+async function loadAll() {
+  document.getElementById('last-refresh').textContent = 'Refreshing...';
+  await Promise.allSettled([loadStats(), loadMerchants(), loadTransactions()]);
+  document.getElementById('last-refresh').textContent = 'Updated ' + new Date().toLocaleTimeString();
+}
+
+async function loadStats() {
+  try {
+    const s = await adminFetch('/api/admin/stats');
+    document.getElementById('s-merchants').textContent = s.total_merchants;
+    document.getElementById('s-new-merchants').textContent = `+${s.new_this_week} new this week`;
+    document.getElementById('s-btc').textContent = '\u20BF ' + (s.total_btc || 0).toFixed(6);
+    document.getElementById('s-eur').textContent = '\u2248 \u20AC' + Math.round(s.total_eur || 0).toLocaleString();
+    document.getElementById('s-confirmed').textContent = s.confirmed_tx || 0;
+    document.getElementById('s-total-tx').textContent = `${s.total_tx || 0} total transactions`;
+    document.getElementById('s-returns').textContent = s.pending_returns || 0;
+    // Fee highlight
+    const feeBtc = s.total_fees_btc || 0;
+    const feeEur = s.total_fees_eur || 0;
+    document.getElementById('fee-btc').textContent = '\u20BF ' + feeBtc.toFixed(8);
+    document.getElementById('fee-eur').textContent = '\u2248 \u20AC' + feeEur.toFixed(2) + ' \u00B7 0.1% of all confirmed volume';
+  } catch(e) { console.error('stats error:', e); }
+}
+
+async function loadMerchants() {
+  try {
+    const merchants = await adminFetch('/api/admin/merchants');
+    document.getElementById('merchant-count').textContent = merchants.length + ' merchants';
+    const tbody = document.getElementById('merchants-tbody');
+    if (!merchants.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">No merchants yet</td></tr>'; return; }
+    tbody.innerHTML = merchants.map(m => `
+      <tr>
+        <td><strong>${esc(m.name)}</strong></td>
+        <td class="mono">${esc(m.email)}</td>
+        <td style="color:var(--muted);font-size:12px;">${new Date(m.created_at).toLocaleDateString()}</td>
+        <td>${m.tx_count || 0}</td>
+        <td class="mono" style="color:var(--orange);">\u20BF ${(m.total_btc || 0).toFixed(6)}</td>
+        <td class="mono">\u20AC ${(m.total_eur || 0).toFixed(2)}</td>
+      </tr>
+    `).join('');
+  } catch(e) { console.error('merchants error:', e); }
+}
+
+async function loadTransactions() {
+  try {
+    const txs = await adminFetch('/api/admin/transactions?limit=100');
+    document.getElementById('tx-count').textContent = txs.length + ' recent';
+    const tbody = document.getElementById('tx-tbody');
+    if (!txs.length) { tbody.innerHTML = '<tr><td colspan="8" class="empty">No transactions yet</td></tr>'; return; }
+    tbody.innerHTML = txs.map(t => {
+      const st = t.session_status;
+      const badge = st === 'confirmed' ? '<span class="badge badge-green">Confirmed</span>'
+                  : st === 'escrowed'  ? '<span class="badge badge-purple">Escrowed</span>'
+                  : st === 'return_requested' ? '<span class="badge badge-red">\u21A9 Return</span>'
+                  : st === 'refunded'  ? '<span class="badge badge-orange">Refunded</span>'
+                  : `<span class="badge">${esc(st)}</span>`;
+      const method = t.method === 'opcredit' ? '\uD83D\uDD12 OpCredit' : t.method === 'btcaddr' ? '\u20BF Address' : '\uD83D\uDCF1 OPNet';
+      return `
+        <tr>
+          <td><strong>${esc(t.merchant_name || '&mdash;')}</strong></td>
+          <td class="mono">${t.session_id.slice(0,8)}&hellip;</td>
+          <td class="mono" style="color:var(--orange);">\u20BF ${(t.btc_amount || 0).toFixed(8)}</td>
+          <td class="mono">\u20AC ${(t.eur_amount || 0).toFixed(2)}</td>
+          <td class="mono" style="color:var(--gold);">\u20BF ${(t.platform_fee_btc || 0).toFixed(8)}</td>
+          <td style="font-size:12px;">${method}</td>
+          <td>${badge}</td>
+          <td style="color:var(--muted);font-size:11px;">${new Date(t.created_at).toLocaleString()}</td>
+        </tr>
+      `;
+    }).join('');
+  } catch(e) { console.error('tx error:', e); }
+}
+
+// ── Tab switching ─────────────────────────────────────────────────────────────
+function showTab(id, btn) {
+  document.getElementById('tab-merchants').style.display = id === 'merchants' ? '' : 'none';
+  document.getElementById('tab-transactions').style.display = id === 'transactions' ? '' : 'none';
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ── Escape HTML ───────────────────────────────────────────────────────────────
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Auto-refresh every 60s ───────────────────────────────────────────────────
+setInterval(() => { if (adminKey) loadAll(); }, 60000);
+</script>
+</body>
+</html>

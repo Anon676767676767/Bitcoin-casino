@@ -193,15 +193,16 @@ export function getReturnRequestsPastTimeout(cutoff) {
 
 // ─── Transactions ─────────────────────────────────────────────────────────────
 
-export function createTransaction({ sessionId, merchantId, txHash, btcAmount, eurAmount, confirmations, method, isEscrow, escrowDays = 14 }) {
+export function createTransaction({ sessionId, merchantId, txHash, btcAmount, eurAmount, confirmations, method, isEscrow, escrowDays = 14, platformFeeBtc = 0 }) {
   const id  = uuid();
   const now = Date.now();
   const escrowRelease = isEscrow ? now + escrowDays * 86_400_000 : null;
   const escrowStatus  = isEscrow ? 'locked' : null;
+  try { db.exec('ALTER TABLE transactions ADD COLUMN platform_fee_btc REAL NOT NULL DEFAULT 0'); } catch {}
   db.prepare(`
-    INSERT INTO transactions (id, session_id, merchant_id, tx_hash, btc_amount, eur_amount, confirmations, method, escrow_release_at, escrow_status, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(id, sessionId, merchantId, txHash ?? null, btcAmount, eurAmount, confirmations ?? 0, method, escrowRelease, escrowStatus, now);
+    INSERT INTO transactions (id, session_id, merchant_id, tx_hash, btc_amount, eur_amount, confirmations, method, escrow_release_at, escrow_status, platform_fee_btc, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(id, sessionId, merchantId, txHash ?? null, btcAmount, eurAmount, confirmations ?? 0, method, escrowRelease, escrowStatus, platformFeeBtc, now);
   return getTransaction(id);
 }
 
@@ -276,4 +277,58 @@ export function createWithdrawal({ merchantId, toAddress, btcAmount }) {
 
 export function getWithdrawalsByMerchant(merchantId) {
   return db.prepare('SELECT * FROM withdrawals WHERE merchant_id = ? ORDER BY created_at DESC').all(merchantId);
+}
+
+// ─── Admin ────────────────────────────────────────────────────────────────────
+
+export function getAdminStats() {
+  const merchants = db.prepare('SELECT COUNT(*) AS total FROM merchants').get();
+  const newThisWeek = db.prepare(`SELECT COUNT(*) AS total FROM merchants WHERE created_at >= ?`).get(Date.now() - 7 * 86_400_000);
+  const txStats = db.prepare(`
+    SELECT
+      COUNT(*)                                                   AS total_tx,
+      SUM(CASE WHEN s.status IN ('confirmed','escrowed') THEN 1 ELSE 0 END) AS confirmed_tx,
+      SUM(CASE WHEN s.status IN ('confirmed','escrowed') THEN t.btc_amount ELSE 0 END) AS total_btc,
+      SUM(CASE WHEN s.status IN ('confirmed','escrowed') THEN t.eur_amount ELSE 0 END) AS total_eur,
+      SUM(CASE WHEN s.status IN ('confirmed','escrowed') THEN t.platform_fee_btc ELSE 0 END) AS total_fees_btc,
+      SUM(CASE WHEN s.status = 'return_requested' THEN 1 ELSE 0 END) AS pending_returns
+    FROM transactions t
+    JOIN sessions s ON s.id = t.session_id
+  `).get();
+  return {
+    total_merchants:   merchants.total,
+    new_this_week:     newThisWeek.total,
+    total_tx:          txStats.total_tx || 0,
+    confirmed_tx:      txStats.confirmed_tx || 0,
+    total_btc:         txStats.total_btc || 0,
+    total_eur:         txStats.total_eur || 0,
+    total_fees_btc:    txStats.total_fees_btc || 0,
+    total_fees_eur:    (txStats.total_fees_btc || 0) * (txStats.total_eur / (txStats.total_btc || 1)),
+    pending_returns:   txStats.pending_returns || 0,
+  };
+}
+
+export function getAdminMerchants({ limit = 50, offset = 0 } = {}) {
+  return db.prepare(`
+    SELECT m.id, m.name, m.email, m.created_at, m.webhook_url,
+      COUNT(t.id) AS tx_count,
+      COALESCE(SUM(t.btc_amount), 0) AS total_btc,
+      COALESCE(SUM(t.eur_amount), 0) AS total_eur
+    FROM merchants m
+    LEFT JOIN transactions t ON t.merchant_id = m.id
+    GROUP BY m.id
+    ORDER BY m.created_at DESC
+    LIMIT ? OFFSET ?
+  `).all(limit, offset);
+}
+
+export function getAdminRecentTransactions({ limit = 100 } = {}) {
+  return db.prepare(`
+    SELECT t.*, s.status AS session_status, s.method, m.name AS merchant_name
+    FROM transactions t
+    JOIN sessions s ON s.id = t.session_id
+    JOIN merchants m ON m.id = t.merchant_id
+    ORDER BY t.created_at DESC
+    LIMIT ?
+  `).all(limit);
 }
