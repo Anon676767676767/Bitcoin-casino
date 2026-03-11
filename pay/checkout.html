@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>OpPay — Secure Checkout</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    :root{--orange:#f7931a;--green:#00c853;--red:#ff4444;--bg:#080810;--card:#0f111a;--border:#1e2235;--text:#f0f0f0;--muted:#6b7280;--sub:#9aa3b2;}
+    body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;align-items:center;}
+
+    /* ── Security bar (mimics trusted browser UI) ── */
+    .sec-bar{width:100%;background:#0a0c14;border-bottom:1px solid #1e2235;padding:10px 20px;display:flex;align-items:center;justify-content:center;gap:0;}
+    .sec-bar-inner{display:flex;align-items:center;gap:10px;background:#12141f;border:1px solid #252840;border-radius:8px;padding:6px 14px;max-width:420px;width:100%;}
+    .sec-lock{color:var(--green);font-size:13px;}
+    .sec-url{font-size:12px;color:var(--sub);flex:1;letter-spacing:0.2px;}
+    .sec-cert{font-size:10px;font-weight:700;color:var(--green);background:rgba(0,200,83,0.1);border:1px solid rgba(0,200,83,0.25);border-radius:4px;padding:2px 7px;}
+    .sec-badge{font-size:10px;font-weight:700;color:#fbbf24;background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.25);border-radius:4px;padding:2px 7px;}
+
+    /* ── Main card ── */
+    .checkout-wrap{width:100%;max-width:480px;padding:24px 16px 48px;flex:1;}
+    .op-logo{display:flex;align-items:center;gap:9px;font-weight:800;font-size:17px;margin-bottom:24px;justify-content:center;}
+    .op-logo-icon{width:32px;height:32px;background:linear-gradient(135deg,#f7931a,#d4780f);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 4px 12px rgba(247,147,26,0.3);}
+
+    /* ── Progress steps ── */
+    .prog{display:flex;align-items:center;margin-bottom:28px;gap:0;}
+    .prog-step{display:flex;flex-direction:column;align-items:center;flex:1;gap:5px;}
+    .prog-dot{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--muted);background:var(--card);transition:all 0.3s;position:relative;z-index:1;}
+    .prog-dot.active{border-color:var(--orange);color:var(--orange);background:rgba(247,147,26,0.1);}
+    .prog-dot.done{border-color:var(--green);color:var(--green);background:rgba(0,200,83,0.1);}
+    .prog-label{font-size:10px;color:var(--muted);font-weight:600;letter-spacing:0.2px;text-align:center;}
+    .prog-label.active{color:var(--orange);}
+    .prog-label.done{color:var(--green);}
+    .prog-line{flex:1;height:2px;background:var(--border);margin:0 -4px;margin-bottom:17px;transition:background 0.3s;}
+    .prog-line.done{background:var(--green);}
+
+    /* ── Card panels ── */
+    .panel{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:24px;margin-bottom:16px;display:none;}
+    .panel.active{display:block;}
+
+    /* ── Payment details ── */
+    .paying-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;}
+    .paying-to{font-size:22px;font-weight:800;margin-bottom:4px;}
+    .paying-desc{font-size:13px;color:var(--sub);margin-bottom:20px;}
+    .amount-box{background:#0a0c14;border:1px solid rgba(247,147,26,0.2);border-radius:14px;padding:18px 20px;margin-bottom:20px;text-align:center;}
+    .amount-fiat{font-size:36px;font-weight:900;color:var(--orange);letter-spacing:-1px;margin-bottom:4px;}
+    .amount-btc{font-size:14px;color:var(--sub);font-weight:600;}
+
+    /* ── Security explainer ── */
+    .trust-box{background:rgba(0,200,83,0.04);border:1px solid rgba(0,200,83,0.15);border-radius:12px;padding:14px 16px;margin-bottom:20px;}
+    .trust-title{font-size:12px;font-weight:700;color:var(--green);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+    .trust-list{list-style:none;display:flex;flex-direction:column;gap:7px;}
+    .trust-list li{font-size:12px;color:var(--sub);display:flex;align-items:flex-start;gap:8px;line-height:1.5;}
+    .trust-list li::before{content:'✓';color:var(--green);font-weight:700;flex-shrink:0;margin-top:1px;}
+
+    /* ── Buttons ── */
+    .btn{width:100%;padding:15px;border-radius:13px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;border:none;transition:all 0.15s;margin-bottom:10px;}
+    .btn-orange{background:linear-gradient(135deg,var(--orange),#d4780f);color:#fff;box-shadow:0 4px 16px rgba(247,147,26,0.25);}
+    .btn-orange:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(247,147,26,0.35);}
+    .btn-ghost{background:rgba(255,255,255,0.04);color:var(--sub);border:1px solid var(--border);}
+    .btn-ghost:hover{border-color:rgba(247,147,26,0.3);color:var(--text);}
+    .btn-green{background:linear-gradient(135deg,#00a843,#00c853);color:#fff;box-shadow:0 4px 16px rgba(0,200,83,0.25);}
+
+    /* ── Wallet connect screen ── */
+    .wallet-icon{text-align:center;font-size:56px;margin-bottom:12px;}
+    .wallet-steps{display:flex;flex-direction:column;gap:10px;margin-bottom:20px;}
+    .wallet-step{display:flex;align-items:center;gap:12px;padding:12px 14px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:11px;}
+    .wstep-num{width:22px;height:22px;background:rgba(247,147,26,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--orange);flex-shrink:0;}
+    .wstep-text{font-size:13px;color:var(--sub);line-height:1.4;}
+
+    /* ── Wallet connected info ── */
+    .wallet-connected-card{background:rgba(0,200,83,0.06);border:1px solid rgba(0,200,83,0.2);border-radius:13px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px;}
+    .wc-icon{font-size:24px;}
+    .wc-label{font-size:11px;color:var(--green);font-weight:700;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:3px;}
+    .wc-addr{font-size:12px;color:var(--sub);font-family:monospace;}
+    .summary{background:#0a0c14;border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px;}
+    .sum-row{display:flex;justify-content:space-between;align-items:center;padding:11px 14px;font-size:13px;border-bottom:1px solid var(--border);}
+    .sum-row:last-child{border-bottom:none;font-weight:700;color:var(--orange);}
+    .sum-label{color:var(--muted);}
+    .sum-val{font-weight:600;}
+
+    /* ── Processing ── */
+    .proc-center{text-align:center;padding:20px 0;}
+    .proc-spinner{width:64px;height:64px;border:3px solid rgba(247,147,26,0.15);border-top-color:var(--orange);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 20px;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+    .proc-title{font-size:20px;font-weight:800;margin-bottom:8px;}
+    .proc-sub{font-size:13px;color:var(--sub);}
+
+    /* ── Success screen ── */
+    .success-icon{font-size:72px;text-align:center;margin-bottom:16px;animation:popIn 0.4s cubic-bezier(0.34,1.6,0.64,1);}
+    @keyframes popIn{from{transform:scale(0);opacity:0;}to{transform:scale(1);opacity:1;}}
+    .success-title{font-size:26px;font-weight:900;color:var(--green);text-align:center;margin-bottom:6px;}
+    .success-sub{font-size:14px;color:var(--sub);text-align:center;margin-bottom:20px;}
+    .conf-card{background:rgba(0,200,83,0.06);border:1px solid rgba(0,200,83,0.2);border-radius:14px;padding:16px 18px;margin-bottom:20px;}
+    .conf-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;margin-bottom:8px;}
+    .conf-row:last-child{margin-bottom:0;}
+    .conf-label{color:var(--muted);}
+    .conf-val{font-weight:700;color:var(--text);font-family:monospace;font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;}
+    .redirect-bar{background:rgba(0,200,83,0.06);border:1px solid rgba(0,200,83,0.2);border-radius:10px;padding:12px 14px;font-size:12px;color:var(--sub);text-align:center;margin-bottom:16px;}
+    .redirect-merchant{color:var(--green);font-weight:700;}
+    .redirect-count{font-size:22px;font-weight:900;color:var(--green);display:block;margin-top:4px;}
+
+    /* ── Utility ── */
+    .section-title{font-size:20px;font-weight:800;margin-bottom:6px;}
+    .section-sub{font-size:13px;color:var(--sub);margin-bottom:20px;}
+  </style>
+</head>
+<body>
+
+<!-- ── Security browser bar ── -->
+<div class="sec-bar">
+  <div class="sec-bar-inner">
+    <span class="sec-lock">🔒</span>
+    <span class="sec-url">oppay.io / secure-checkout</span>
+    <span class="sec-cert">SSL</span>
+    <span class="sec-badge">OPNet</span>
+  </div>
+</div>
+
+<div class="checkout-wrap">
+
+  <!-- Logo -->
+  <div class="op-logo">
+    <div class="op-logo-icon">₿</div>
+    <span>Op<span style="color:var(--orange)">Pay</span> Secure Checkout</span>
+  </div>
+
+  <!-- Progress bar -->
+  <div class="prog">
+    <div class="prog-step">
+      <div class="prog-dot active" id="pd1">1</div>
+      <div class="prog-label active" id="pl1">Details</div>
+    </div>
+    <div class="prog-line" id="pline1"></div>
+    <div class="prog-step">
+      <div class="prog-dot" id="pd2">2</div>
+      <div class="prog-label" id="pl2">Connect</div>
+    </div>
+    <div class="prog-line" id="pline2"></div>
+    <div class="prog-step">
+      <div class="prog-dot" id="pd3">3</div>
+      <div class="prog-label" id="pl3">Confirm</div>
+    </div>
+    <div class="prog-line" id="pline3"></div>
+    <div class="prog-step">
+      <div class="prog-dot" id="pd4">4</div>
+      <div class="prog-label" id="pl4">Done!</div>
+    </div>
+  </div>
+
+  <!-- ── STEP 1: Payment details ── -->
+  <div class="panel active" id="step1">
+    <div class="paying-label">You are safely paying</div>
+    <div class="paying-to" id="s1-merchant">—</div>
+    <div class="paying-desc" id="s1-desc">—</div>
+    <div class="amount-box">
+      <div class="amount-fiat" id="s1-amount">—</div>
+      <div class="amount-btc" id="s1-btc">—</div>
+    </div>
+    <div class="trust-box">
+      <div class="trust-title">🛡️ Why is this safe?</div>
+      <ul class="trust-list">
+        <li>Your wallet connects to <strong>OpPay</strong>, not to the merchant's website</li>
+        <li>The merchant can never see your private keys or wallet balance</li>
+        <li>Only the exact amount shown is sent — nothing more</li>
+        <li>You can cancel at any time before confirming</li>
+      </ul>
+    </div>
+    <button class="btn btn-orange" onclick="goStep2()">Connect My OPNet Wallet →</button>
+    <button class="btn btn-ghost" onclick="goBack()">← Cancel & return to shop</button>
+  </div>
+
+  <!-- ── STEP 2: Connect wallet ── -->
+  <div class="panel" id="step2">
+    <div class="section-title">Connect OPNet Wallet</div>
+    <div class="section-sub">Follow these steps to safely connect your wallet</div>
+    <div class="wallet-icon" id="wallet-icon-anim">🔗</div>
+    <div class="wallet-steps">
+      <div class="wallet-step" id="ws1">
+        <div class="wstep-num">1</div>
+        <div class="wstep-text">Your browser will show an OPNet wallet popup — click <strong style="color:var(--text)">Connect</strong> to approve</div>
+      </div>
+      <div class="wallet-step" id="ws2">
+        <div class="wstep-num">2</div>
+        <div class="wstep-text">Only this payment page (<strong style="color:var(--text)">oppay.io</strong>) gets access — not the merchant</div>
+      </div>
+      <div class="wallet-step" id="ws3">
+        <div class="wstep-num">3</div>
+        <div class="wstep-text">After connecting, review your wallet details and confirm the payment</div>
+      </div>
+    </div>
+    <button class="btn btn-orange" id="connect-btn" onclick="doConnect()">🔗 Connect OPNet Wallet</button>
+    <button class="btn btn-ghost" onclick="setStep(1)">← Back</button>
+  </div>
+
+  <!-- ── STEP 3: Review & confirm ── -->
+  <div class="panel" id="step3">
+    <div class="section-title">Review Your Payment</div>
+    <div class="section-sub">Check the details carefully before confirming</div>
+    <div class="wallet-connected-card">
+      <div class="wc-icon">✅</div>
+      <div>
+        <div class="wc-label">Wallet connected</div>
+        <div class="wc-addr" id="s3-wallet-addr">—</div>
+      </div>
+    </div>
+    <div class="summary">
+      <div class="sum-row"><span class="sum-label">Paying to</span><span class="sum-val" id="s3-merchant">—</span></div>
+      <div class="sum-row"><span class="sum-label">Description</span><span class="sum-val" id="s3-desc">—</span></div>
+      <div class="sum-row"><span class="sum-label">Amount</span><span class="sum-val" id="s3-amount">—</span></div>
+      <div class="sum-row"><span class="sum-label">BTC amount</span><span class="sum-val" id="s3-btc">—</span></div>
+      <div class="sum-row"><span class="sum-label">Network fee</span><span class="sum-val">~0.000003 BTC</span></div>
+      <div class="sum-row"><span class="sum-label">Total BTC</span><span class="sum-val" id="s3-total">—</span></div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:16px;line-height:1.6;">By confirming, you authorize OpPay to broadcast this transaction from your connected wallet. Your private key never leaves your device.</div>
+    <button class="btn btn-orange" onclick="doConfirm()">🔐 Confirm & Send Payment</button>
+    <button class="btn btn-ghost" onclick="setStep(2)">← Back</button>
+  </div>
+
+  <!-- ── STEP 4: Processing ── -->
+  <div class="panel" id="step4">
+    <div class="proc-center">
+      <div class="proc-spinner" id="proc-spin"></div>
+      <div class="proc-title" id="proc-title">Broadcasting transaction...</div>
+      <div class="proc-sub" id="proc-sub">Please wait while Bitcoin confirms your payment</div>
+    </div>
+  </div>
+
+  <!-- ── STEP 5: Success ── -->
+  <div class="panel" id="step5">
+    <div class="success-icon">✅</div>
+    <div class="success-title">Payment Confirmed!</div>
+    <div class="success-sub" id="success-sub">Your payment has been received.</div>
+    <div class="conf-card">
+      <div class="conf-row"><span class="conf-label">Transaction</span><span class="conf-val" id="conf-tx">—</span></div>
+      <div class="conf-row"><span class="conf-label">Amount</span><span class="conf-val" id="conf-amount">—</span></div>
+      <div class="conf-row"><span class="conf-label">Merchant</span><span class="conf-val" id="conf-merchant">—</span></div>
+      <div class="conf-row" id="conf-order-row" style="display:none"><span class="conf-label">Order ID</span><span class="conf-val" id="conf-order">—</span></div>
+      <div class="conf-row"><span class="conf-label">Status</span><span class="conf-val" style="color:var(--green);">Confirmed on Bitcoin L1 ✓</span></div>
+    </div>
+    <div class="redirect-bar" id="redirect-bar">
+      Returning you to <span class="redirect-merchant" id="redir-merchant">the shop</span> in
+      <span class="redirect-count" id="redir-count">5</span>
+    </div>
+    <button class="btn btn-green" id="return-btn" onclick="returnNow()">← Return to Shop Now</button>
+  </div>
+
+</div>
+
+<script>
+// ── Read URL params ──────────────────────────────────────────────────────────
+const p=new URLSearchParams(location.search);
+const PAY={
+  session:   p.get('session')||'',
+  amount:    parseFloat(p.get('amount'))||0,
+  currency:  (p.get('currency')||'EUR').toUpperCase(),
+  btc:       parseFloat(p.get('btc'))||0,
+  merchant:  p.get('merchant')||'Unknown Merchant',
+  desc:      p.get('desc')||'Bitcoin payment',
+  returnUrl: p.get('return_url')||'',
+  orderId:   p.get('order_id')||'',
+  apiBase:   p.get('api')||'',
+};
+
+// ── Step management ──────────────────────────────────────────────────────────
+let currentStep=1;
+function setStep(n){
+  [1,2,3,4,5].forEach(i=>{
+    document.getElementById('step'+i).classList.toggle('active',i===n);
+  });
+  // Update progress dots
+  [1,2,3,4].forEach(i=>{
+    const dot=document.getElementById('pd'+i);
+    const lbl=document.getElementById('pl'+i);
+    const line=document.getElementById('pline'+i);
+    if(i<n){dot.className='prog-dot done';dot.textContent='✓';lbl.className='prog-label done';}
+    else if(i===n){dot.className='prog-dot active';dot.textContent=i;lbl.className='prog-label active';}
+    else{dot.className='prog-dot';dot.textContent=i;lbl.className='prog-label';}
+    if(line)line.className='prog-line'+(i<n?' done':'');
+  });
+  currentStep=n;
+}
+
+// ── Populate step 1 ──────────────────────────────────────────────────────────
+(function init(){
+  document.getElementById('s1-merchant').textContent=PAY.merchant;
+  document.getElementById('s1-desc').textContent=PAY.desc;
+  try{
+    document.getElementById('s1-amount').textContent=new Intl.NumberFormat(undefined,{style:'currency',currency:PAY.currency}).format(PAY.amount);
+  }catch(e){document.getElementById('s1-amount').textContent=PAY.currency+' '+PAY.amount.toFixed(2);}
+  document.getElementById('s1-btc').textContent='≈ ₿ '+PAY.btc.toFixed(8);
+})();
+
+// ── Step 1 → 2 ──────────────────────────────────────────────────────────────
+function goStep2(){ setStep(2); }
+
+// ── Connect wallet (demo simulation) ────────────────────────────────────────
+let connectedAddr='';
+function doConnect(){
+  const btn=document.getElementById('connect-btn');
+  btn.textContent='Waiting for wallet...';btn.disabled=true;
+  const icon=document.getElementById('wallet-icon-anim');
+  icon.textContent='⏳';
+  // Simulate wallet popup + connection (in production: call OPNet wallet extension API)
+  setTimeout(()=>{
+    icon.textContent='✅';
+    connectedAddr='bc1q'+Math.random().toString(36).slice(2,10)+'opnet'+Math.random().toString(36).slice(2,6);
+    // Populate step 3
+    document.getElementById('s3-merchant').textContent=PAY.merchant;
+    document.getElementById('s3-desc').textContent=PAY.desc;
+    try{document.getElementById('s3-amount').textContent=new Intl.NumberFormat(undefined,{style:'currency',currency:PAY.currency}).format(PAY.amount);}catch(e){document.getElementById('s3-amount').textContent=PAY.currency+' '+PAY.amount;}
+    document.getElementById('s3-btc').textContent='₿ '+PAY.btc.toFixed(8);
+    document.getElementById('s3-total').textContent='₿ '+(PAY.btc+0.000003).toFixed(8);
+    document.getElementById('s3-wallet-addr').textContent=connectedAddr;
+    setTimeout(()=>setStep(3),400);
+  },2000);
+}
+
+// ── Confirm & broadcast (demo simulation) ───────────────────────────────────
+let txHash='';
+function doConfirm(){
+  setStep(4);
+  // Simulate broadcast + confirmation
+  setTimeout(()=>{
+    document.getElementById('proc-title').textContent='Transaction sent!';
+    document.getElementById('proc-sub').textContent='Waiting for Bitcoin network confirmation...';
+    document.getElementById('proc-spin').style.borderTopColor='#00c853';
+  },1500);
+  setTimeout(()=>{
+    txHash='0x'+Array.from({length:32},()=>Math.floor(Math.random()*16).toString(16)).join('');
+    showSuccess();
+  },3500);
+
+  // In real integration: poll session status from backend
+  if(PAY.session&&PAY.apiBase){
+    const timer=setInterval(async()=>{
+      try{
+        const r=await fetch(`${PAY.apiBase}/api/sessions/${PAY.session}`);
+        const s=await r.json();
+        if(s.status==='confirmed'||s.status==='escrowed'){
+          clearInterval(timer);
+          txHash=s.tx_hash||txHash||'confirmed';
+          showSuccess();
+        }
+      }catch(e){}
+    },4000);
+  }
+}
+
+// ── Show success screen ──────────────────────────────────────────────────────
+let _redirectTimer=null;
+function showSuccess(){
+  setStep(5);
+  try{document.getElementById('conf-amount').textContent=new Intl.NumberFormat(undefined,{style:'currency',currency:PAY.currency}).format(PAY.amount)+' (₿ '+PAY.btc.toFixed(8)+')';}catch(e){}
+  document.getElementById('conf-merchant').textContent=PAY.merchant;
+  document.getElementById('conf-tx').textContent=txHash||'confirmed';
+  if(PAY.orderId){
+    document.getElementById('conf-order-row').style.display='flex';
+    document.getElementById('conf-order').textContent='#'+PAY.orderId;
+  }
+  document.getElementById('success-sub').textContent=`Your payment to ${PAY.merchant} is confirmed on Bitcoin Layer 1.`;
+
+  // Auto-redirect countdown
+  if(PAY.returnUrl){
+    document.getElementById('redir-merchant').textContent=PAY.merchant;
+    let count=5;
+    _redirectTimer=setInterval(()=>{
+      count--;
+      document.getElementById('redir-count').textContent=count;
+      if(count<=0){clearInterval(_redirectTimer);returnNow();}
+    },1000);
+  }else{
+    document.getElementById('redirect-bar').style.display='none';
+  }
+}
+
+// ── Return to merchant with confirmation params ──────────────────────────────
+function returnNow(){
+  if(_redirectTimer)clearInterval(_redirectTimer);
+  if(!PAY.returnUrl){history.back();return;}
+  const ret=new URL(PAY.returnUrl);
+  ret.searchParams.set('session_id',PAY.session);
+  ret.searchParams.set('status','confirmed');
+  ret.searchParams.set('tx',txHash||'confirmed');
+  ret.searchParams.set('btc',PAY.btc);
+  ret.searchParams.set('currency',PAY.currency);
+  if(PAY.orderId)ret.searchParams.set('order_id',PAY.orderId);
+  window.location.href=ret.toString();
+}
+
+// ── Cancel / go back ─────────────────────────────────────────────────────────
+function goBack(){
+  if(PAY.returnUrl){window.location.href=PAY.returnUrl;}
+  else{history.back();}
+}
+</script>
+</body>
+</html>

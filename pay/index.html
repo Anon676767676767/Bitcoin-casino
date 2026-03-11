@@ -510,6 +510,12 @@
       </div>
     </div>
 
+    <!-- Live BTC price ticker -->
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;font-size:12px;color:var(--muted);" class="reveal">
+      <span id="live-btc-dot" style="display:inline-block;width:7px;height:7px;background:#4a5568;border-radius:50%;flex-shrink:0;transition:background 0.3s;"></span>
+      <span id="live-btc-ticker">Loading live BTC price...</span>
+    </div>
+
     <div class="shop-grid">
       <div class="product reveal">
         <div class="product-img" style="background:linear-gradient(135deg,#0d1020,#1a1030);">🎧</div>
@@ -519,9 +525,9 @@
           <div class="product-foot">
             <div>
               <div class="product-price" data-eur="89.99">€ 89.99</div>
-              <div class="product-btc">≈ 0.00089 BTC</div>
+              <div class="product-btc" data-eur="89.99">≈ 0.00089 BTC</div>
             </div>
-            <button class="oppay-btn" onclick="pay(89.99, 0.00089, 'TechStore NL', 'Wireless Headphones #4821')">
+            <button class="oppay-btn" onclick="pay(89.99,'TechStore NL','Wireless Headphones #4821')">
               <span class="btc-icon">₿</span> Pay
             </button>
           </div>
@@ -536,9 +542,9 @@
           <div class="product-foot">
             <div>
               <div class="product-price" data-eur="129.95">€ 129.95</div>
-              <div class="product-btc">≈ 0.00129 BTC</div>
+              <div class="product-btc" data-eur="129.95">≈ 0.00129 BTC</div>
             </div>
-            <button class="oppay-btn" onclick="pay(129.95, 0.00129, 'SportShop', 'Running Shoes size 42 #7203')">
+            <button class="oppay-btn" onclick="pay(129.95,'SportShop','Running Shoes size 42 #7203')">
               <span class="btc-icon">₿</span> Pay
             </button>
           </div>
@@ -553,9 +559,9 @@
           <div class="product-foot">
             <div>
               <div class="product-price" data-eur="19.00">€ 19.00</div>
-              <div class="product-btc">≈ 0.000188 BTC</div>
+              <div class="product-btc" data-eur="19.00">≈ 0.000188 BTC</div>
             </div>
-            <button class="oppay-btn" onclick="pay(19.00, 0.000188, 'GreenApp', 'Premium Monthly April 2026')">
+            <button class="oppay-btn" onclick="pay(19.00,'GreenApp','Premium Monthly April 2026')">
               <span class="btc-icon">₿</span> Pay
             </button>
           </div>
@@ -779,6 +785,7 @@ function modal(o){
         </div>
       </div>
       <button id="op-opnet-deeplink" class="op-btn op-btn-ghost" style="margin-bottom:8px;">📱 Already on phone? Open OPNet App →</button>
+      <button class="op-btn op-btn-orange" onclick="openHostedCheckout()" style="margin-bottom:8px;background:rgba(247,147,26,0.12);border:1.5px solid rgba(247,147,26,0.3);color:var(--orange);">🖥️ Connect Desktop Wallet — Secure page →</button>
       <button class="op-btn op-btn-ghost" onclick="if(_qrPollTimer){clearInterval(_qrPollTimer);_qrPollTimer=null;}setStep(0);">← Back</button>
     </div>
     <div class="op-step" id="os1-btcaddr">
@@ -1025,6 +1032,23 @@ function showEscrowResult(ok,tx,escrowId){
   const can=document.getElementById('r-cancel');if(can)can.onclick=()=>{close();if(opts.onFailure)opts.onFailure({txId:tx,reason:'cancelled'});};
 }
 
+// ─── Hosted secure checkout (iDEAL-style redirect flow) ──────────────────────
+function openHostedCheckout(){
+  const base=opts._checkoutUrl||'checkout.html';
+  const p=new URLSearchParams({
+    amount:  opts.amount||0,
+    currency:opts.currency||'EUR',
+    btc:     opts.btc||0,
+    merchant:opts.merchant||'OpPay',
+    desc:    opts.description||'Bitcoin payment',
+    session: opts.session_id||'',
+    return_url: window.location.href,
+  });
+  if(_qrPollTimer){clearInterval(_qrPollTimer);_qrPollTimer=null;}
+  close();
+  window.location.href=`${base}?${p.toString()}`;
+}
+
 // ─── OPNet QR scan flow (iDEAL-style) ────────────────────────────────────────
 async function startOpnetQrFlow(){
   if(_qrPollTimer){clearInterval(_qrPollTimer);_qrPollTimer=null;}
@@ -1123,11 +1147,27 @@ g.OpPay={open,close,version:'1.0.0'};
 
 <!-- PAGE LOGIC -->
 <script>
-// Currency system for demo
-const CUR_RATES={EUR:1,USD:1.08,GBP:0.86,JPY:162,CHF:0.98,AUD:1.65,CAD:1.47};
-const CUR_SYMBOLS={EUR:'€',USD:'$',GBP:'£',JPY:'¥',CHF:'Fr',AUD:'A$',CAD:'C$'};
-const BTC_EUR=100000; // approx sats per EUR for demo
+// Currency system for demo — live prices via CoinGecko
+const CUR_SYMBOLS={EUR:'€',USD:'$',GBP:'£',JPY:'¥',CHF:'Fr.',AUD:'A$',CAD:'C$'};
+const FALLBACK_BTC={eur:97000,usd:105000,gbp:83000,jpy:15500000,chf:95000,aud:163000,cad:145000};
 let demoCurrentency='EUR';
+let _liveBtc=null,_liveBtcTs=0;
+
+async function getLiveBtc(){
+  if(_liveBtc&&Date.now()-_liveBtcTs<60000)return _liveBtc;
+  try{
+    const r=await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=eur,usd,gbp,jpy,chf,aud,cad',{signal:AbortSignal.timeout(6000)});
+    const d=await r.json();
+    _liveBtc=d.bitcoin;_liveBtcTs=Date.now();
+    // Light up the ticker
+    const dot=document.getElementById('live-btc-dot');if(dot)dot.style.background='#00c853';
+    const tick=document.getElementById('live-btc-ticker');
+    if(tick){const c=demoCurrentency.toLowerCase();const p=_liveBtc[c]||_liveBtc.eur;tick.innerHTML=`<strong style="color:var(--orange);">₿1 = ${new Intl.NumberFormat(undefined,{style:'currency',currency:demoCurrentency}).format(p)}</strong> &nbsp;·&nbsp; Live price via CoinGecko`;}
+  }catch(e){
+    if(!_liveBtc){_liveBtc=FALLBACK_BTC;const dot=document.getElementById('live-btc-dot');if(dot)dot.style.background='#fbbf24';const tick=document.getElementById('live-btc-ticker');if(tick)tick.textContent='Using cached BTC price (CoinGecko unavailable)';}
+  }
+  return _liveBtc;
+}
 
 function fmtDemo(eur,cur){
   const amt=eur*CUR_RATES[cur];
@@ -1136,42 +1176,65 @@ function fmtDemo(eur,cur){
   return sym+amt.toFixed(2);
 }
 
-function setCurrency(cur){
+async function setCurrency(cur){
   demoCurrentency=cur;
   document.querySelectorAll('.cur-btn').forEach(b=>b.classList.toggle('cur-active',b.dataset.cur===cur));
-  // Update product display prices
-  document.querySelectorAll('[data-eur]').forEach(el=>{
-    el.textContent=fmtDemo(parseFloat(el.dataset.eur),cur);
+  const prices=await getLiveBtc();
+  const btcLocal=prices[cur.toLowerCase()]||prices.eur;
+  const btcEur=prices.eur;
+  // Update fiat prices
+  document.querySelectorAll('.product-price[data-eur]').forEach(el=>{
+    const eur=parseFloat(el.dataset.eur);
+    const local=cur==='EUR'?eur:+(eur*(btcLocal/btcEur)).toFixed(cur==='JPY'?0:2);
+    el.textContent=new Intl.NumberFormat(undefined,{style:'currency',currency:cur,maximumFractionDigits:cur==='JPY'?0:2}).format(local);
   });
+  // Update BTC equivalent prices
+  document.querySelectorAll('.product-btc[data-eur]').forEach(el=>{
+    const btcAmt=(parseFloat(el.dataset.eur)/btcEur).toFixed(8);
+    el.textContent='≈ '+btcAmt+' BTC';
+  });
+  // Update ticker
+  const tick=document.getElementById('live-btc-ticker');
+  if(tick&&_liveBtc){tick.innerHTML=`<strong style="color:var(--orange);">₿1 = ${new Intl.NumberFormat(undefined,{style:'currency',currency:cur}).format(btcLocal)}</strong> &nbsp;·&nbsp; Live price via CoinGecko`;}
 }
 
-function pay(eurAmount,btc,merchant,description){
+async function pay(eurAmount,merchant,description){
   const cur=demoCurrentency;
-  const displayAmt=eurAmount*CUR_RATES[cur];
+  const prices=await getLiveBtc();
+  const btcEur=prices.eur;
+  const btcLocal=prices[cur.toLowerCase()]||btcEur;
+  const localAmt=cur==='EUR'?eurAmount:+(eurAmount*(btcLocal/btcEur)).toFixed(cur==='JPY'?0:2);
+  const btcAmt=+(eurAmount/btcEur).toFixed(8);
   OpPay.open({
-    amount:displayAmt, btc, merchant, description, currency:cur,
+    amount:localAmt, btc:btcAmt, merchant, description, currency:cur,
     onSuccess:(d)=>{
-      const sym=CUR_SYMBOLS[cur]||cur;
-      if(d.method==='opcredit'){logEvent('ok',`🔒 OpCredit · ${sym}${displayAmt.toFixed(2)} ESCROWED → ${merchant} · ID ${d.escrowId}`);}
-      else if(d.method==='btcaddr'){logEvent('ok',`₿ Bitcoin Address · ${sym}${displayAmt.toFixed(2)} → ${merchant} · TX ${d.txId}`);}
-      else{logEvent('ok',`🔗 OPNet Wallet · ${sym}${displayAmt.toFixed(2)} → ${merchant} · TX ${d.txId}`);}
+      const fmted=new Intl.NumberFormat(undefined,{style:'currency',currency:cur}).format(localAmt);
+      if(d.method==='opcredit')logEvent('ok',`🔒 OpCredit · ${fmted} ESCROWED → ${merchant} · ID ${d.escrowId}`);
+      else if(d.method==='btcaddr')logEvent('ok',`₿ Bitcoin · ${fmted} → ${merchant} · TX ${d.txId}`);
+      else logEvent('ok',`📱 OPNet Wallet · ${fmted} → ${merchant} · TX ${d.txId}`);
     },
     onFailure:(d)=>{
-      if(d.reason==='returned')logEvent('cancel',`↩ Order returned — BTC refund initiated · Escrow ${d.escrowId}`);
+      if(d.reason==='returned')logEvent('cancel',`↩ Return requested — awaiting merchant confirmation · Escrow ${d.escrowId}`);
       else logEvent('fail',`Payment failed: ${d.reason}`);
     },
     onCancel:()=>logEvent('cancel','Payment cancelled by user'),
   });
 }
 
-function payCustom(){
+async function payCustom(){
   const amount=parseFloat(document.getElementById('custom-amount').value);
   if(!amount||amount<=0)return alert('Enter a valid amount.');
-  const btc=+(amount/BTC_EUR).toFixed(8);
   const cur=demoCurrentency;
-  const sym=CUR_SYMBOLS[cur]||cur;
-  pay(amount,btc,'Custom Demo',`Custom payment ${sym}${amount.toFixed(2)}`);
+  const prices=await getLiveBtc();
+  const btcLocal=prices[cur.toLowerCase()]||prices.eur;
+  const btcAmt=+(amount/btcLocal).toFixed(8);
+  // custom amount is in current currency already
+  const eurAmt=cur==='EUR'?amount:+(amount/(btcLocal/prices.eur)).toFixed(2);
+  pay(eurAmt,'Custom Demo',`Custom payment ${new Intl.NumberFormat(undefined,{style:'currency',currency:cur}).format(amount)}`);
 }
+
+// Fetch live prices on load
+getLiveBtc().then(()=>setCurrency(demoCurrentency));
 
 function showTab(id){
   document.querySelectorAll('.ctab').forEach((t,i)=>t.classList.toggle('active',['html','js','react'][i]===id));
