@@ -464,6 +464,26 @@
         </div>
       </div>
 
+      <h3 style="font-size:16px;font-weight:700;margin:36px 0 12px;color:white;">Option B — Hosted Checkout (redirect flow)</h3>
+      <p style="font-size:14px;color:var(--sub);margin-bottom:12px;line-height:1.7;">Instead of embedding a modal, redirect the customer to OpPay's hosted checkout page — similar to iDEAL or Stripe Checkout. After payment they are sent back to your site automatically.</p>
+      <div class="code-block reveal">
+        <div class="code-header"><span class="code-lang">URL</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+        <div class="code-body">checkout.html?session=SESSION_ID&amp;amount=49.99&amp;currency=USD&amp;btc=0.000473
+  &amp;merchant=MyShop&amp;desc=Order+1234&amp;return_url=https://myshop.com/confirm&amp;order_id=12345</div>
+      </div>
+      <p style="font-size:14px;color:var(--sub);margin:12px 0;line-height:1.7;">After the customer pays, they are redirected to your <code>return_url</code> with the following query parameters:</p>
+      <div class="code-block reveal">
+        <div class="code-header"><span class="code-lang">Redirect</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+        <div class="code-body">https://myshop.com/confirm?session_id=X&amp;status=confirmed&amp;tx=X&amp;order_id=X</div>
+      </div>
+      <div class="callout callout-info reveal">
+        <div class="callout-icon">💡</div>
+        <div class="callout-body">
+          <div class="callout-title">Good for: redirect-style shops</div>
+          Use the hosted checkout page if you want an iDEAL-style redirect flow instead of an embedded modal — no JavaScript SDK required on your page.
+        </div>
+      </div>
+
       <h3 style="font-size:16px;font-weight:700;margin:36px 0 12px;color:white;">Optional — Data attributes (no-JS mode)</h3>
       <p style="font-size:14px;color:var(--sub);margin-bottom:12px;line-height:1.7;">For simple static sites you can use data attributes — no JavaScript needed:</p>
       <div class="code-block reveal">
@@ -597,6 +617,19 @@ npm start
   <span class="ca">"metadata"</span>:    { <span class="ca">"order_id"</span>: <span class="cv">"1234"</span> },
   <span class="ca">"timestamp"</span>:   <span class="cn">1712345678901</span>
 }</div>
+      </div>
+
+      <h3 style="font-size:16px;font-weight:700;margin:28px 0 12px;color:white;">Return &amp; dispute events</h3>
+      <p style="font-size:14px;color:var(--sub);margin-bottom:12px;line-height:1.7;">In addition to payment events, OpPay fires the following events for the return flow:</p>
+      <div class="doc-table-wrap reveal">
+        <table class="doc-table">
+          <thead><tr><th>Event</th><th>Fired when</th></tr></thead>
+          <tbody>
+            <tr><td><code>return.requested</code></td><td>Customer calls <code>POST /api/sessions/:id/refund</code> — BTC stays locked, merchant is notified.</td></tr>
+            <tr><td><code>return.confirmed</code></td><td>Merchant confirms receipt via <code>POST /api/sessions/:id/confirm-return</code> — BTC is returned to the customer.</td></tr>
+            <tr><td><code>return.auto_approved</code></td><td>Fired after 7 days if the merchant has not responded to a return request — refund is auto-approved.</td></tr>
+          </tbody>
+        </table>
       </div>
 
       <h3 style="font-size:16px;font-weight:700;margin:28px 0 12px;color:white;">Verify the signature</h3>
@@ -782,6 +815,32 @@ curl -X POST http://localhost:3001/api/withdraw \
         </div>
       </div>
 
+      <h3 style="font-size:14px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin:28px 0 14px;">Returns &amp; Disputes</h3>
+      <div class="endpoint reveal">
+        <div class="ep-method ep-post">POST</div>
+        <div class="ep-body">
+          <div class="ep-path">/api/sessions/:id/refund</div>
+          <div class="ep-desc">Customer requests a return. Sets session status to <code>return_requested</code> and notifies the merchant via webhook. BTC remains locked in escrow.</div>
+          <span class="ep-pub">Public</span>
+        </div>
+      </div>
+      <div class="endpoint reveal">
+        <div class="ep-method ep-post">POST</div>
+        <div class="ep-body">
+          <div class="ep-path">/api/sessions/:id/confirm-return</div>
+          <div class="ep-desc">Merchant confirms goods have been received back. Releases escrowed BTC to the customer immediately.</div>
+          <span class="ep-auth">🔑 Auth required</span>
+        </div>
+      </div>
+      <div class="endpoint reveal">
+        <div class="ep-method ep-get">GET</div>
+        <div class="ep-body">
+          <div class="ep-path">/api/returns</div>
+          <div class="ep-desc">List all pending return requests for this merchant account.</div>
+          <span class="ep-auth">🔑 Auth required</span>
+        </div>
+      </div>
+
       <h3 style="font-size:14px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin:28px 0 14px;">Transactions &amp; Stats</h3>
       <div class="endpoint reveal">
         <div class="ep-method ep-get">GET</div>
@@ -829,7 +888,7 @@ curl -X POST http://localhost:3001/api/withdraw \
         <div class="ep-method ep-get">GET</div>
         <div class="ep-body">
           <div class="ep-path">/api/price</div>
-          <div class="ep-desc">Get current BTC/EUR price. Cached for 60 seconds.</div>
+          <div class="ep-desc">Get current BTC price from CoinGecko. Cached for 60 seconds. Supports EUR, USD, GBP, JPY, CHF, AUD, CAD — pass <code>?currency=USD</code> (default: EUR).</div>
           <span class="ep-pub">Public</span>
         </div>
       </div>

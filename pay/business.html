@@ -483,7 +483,7 @@
         <div class="checklist">
           <div class="check-item reveal">
             <div class="check-mark">✓</div>
-            <div class="check-text"><strong>Two payment methods</strong> — OPNet Wallet for instant sign-and-pay, or OpCredit anonymous escrow</div>
+            <div class="check-text"><strong>Two payment methods</strong> — OPNet Wallet for instant sign-and-pay, or OpCredit anonymous escrow. Or use our <strong>hosted checkout page</strong> — customers are redirected to a secure OpPay page (like iDEAL/Stripe Checkout) to connect their wallet and pay, then returned to your site with confirmation.</div>
           </div>
           <div class="check-item reveal rd1">
             <div class="check-mark">✓</div>
@@ -522,7 +522,7 @@
               <div class="mock-method-icon">🔗</div>
               <div>
                 <div class="mock-method-name">OPNet Wallet</div>
-                <div class="mock-method-desc">Connect and sign instantly</div>
+                <div class="mock-method-desc">Scan QR with the OPNet app — iDEAL-style, no browser extension needed. Or use the hosted checkout page.</div>
               </div>
               <div style="margin-left:auto;font-size:10px;font-weight:700;color:var(--orange);background:var(--orange-dim);border:1px solid var(--orange-border);padding:2px 8px;border-radius:10px;">REC</div>
             </div>
@@ -840,7 +840,7 @@ $session = json_decode($response, <span class="ck">true</span>);
       </details>
       <details class="faq-item">
         <summary>How do I handle refunds? <span class="faq-icon">+</span></summary>
-        <div class="faq-body">Bitcoin transactions are irreversible — there are no automatic refunds. For standard payments you would manually send BTC back to the customer's wallet. For OpCredit payments, before escrow is released you can decline the release by not triggering the confirm endpoint, though the 14-day auto-release will still apply.</div>
+        <div class="faq-body">For OpCredit orders, the return flow is built-in and merchant-verified: (1) The customer requests a return — BTC stays locked. (2) The merchant ships a return label. (3) Once the merchant receives the goods back, they confirm via the merchant dashboard or API (<code style="font-family:monospace;color:var(--orange)">POST /api/sessions/:id/confirm-return</code>). Only then is BTC returned to the customer. If a merchant fails to confirm within 7 days, the refund is auto-approved. For standard Bitcoin payments, merchants handle returns manually.</div>
       </details>
       <details class="faq-item">
         <summary>Is OpPay open source? <span class="faq-icon">+</span></summary>

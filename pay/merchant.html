@@ -300,6 +300,7 @@
         <div class="nav-section-label">Main</div>
         <button class="nav-item active" onclick="showPage('overview')"><span class="ni">📊</span> Overview</button>
         <button class="nav-item" onclick="showPage('transactions')"><span class="ni">💸</span> Transactions</button>
+        <button class="nav-item" onclick="showPage('returns')" id="nav-returns"><span class="ni">↩</span> Returns</button>
         <div class="nav-section-label">Funds</div>
         <button class="nav-item" onclick="showPage('withdraw')"><span class="ni">₿</span> Withdraw</button>
         <div class="nav-section-label">Developer</div>
@@ -358,6 +359,11 @@
             <div class="stat-value" id="stat-escrow">€ 0.00</div>
             <div class="stat-sub" id="stat-escrow-count">0 orders locked</div>
           </div>
+          <div class="stat-card" style="border-color:rgba(255,68,68,0.25);background:linear-gradient(160deg,rgba(255,68,68,0.06),var(--card));">
+            <div class="stat-label" style="color:rgba(255,100,100,0.85);">↩ Pending Returns</div>
+            <div class="stat-value" id="stat-returns" style="color:var(--red);">0</div>
+            <div class="stat-sub">awaiting your confirmation</div>
+          </div>
         </div>
 
         <div class="section-head">
@@ -382,6 +388,7 @@
             <button class="filter-btn active" onclick="filterTx('all',this)">All</button>
             <button class="filter-btn" onclick="filterTx('confirmed',this)">Confirmed</button>
             <button class="filter-btn" onclick="filterTx('escrowed',this)" style="color:var(--purple-light);">🔒 OpCredit</button>
+            <button class="filter-btn" onclick="filterTx('return_requested',this)" style="color:var(--red);">↩ Returns</button>
             <button class="filter-btn" onclick="filterTx('failed',this)">Failed</button>
           </div>
         </div>
@@ -459,6 +466,16 @@
             <button class="copy-btn" onclick="saveWebhook()">Save</button>
           </div>
           <div style="font-size:12px;color:var(--muted);margin-top:10px;">Payload: <code style="color:var(--orange)">{ txId, amount, btc, method, description, timestamp }</code></div>
+        </div>
+      </div>
+
+      <!-- RETURNS -->
+      <div class="page" id="page-returns">
+        <div class="section-head">
+          <div class="section-title">↩ Pending Return Requests</div>
+        </div>
+        <div id="returns-list">
+          <div class="empty-table"><div class="empty-icon">↩</div><div class="empty-text">No pending returns</div><div class="empty-sub">Return requests from customers will appear here</div></div>
         </div>
       </div>
 
@@ -596,12 +613,13 @@ function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
   document.querySelectorAll('.nav-item').forEach((n,i) => {
-    n.classList.toggle('active', ['overview','transactions','withdraw','api','settings'][i]===id);
+    n.classList.toggle('active', ['overview','transactions','returns','withdraw','api','settings'][i]===id);
   });
-  const titles = {overview:'Overview', transactions:'Transactions', withdraw:'Withdraw BTC', api:'API & Embed', settings:'Settings'};
+  const titles = {overview:'Overview', transactions:'Transactions', returns:'Returns', withdraw:'Withdraw BTC', api:'API & Embed', settings:'Settings'};
   document.getElementById('topbar-title').textContent = titles[id] || id;
   if (id==='overview'||id==='transactions') refreshDashboard();
   if (id==='withdraw') loadWithdrawals();
+  if (id==='returns') loadReturns();
 }
 
 async function refreshDashboard() {
@@ -630,6 +648,12 @@ async function refreshDashboard() {
       document.getElementById('stat-escrow-count').textContent = (stats.escrowed_count||0) + ' orders locked';
       document.getElementById('w-balance').textContent    = fmtEur(stats.total_eur || 0);
       document.getElementById('w-balance-btc').textContent = (stats.total_btc||0).toFixed(8) + ' BTC available for withdrawal';
+      try {
+        const returns = await api('/returns');
+        if (returns && Array.isArray(returns)) {
+          document.getElementById('stat-returns').textContent = returns.length;
+        }
+      } catch {}
     } catch (err) {
       console.warn('API error, falling back to local:', err.message);
       txs = loadTxLocal();
@@ -658,9 +682,10 @@ async function refreshDashboard() {
 }
 
 function filterList(txs) {
-  if (txFilter === 'confirmed') return txs.filter(t => t.status==='confirmed');
-  if (txFilter === 'failed')    return txs.filter(t => t.status==='failed');
-  if (txFilter === 'escrowed')  return txs.filter(t => t.status==='escrowed');
+  if (txFilter === 'confirmed')        return txs.filter(t => t.status==='confirmed');
+  if (txFilter === 'failed')           return txs.filter(t => t.status==='failed');
+  if (txFilter === 'escrowed')         return txs.filter(t => t.status==='escrowed');
+  if (txFilter === 'return_requested') return txs.filter(t => t.status==='return_requested');
   return txs;
 }
 
@@ -688,6 +713,8 @@ function txRow(tx, cols) {
     ? '<span class="badge badge-escrow">🔒 Escrowed</span>'
     : tx.status==='pending'
     ? '<span class="badge badge-pending">⏳ Pending</span>'
+    : tx.status==='return_requested'
+    ? '<span class="badge badge-fail">↩ Return Pending</span>'
     : '<span class="badge badge-fail">✗ Failed</span>';
   const method = tx.method==='opcredit'
     ? '<span class="method-tag" style="color:var(--purple-light);">🔒 OpCredit</span>'
@@ -819,6 +846,53 @@ async function loadWithdrawals() {
         <span class="badge badge-ok">✓ Queued</span>
       </div>`).join('');
   } catch {}
+}
+
+async function loadReturns() {
+  const el = document.getElementById('returns-list');
+  if (!serverOnline) {
+    el.innerHTML = '<div class="empty-table"><div class="empty-icon">↩</div><div class="empty-text">Server offline</div><div class="empty-sub">Connect the server to manage return requests</div></div>';
+    return;
+  }
+  try {
+    const returns = await api('/returns');
+    document.getElementById('stat-returns').textContent = returns.length;
+    if (!returns.length) {
+      el.innerHTML = '<div class="empty-table"><div class="empty-icon">↩</div><div class="empty-text">No pending returns</div><div class="empty-sub">Return requests from customers will appear here</div></div>';
+      return;
+    }
+    el.innerHTML = returns.map(r => {
+      const when = new Date(r.return_requested_at || r.updated_at || r.created_at).toLocaleString('nl-NL', {day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
+      const sessionShort = (r.id || r.session_id || '').slice(0, 20);
+      const eur = fmtEur(r.eur_amount || r.amount || 0);
+      const btc = (r.btc_amount || r.btc || 0).toFixed(8);
+      const desc = r.description ? `<div style="font-size:12px;color:var(--sub);margin-top:4px;">${r.description}</div>` : '';
+      return `<div style="background:var(--card);border:1px solid rgba(255,68,68,0.2);border-radius:14px;padding:18px 20px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+            <span class="badge badge-fail">↩ Return Pending</span>
+            <span class="td-mono" style="font-size:11px;">${sessionShort}...</span>
+          </div>
+          <div style="font-size:14px;font-weight:700;">${eur} <span style="font-size:12px;color:var(--sub);font-weight:400;">/ ${btc} BTC</span></div>
+          ${desc}
+          <div style="font-size:12px;color:var(--muted);margin-top:4px;">Requested: ${when}</div>
+        </div>
+        <button onclick="confirmReturn('${r.id || r.session_id}')" style="padding:10px 18px;background:rgba(0,200,83,0.1);border:1px solid rgba(0,200,83,0.25);color:var(--green);border-radius:10px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all 0.15s;" onmouseover="this.style.background='rgba(0,200,83,0.18)'" onmouseout="this.style.background='rgba(0,200,83,0.1)'">✓ Confirm Return Received</button>
+      </div>`;
+    }).join('');
+  } catch (err) {
+    el.innerHTML = `<div class="empty-table"><div class="empty-icon">⚠️</div><div class="empty-text">Failed to load returns</div><div class="empty-sub">${err.message}</div></div>`;
+  }
+}
+
+async function confirmReturn(sessionId) {
+  try {
+    await api('/sessions/' + sessionId + '/confirm-return', { method: 'POST' });
+    toast('✓', 'Return confirmed — BTC will be refunded to customer');
+    await loadReturns();
+  } catch (err) {
+    toast('✗', err.message);
+  }
 }
 
 async function saveSettings() {

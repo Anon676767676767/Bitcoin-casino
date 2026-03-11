@@ -557,6 +557,9 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
   <div class="si" onclick="pgNav('mybets')">🏆 My Bets</div>
   <div class="ss">Account</div>
   <div class="si" onclick="odep()">💰 Deposit</div>
+  <div class="ss">Bitcoin Payments</div>
+  <a href="pay/checkout.html" target="_blank" style="text-decoration:none"><div class="si">₿ Deposit with Bitcoin</div></a>
+  <div style="margin:4px 8px 6px;padding:8px 10px;background:rgba(247,147,26,.07);border:1px solid rgba(247,147,26,.18);border-radius:7px;font-size:10px;color:var(--mut);line-height:1.6">Live BTC rates via CoinGecko · EUR, USD, GBP, JPY, CHF, AUD, CAD · Powered by <span style="color:var(--or);font-weight:700">OpPay</span></div>
 </div>
 
 <div id="main">
@@ -880,6 +883,11 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
       <div style="color:#34d399;font-weight:800;margin-bottom:3px">🔗 Wallet Connected</div>
       <div style="color:#9ca3af;word-break:break-all;font-family:monospace;font-size:10px" id="wlt-addr"></div>
       <div style="color:#f7931a;font-weight:700;margin-top:3px;font-size:10px" id="wlt-bal2"></div>
+    </div>
+    <div style="background:rgba(247,147,26,.07);border:1px solid rgba(247,147,26,.22);border-radius:8px;padding:9px 11px;margin-bottom:10px;font-size:11px">
+      <div style="color:var(--or);font-weight:800;margin-bottom:3px">₿ Deposit with Bitcoin via OpPay</div>
+      <div style="color:var(--mut);line-height:1.6">Real BTC accepted · Live rates from CoinGecko · EUR, USD, GBP, JPY, CHF, AUD, CAD · Scan QR or use hosted checkout</div>
+      <a href="pay/checkout.html" target="_blank" style="display:inline-block;margin-top:6px;padding:4px 10px;background:linear-gradient(135deg,var(--or),var(--or2));color:#000;border-radius:5px;font-weight:800;font-size:11px;text-decoration:none">Pay with Bitcoin →</a>
     </div>
     <p style="font-size:11px;color:var(--mut);margin-bottom:2px">Demo mode — select amount to add</p>
     <div class="dams">
