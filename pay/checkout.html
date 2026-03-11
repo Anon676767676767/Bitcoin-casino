@@ -89,14 +89,7 @@
     .copy-btn.copied{background:rgba(0,200,83,0.1);border-color:rgba(0,200,83,0.3);color:var(--green);}
     .addr-monitor{display:flex;align-items:center;justify-content:center;gap:8px;font-size:12px;color:var(--muted);margin-top:12px;}
 
-    /* ── Step 3: OpCredit ── */
-    .escrow-info{background:rgba(124,58,237,0.06);border:1px solid rgba(124,58,237,0.25);border-radius:14px;padding:18px;margin-bottom:16px;}
-    .escrow-title{font-size:13px;font-weight:700;color:#a78bfa;margin-bottom:12px;display:flex;align-items:center;gap:7px;}
-    .escrow-steps{display:flex;flex-direction:column;gap:10px;}
-    .escrow-step{display:flex;align-items:flex-start;gap:10px;font-size:12px;color:var(--sub);line-height:1.5;}
-    .escrow-n{width:20px;height:20px;background:rgba(124,58,237,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#a78bfa;flex-shrink:0;margin-top:1px;}
-    .btn-purple{background:linear-gradient(135deg,#7c3aed,#6d28d9);color:white;box-shadow:0 4px 16px rgba(124,58,237,0.25);}
-    .btn-purple:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(124,58,237,0.35);}
+
 
     /* ── Wallet connect ── */
     .wallet-icon{text-align:center;font-size:56px;margin-bottom:12px;}
@@ -230,14 +223,6 @@
         </div>
         <div class="mc-arrow">→</div>
       </button>
-      <button class="method-card" id="method-opcredit" onclick="selectMethod('opcredit')">
-        <div class="mc-icon purple">🔒</div>
-        <div class="mc-info">
-          <div class="mc-name">OpCredit Escrow</div>
-          <div class="mc-desc">BTC locked in smart contract — released after you confirm receipt. 7-day return window.</div>
-        </div>
-        <div class="mc-arrow">→</div>
-      </button>
     </div>
     <button class="btn btn-ghost" onclick="setStep(1)">← Back</button>
   </div>
@@ -293,26 +278,6 @@
       <button class="btn btn-ghost" onclick="setStep(2)">← Change payment method</button>
     </div>
 
-    <!-- 3c: OpCredit -->
-    <div id="m-opcredit" style="display:none;">
-      <div class="section-title">OpCredit Escrow</div>
-      <div class="section-sub">Your BTC is locked until you confirm receipt</div>
-      <div class="amount-box">
-        <div class="amount-fiat" id="cred-amount">—</div>
-        <div class="amount-btc" id="cred-btc">—</div>
-      </div>
-      <div class="escrow-info">
-        <div class="escrow-title">🔒 How OpCredit protects you</div>
-        <div class="escrow-steps">
-          <div class="escrow-step"><div class="escrow-n">1</div>Your BTC is locked in an OPNet smart contract — the merchant can't touch it yet</div>
-          <div class="escrow-step"><div class="escrow-n">2</div>The merchant ships your order</div>
-          <div class="escrow-step"><div class="escrow-n">3</div>You confirm delivery → BTC is released to the merchant</div>
-          <div class="escrow-step"><div class="escrow-n">4</div>Not satisfied? Request a return → merchant confirms → BTC returned to you within 7 days</div>
-        </div>
-      </div>
-      <button class="btn btn-purple" onclick="doConfirm()">🔒 Lock BTC in Escrow</button>
-      <button class="btn btn-ghost" onclick="setStep(2)">← Change payment method</button>
-    </div>
 
   </div>
 
@@ -343,10 +308,10 @@
       <div class="conf-row"><span class="conf-label">Status</span><span class="conf-val" style="color:var(--green);">Confirmed on Bitcoin L1 ✓</span></div>
     </div>
     <div class="redirect-bar" id="redirect-bar" style="display:none;">
-      Returning to <strong id="redir-merchant">the shop</strong> in
-      <span class="redirect-count" id="redir-count">5</span>
+      Returning to <strong id="redir-merchant">Casino</strong> in
+      <span class="redirect-count" id="redir-count">3</span>s — or click below
     </div>
-    <button class="btn btn-green" onclick="returnNow()">← Return to <span id="return-label">Shop</span></button>
+    <button class="btn btn-green" id="return-btn" onclick="closeOrReturn()" style="font-size:17px;padding:18px;">← Return to Casino</button>
   </div>
 
 </div>
@@ -364,7 +329,6 @@ const PAY = {
   returnUrl: p.get('return_url') || '',
   orderId:   p.get('order_id') || '',
   sat:       parseInt(p.get('sat')) || 0,  // sats to credit back (for casino demo)
-  noEscrow:  p.get('no_escrow') === '1',   // hide OpCredit (e.g. casino deposit)
   apiBase:   p.get('api') || '',
 };
 
@@ -400,14 +364,9 @@ function fmtFiat(n) {
   document.getElementById('s1-desc').textContent     = PAY.desc;
   document.getElementById('s1-amount').textContent   = PAY.amount ? fmtFiat(PAY.amount) : '—';
   document.getElementById('s1-btc').textContent      = PAY.btc ? '≈ ₿ '+PAY.btc.toFixed(8) : '—';
-  if (PAY.merchant) {
-    document.getElementById('return-label').textContent = PAY.merchant;
+  if (PAY.merchant && PAY.merchant !== 'Unknown Merchant') {
     document.getElementById('redir-merchant').textContent = PAY.merchant;
-  }
-  // Hide OpCredit option when no_escrow=1 (e.g. casino deposit — pay later makes no sense)
-  if (PAY.noEscrow) {
-    var el = document.getElementById('method-opcredit');
-    if (el) el.style.display = 'none';
+    document.getElementById('return-btn').textContent = '\u2190 Return to ' + PAY.merchant;
   }
 })();
 
@@ -417,7 +376,7 @@ let chosenMethod = '';
 function selectMethod(method) {
   chosenMethod = method;
   // Hide all sub-panels
-  ['m-opnet','m-btcaddr','m-opcredit'].forEach(id => {
+  ['m-opnet','m-btcaddr'].forEach(id => {
     document.getElementById(id).style.display='none';
   });
 
@@ -441,11 +400,6 @@ function selectMethod(method) {
     document.getElementById('open-wallet-link').href    = BTC_URI;
     setStep(3);
 
-  } else if (method === 'opcredit') {
-    document.getElementById('m-opcredit').style.display='block';
-    document.getElementById('cred-amount').textContent = PAY.amount ? fmtFiat(PAY.amount) : '—';
-    document.getElementById('cred-btc').textContent    = PAY.btc ? '≈ ₿ '+PAY.btc.toFixed(8) : '—';
-    setStep(3);
   }
 }
 
@@ -459,7 +413,7 @@ function copyAddr() {
   });
 }
 
-// ── Confirm payment (OpCredit & OPNet wallet step) ────────────────────────────
+// ── Confirm payment ───────────────────────────────────────────────────────────
 function doConfirm() { simulatePayment(); }
 
 // ── Simulate payment processing ───────────────────────────────────────────────
@@ -498,37 +452,41 @@ function showSuccess() {
   }
   document.getElementById('success-sub').textContent = `Your payment to ${PAY.merchant} is confirmed on Bitcoin Layer 1.`;
 
-  if (PAY.returnUrl) {
-    document.getElementById('redirect-bar').style.display='block';
-    let count = 3;
+  // Write result to localStorage — casino detects via storage event (popup) or page load (same-tab)
+  if (PAY.sat > 0) {
+    try { localStorage.setItem('oppay_result', JSON.stringify({sat: PAY.sat, ts: Date.now(), status: 'confirmed'})); } catch(e) {}
+  }
+
+  // Always show the redirect bar + start 3-second countdown
+  document.getElementById('redirect-bar').style.display = 'block';
+  let count = 3;
+  document.getElementById('redir-count').textContent = count;
+  _redirectTimer = setInterval(() => {
+    count--;
     document.getElementById('redir-count').textContent = count;
-    _redirectTimer = setInterval(() => {
-      count--;
-      document.getElementById('redir-count').textContent = count;
-      if (count <= 0) { clearInterval(_redirectTimer); returnNow(); }
-    }, 1000);
+    if (count <= 0) { clearInterval(_redirectTimer); closeOrReturn(); }
+  }, 1000);
+}
+
+// ── Close popup or redirect same-tab ─────────────────────────────────────────
+function closeOrReturn() {
+  if (_redirectTimer) clearInterval(_redirectTimer);
+  if (window.opener && !window.opener.closed) {
+    window.opener.focus(); // bring casino window to front
+    setTimeout(() => window.close(), 300); // delay so storage event fires first
+  } else {
+    returnNow();
   }
 }
 
-// ── Return to merchant ────────────────────────────────────────────────────────
 function returnNow() {
   if (_redirectTimer) clearInterval(_redirectTimer);
-  if (!PAY.returnUrl) { history.back(); return; }
-  // Build return params — avoid new URL() to stay compatible with file:// paths
-  const params = new URLSearchParams();
-  if (PAY.session) params.set('session_id', PAY.session);
-  params.set('status', 'confirmed');
-  params.set('tx', txHash || 'confirmed');
-  params.set('btc', PAY.btc);
-  params.set('currency', PAY.currency);
-  if (PAY.sat)     params.set('sat', PAY.sat);
-  if (PAY.orderId) params.set('order_id', PAY.orderId);
-  const sep = PAY.returnUrl.includes('?') ? '&' : '?';
-  window.location.href = PAY.returnUrl + sep + params.toString();
+  const base = PAY.returnUrl ? PAY.returnUrl.split('#')[0] : null;
+  if (base) { window.location.href = base; } else { history.back(); }
 }
 
 function goBack() {
-  if (PAY.returnUrl) window.location.href = PAY.returnUrl;
+  if (PAY.returnUrl) window.location.href = PAY.returnUrl.split('#')[0];
   else history.back();
 }
 </script>

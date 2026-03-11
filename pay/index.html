@@ -566,6 +566,7 @@
   <ul class="nav-links" id="nav-links">
     <li><a href="#how">How It Works</a></li>
     <li><a href="#demo">Demo</a></li>
+    <li><a href="#pricing">Pricing</a></li>
     <li><a href="business.html">For Business</a></li>
     <li><a href="docs.html">Docs</a></li>
     <li><a href="merchant.html" class="nav-cta">Merchant Dashboard →</a></li>
@@ -579,6 +580,7 @@
 <div class="mob-nav" id="mob-nav">
   <a href="#how" onclick="closeMobNav()">How It Works</a>
   <a href="#demo" onclick="closeMobNav()">Demo</a>
+  <a href="#pricing" onclick="closeMobNav()">Pricing</a>
   <a href="business.html">For Business</a>
   <a href="docs.html">Docs</a>
   <a href="merchant.html" class="mob-nav-cta">Merchant Dashboard →</a>
@@ -650,8 +652,8 @@
     </div>
     <div style="width:1px;background:var(--border)"></div>
     <div>
-      <div class="hero-stat-num">0% fees</div>
-      <div class="hero-stat-label">from OpPay</div>
+      <div class="hero-stat-num">0.1% fee</div>
+      <div class="hero-stat-label">only OpPay service fee</div>
     </div>
   </div>
 </section>
@@ -924,6 +926,42 @@
   </div>
 </section>
 
+<!-- FREE / PRICING SECTION -->
+<section class="section" id="pricing" style="background:linear-gradient(135deg,rgba(247,147,26,0.04) 0%,rgba(247,147,26,0.01) 100%);">
+  <div class="container" style="text-align:center;">
+    <div class="sec-label reveal">Pricing</div>
+    <div class="sec-title reveal reveal-delay-1">Totally free to use</div>
+    <div class="sec-sub reveal reveal-delay-2" style="max-width:560px;margin:0 auto 48px;">
+      OpPay charges <strong style="color:var(--orange);">no setup fees, no monthly costs, no per-transaction markup</strong>. The only thing we take is <strong style="color:var(--orange);">0.1%</strong> per confirmed payment — that's our platform service fee to keep the infrastructure running.
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:24px;justify-content:center;margin-bottom:48px;">
+      <div class="reveal" style="background:var(--card);border:1.5px solid var(--border);border-radius:20px;padding:36px 32px;min-width:220px;flex:1;max-width:280px;">
+        <div style="font-size:36px;font-weight:900;color:var(--orange);margin-bottom:6px;">€0</div>
+        <div style="font-size:14px;font-weight:700;color:white;margin-bottom:8px;">Setup & integration</div>
+        <div style="font-size:13px;color:var(--muted);">No registration fee. Start accepting Bitcoin in minutes.</div>
+      </div>
+      <div class="reveal reveal-delay-1" style="background:var(--card);border:1.5px solid rgba(247,147,26,0.35);border-radius:20px;padding:36px 32px;min-width:220px;flex:1;max-width:280px;position:relative;">
+        <div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--orange);color:black;font-size:10px;font-weight:800;padding:3px 12px;border-radius:20px;letter-spacing:0.05em;white-space:nowrap;">ONLY COST</div>
+        <div style="font-size:36px;font-weight:900;color:var(--orange);margin-bottom:6px;">0.1%</div>
+        <div style="font-size:14px;font-weight:700;color:white;margin-bottom:8px;">Per confirmed transaction</div>
+        <div style="font-size:13px;color:var(--muted);">Tiny platform service fee. On €100 that's just 10 cents.</div>
+      </div>
+      <div class="reveal reveal-delay-2" style="background:var(--card);border:1.5px solid var(--border);border-radius:20px;padding:36px 32px;min-width:220px;flex:1;max-width:280px;">
+        <div style="font-size:36px;font-weight:900;color:var(--orange);margin-bottom:6px;">€0</div>
+        <div style="font-size:14px;font-weight:700;color:white;margin-bottom:8px;">Monthly / yearly</div>
+        <div style="font-size:13px;color:var(--muted);">No subscriptions. You only pay when you actually get paid.</div>
+      </div>
+    </div>
+    <div class="reveal" style="background:rgba(247,147,26,0.06);border:1px solid rgba(247,147,26,0.2);border-radius:16px;padding:20px 28px;display:inline-flex;align-items:center;gap:14px;max-width:560px;">
+      <div style="font-size:24px;flex-shrink:0;">₿</div>
+      <div style="text-align:left;font-size:13px;color:var(--muted);line-height:1.6;">
+        <strong style="color:white;">Compare to traditional payment processors:</strong><br>
+        Stripe charges ~2.9% + €0.30 per transaction. PayPal up to 3.49%. With OpPay you pay <strong style="color:var(--orange);">0.1%</strong> — that's up to <strong style="color:var(--orange);">30× cheaper</strong>, and your customer's BTC goes directly to you.
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- FOOTER -->
 <footer>
   <div class="footer-inner">
@@ -939,6 +977,7 @@
         <div class="footer-col-title">Product</div>
         <a href="#demo">Live Demo</a>
         <a href="#how">How It Works</a>
+        <a href="#pricing">Pricing</a>
         <a href="#code">Integration</a>
       </div>
       <div class="footer-col">
