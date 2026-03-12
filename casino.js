@@ -3078,7 +3078,9 @@ function renderSportTagged(tagged){
     var s1=h1.score||'0',s2=h2.score||'0';
     var st=(c.status||{}).type||{},state=st.state||'pre',live=state==='in';
     var min=live&&c.status&&c.status.displayClock?c.status.displayClock:'';
+    var matchDate=new Date(ev.date||c.date||0);
     var kickoff=fmtTime(ev.date||c.date||'');
+    if(kickoff&&matchDate.toDateString()!==new Date().toDateString()){var _days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];kickoff=_days[matchDate.getDay()]+' '+kickoff;}
     var l1=(h1.team||{}).logo||(h1.team&&h1.team.logos&&h1.team.logos[0]&&h1.team.logos[0].href)||'';
     var l2=(h2.team||{}).logo||(h2.team&&h2.team.logos&&h2.team.logos[0]&&h2.team.logos[0].href)||'';
     var oddsData=c.odds||null;
@@ -3103,25 +3105,39 @@ function seededRand(str,salt){
   return(Math.abs(h)%100000)/100000;
 }
 function americanToDecimal(ml){
-  if(!ml||isNaN(ml))return null;
-  return ml>0?(ml/100+1).toFixed(2):(100/(-ml)+1).toFixed(2);
+  if(!ml)return null;
+  /* handle both number (300) and string ("+300", "-120") formats */
+  var n=parseFloat(String(ml).replace(/[^0-9.\-]/g,''));
+  if(!n||isNaN(n))return null;
+  return+(n>0?(n/100+1).toFixed(2):(100/(-n)+1).toFixed(2));
 }
 function mkCard(idx,lg,t1,t2,s1,s2,live,timeStr,sport,l1,l2,kickoff,state,espnId,leagueId,oddsData){
   var eid2=espnId||'';var lid=leagueId||'';
-  /* Use real ESPN ID so bets from different sports never clash in the slip */
   var eid=eid2?'ev-'+eid2:'ev-'+sport+'-'+idx;
   var seed=eid2||eid;
   var c1=l1?'transparent':tcol(t1),c2=l2?'transparent':tcol(t2);
-  /* Try real ESPN odds first, fallback to seeded-stable pseudo-random */
+  /* Parse real ESPN odds — support both legacy format and new moneyline format */
   var eo=oddsData&&oddsData[0]||null;
-  var o1=eo&&eo.homeTeamOdds&&eo.homeTeamOdds.moneyLine?americanToDecimal(eo.homeTeamOdds.moneyLine):null;
-  var o2=eo&&eo.awayTeamOdds&&eo.awayTeamOdds.moneyLine?americanToDecimal(eo.awayTeamOdds.moneyLine):null;
-  var od=eo&&eo.drawOdds&&eo.drawOdds.moneyLine?americanToDecimal(eo.drawOdds.moneyLine):null;
+  var ml=eo&&eo.moneyline||null;
+  var o1=null,o2=null,od=null,ou=null,uu=null;
+  if(ml){
+    o1=americanToDecimal(ml.home&&(ml.home.close||ml.home.open)&&(ml.home.close||ml.home.open).odds);
+    o2=americanToDecimal(ml.away&&(ml.away.close||ml.away.open)&&(ml.away.close||ml.away.open).odds);
+    od=americanToDecimal(ml.draw&&(ml.draw.close||ml.draw.open)&&(ml.draw.close||ml.draw.open).odds);
+  }
+  if(!o1&&eo&&eo.homeTeamOdds)o1=americanToDecimal(eo.homeTeamOdds.moneyLine);
+  if(!o2&&eo&&eo.awayTeamOdds)o2=americanToDecimal(eo.awayTeamOdds.moneyLine);
+  if(!od&&eo&&eo.drawOdds)od=americanToDecimal(eo.drawOdds.moneyLine);
+  if(eo&&eo.total){
+    var tot=eo.total;
+    ou=americanToDecimal(tot.over&&(tot.over.close||tot.over.open)&&(tot.over.close||tot.over.open).odds);
+    uu=americanToDecimal(tot.under&&(tot.under.close||tot.under.open)&&(tot.under.close||tot.under.open).odds);
+  }
   if(!o1)o1=(1.4+seededRand(seed,1)*1.8).toFixed(2);
   if(!o2)o2=(1.5+seededRand(seed,2)*2.0).toFixed(2);
   if(!od)od=(2.8+seededRand(seed,3)*1.4).toFixed(2);
-  var ou=(1.55+seededRand(seed,4)*0.55).toFixed(2);
-  var uu=(1.80+seededRand(seed,5)*0.55).toFixed(2);
+  if(!ou)ou=(1.55+seededRand(seed,4)*0.55).toFixed(2);
+  if(!uu)uu=(1.80+seededRand(seed,5)*0.55).toFixed(2);
   var showDraw=(sport==='soccer'||!sport);
   var timeMid,liveTag='';
   if(state==='in'||live){
