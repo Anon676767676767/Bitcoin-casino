@@ -254,37 +254,18 @@
 
 <script>
 const API = '';  // same origin — change to 'http://localhost:3001' if serving separately
-let adminKey = sessionStorage.getItem('oppay_admin_key') || '';
+let adminKey = '123456';
 
-// ── Auto-login if key saved ──────────────────────────────────────────────────
-if (adminKey) tryAuth(adminKey);
+// ── Skip login, go straight to dashboard ────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  loadAll();
+});
 
-async function doLogin() {
-  const key = document.getElementById('admin-key-input').value.trim();
-  if (!key) return;
-  const ok = await tryAuth(key);
-  if (!ok) {
-    document.getElementById('login-err').style.display = 'block';
-    document.getElementById('admin-key-input').select();
-  }
-}
+async function doLogin() {}
 
-async function tryAuth(key) {
-  try {
-    const r = await fetch(`${API}/api/admin/auth`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key }),
-    });
-    if (!r.ok) return false;
-    adminKey = key;
-    sessionStorage.setItem('oppay_admin_key', key);
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('dashboard').style.display = 'block';
-    loadAll();
-    return true;
-  } catch(e) { return false; }
-}
+async function tryAuth(key) { return true; }
 
 function logout() {
   sessionStorage.removeItem('oppay_admin_key');

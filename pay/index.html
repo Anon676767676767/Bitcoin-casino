@@ -1,743 +1,664 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OpPay — Bitcoin Payment SDK</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>OpPay — Bitcoin Payments for Any Website</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --orange: #f7931a; --orange-dark: #d4780f; --orange-glow: rgba(247,147,26,0.35);
-      --blue: #0070f3; --green: #00c853; --red: #ff4444;
-      --bg: #080810; --surface: #0e101a; --card: #12141f; --border: #1e2235;
-      --text: #f0f0f0; --muted: #6b7280; --sub: #9aa3b2;
-      --purple: #7c3aed; --purple-light: #a78bfa;
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    :root{
+      --bg:#040610;--surface:#07091599;--card:#0c1020;--card2:#0f1328;
+      --border:#1c2238;--text:#eef0f8;--muted:#55617a;--sub:#8a93a8;
+      --orange:#f7931a;--orange-dark:#d4780f;--orange-glow:rgba(247,147,26,0.18);
+      --green:#10b981;--blue:#3b82f6;--purple:#7c3aed;--purple-light:#a78bfa;--red:#ef4444;
     }
-    html { scroll-behavior: smooth; }
-    body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+    html{scroll-behavior:smooth;}
+    body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
 
-    /* ─── OPPAY MODAL SDK ──────────────────────────────────────────────── */
-    .oppay-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.8);
-      z-index: 99999; display: flex; align-items: center; justify-content: center;
-      opacity: 0; transition: opacity 0.3s ease; backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-    }
-    .oppay-overlay.oppay-visible { opacity: 1; }
-    .oppay-modal {
-      background: #0f111a; border: 1px solid #252840;
-      border-radius: 24px; width: 100%; max-width: 430px; margin: 16px;
-      box-shadow: 0 40px 120px rgba(0,0,0,0.7), 0 0 0 1px rgba(247,147,26,0.08), inset 0 1px 0 rgba(255,255,255,0.05);
-      font-family: 'Inter', sans-serif; overflow: hidden;
-      transform: translateY(32px) scale(0.95);
-      transition: transform 0.32s cubic-bezier(0.34,1.4,0.64,1);
-    }
-    .oppay-overlay.oppay-visible .oppay-modal { transform: translateY(0) scale(1); }
+    /* ─── OPPAY MODAL SDK (keep unchanged) ─────────────────────────────── */
+    .oppay-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:99999;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.3s ease;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);}
+    .oppay-overlay.oppay-visible{opacity:1;}
+    .oppay-modal{background:#0f111a;border:1px solid #252840;border-radius:24px;width:100%;max-width:430px;margin:16px;box-shadow:0 40px 120px rgba(0,0,0,0.7),0 0 0 1px rgba(247,147,26,0.08),inset 0 1px 0 rgba(255,255,255,0.05);font-family:'Inter',sans-serif;overflow:hidden;transform:translateY(32px) scale(0.95);transition:transform 0.32s cubic-bezier(0.34,1.4,0.64,1);}
+    .oppay-overlay.oppay-visible .oppay-modal{transform:translateY(0) scale(1);}
+    .op-header{background:linear-gradient(160deg,#14100a 0%,#0a0c14 100%);border-bottom:1px solid #1e2235;padding:22px 26px 20px;position:relative;overflow:hidden;}
+    .op-header::before{content:'';position:absolute;top:-40px;right:-40px;width:160px;height:160px;background:radial-gradient(circle,rgba(247,147,26,0.12) 0%,transparent 70%);pointer-events:none;}
+    .op-header-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+    .op-logo{display:flex;align-items:center;gap:9px;font-weight:800;font-size:17px;letter-spacing:-0.3px;}
+    .op-logo-icon{width:30px;height:30px;background:linear-gradient(135deg,#f7931a,#d4780f);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 4px 12px rgba(247,147,26,0.3);}
+    .op-logo-text{color:#f0f0f0;}.op-logo-text span{color:var(--orange);}
+    .op-close{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#888;width:30px;height:30px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all 0.2s;}
+    .op-close:hover{background:rgba(255,255,255,0.12);color:white;transform:rotate(90deg);}
+    .op-merchant-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:3px;}
+    .op-merchant-name{font-size:14px;font-weight:600;color:#ccc;margin-bottom:12px;}
+    .op-amount-row{display:flex;align-items:baseline;gap:12px;}
+    .op-amount-eur{font-size:36px;font-weight:900;letter-spacing:-1.5px;color:white;}
+    .op-amount-btc{font-size:13px;font-weight:600;color:var(--orange);background:rgba(247,147,26,0.12);padding:4px 12px;border-radius:20px;border:1px solid rgba(247,147,26,0.22);}
+    .op-dots{display:flex;justify-content:center;gap:6px;padding:14px 0 2px;}
+    .op-dot{width:6px;height:6px;border-radius:50%;background:#252840;transition:all 0.25s cubic-bezier(0.4,0,0.2,1);}
+    .op-dot.active{background:var(--orange);width:24px;border-radius:3px;}
+    .op-body{padding:22px 24px 26px;}
+    .op-step{display:none;animation:stepIn 0.2s ease;}
+    .op-step.op-active{display:block;}
+    @keyframes stepIn{from{opacity:0;transform:translateX(8px);}to{opacity:1;transform:translateX(0);}}
+    .op-step-title{font-size:16px;font-weight:700;color:white;margin-bottom:5px;}
+    .op-step-sub{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.5;}
+    .op-methods{display:flex;flex-direction:column;gap:10px;margin-bottom:20px;}
+    .op-method{display:flex;align-items:center;gap:14px;padding:15px 18px;border-radius:14px;border:1.5px solid var(--border);background:var(--card);cursor:pointer;transition:all 0.18s;text-align:left;width:100%;font-family:inherit;}
+    .op-method:hover{border-color:rgba(247,147,26,0.5);background:rgba(247,147,26,0.05);transform:translateY(-1px);}
+    .op-method.selected{border-color:var(--orange);background:rgba(247,147,26,0.09);box-shadow:0 0 0 3px rgba(247,147,26,0.1);}
+    .op-method-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:21px;flex-shrink:0;}
+    .op-method-info{flex:1;}.op-method-name{font-size:14px;font-weight:700;color:white;margin-bottom:2px;}
+    .op-method-desc{font-size:12px;color:var(--muted);}
+    .op-method-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;background:rgba(247,147,26,0.14);color:var(--orange);border:1px solid rgba(247,147,26,0.28);white-space:nowrap;}
+    .opcredit{border-color:rgba(124,58,237,0.25)!important;}.op-method-icon.purple{background:rgba(124,58,237,0.12);}
+    .opcredit-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;background:rgba(124,58,237,0.12);color:#a78bfa;border:1px solid rgba(124,58,237,0.25);white-space:nowrap;}
+    .op-btn{display:block;width:100%;padding:14px;border-radius:13px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;border:none;margin-bottom:10px;transition:all 0.18s;}
+    .op-btn:last-child{margin-bottom:0;}
+    .op-btn-orange{background:linear-gradient(135deg,#f7931a,#d4780f);color:#fff;box-shadow:0 4px 16px rgba(247,147,26,0.3);}
+    .op-btn-orange:disabled{opacity:0.4;cursor:not-allowed;}
+    .op-btn-orange:not(:disabled):hover{background:linear-gradient(135deg,#ffb040,#f7931a);transform:translateY(-1px);box-shadow:0 8px 24px rgba(247,147,26,0.4);}
+    .op-btn-ghost{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#8892a4;}
+    .op-btn-ghost:hover{background:rgba(255,255,255,0.09);color:white;}
+    .op-btn-green{background:linear-gradient(135deg,#10b981,#059669);color:#fff;box-shadow:0 4px 16px rgba(16,185,129,0.3);}
+    .op-btn-green:hover{transform:translateY(-1px);}
+    .op-btn-purple{background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;box-shadow:0 4px 16px rgba(124,58,237,0.3);}
+    .op-btn-purple:hover{transform:translateY(-1px);}
+    .op-btn-confirm-receipt{display:block;width:100%;padding:14px;background:linear-gradient(135deg,rgba(16,185,129,0.12),rgba(16,185,129,0.08));border:1.5px solid rgba(16,185,129,0.3);color:#10b981;border-radius:13px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.18s;}
+    .op-btn-confirm-receipt:hover{background:linear-gradient(135deg,rgba(16,185,129,0.2),rgba(16,185,129,0.14));transform:translateY(-1px);}
+    .op-security{text-align:center;font-size:11px;color:#4a5568;margin-top:14px;}
+    .op-wallet-screen{text-align:center;}
+    .op-ideal-card{display:flex;flex-direction:column;align-items:center;gap:14px;padding:8px 0 4px;}
+    .op-ideal-qr-box{background:#fff;border-radius:18px;padding:14px;box-shadow:0 0 0 1px rgba(247,147,26,0.2),0 8px 32px rgba(247,147,26,0.18);position:relative;}
+    .op-ideal-qr-box canvas,.op-ideal-qr-box img{display:block;border-radius:6px;}
+    .op-ideal-qr-logo{position:absolute;inset:50% auto auto 50%;transform:translate(-50%,-50%);width:32px;height:32px;background:linear-gradient(135deg,#f7931a,#d4780f);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;box-shadow:0 2px 8px rgba(247,147,26,0.5);border:3px solid #fff;pointer-events:none;}
+    .op-ideal-amount{display:flex;align-items:baseline;gap:8px;}
+    .op-ideal-btc{font-size:20px;font-weight:800;color:var(--orange);}
+    .op-ideal-fiat{font-size:13px;color:var(--muted);}
+    .op-ideal-status{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--sub);}
+    .op-ideal-pulse{width:9px;height:9px;background:var(--orange);border-radius:50%;animation:oppulse 1.4s ease-in-out infinite;flex-shrink:0;}
+    @keyframes oppulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.4;transform:scale(0.7);}}
+    .op-ideal-howto{background:rgba(0,0,0,0.25);border:1px solid #1e2235;border-radius:12px;padding:11px 14px;width:100%;display:grid;grid-template-columns:1fr 1fr;gap:5px 10px;}
+    .op-ideal-step{font-size:11px;color:var(--muted);display:flex;align-items:flex-start;gap:6px;line-height:1.4;}
+    .op-ideal-num{width:16px;height:16px;background:rgba(247,147,26,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:var(--orange);flex-shrink:0;margin-top:1px;}
+    .op-wallet-addr{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 16px;margin-bottom:14px;text-align:left;}
+    .op-wallet-addr-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:5px;}
+    .op-wallet-addr-value{font-family:monospace;font-size:12px;color:var(--orange);word-break:break-all;line-height:1.5;}
+    .op-qr-wrap{display:flex;justify-content:center;margin-bottom:16px;}
+    .op-qr{width:160px;height:160px;background:white;border-radius:14px;padding:12px;display:grid;grid-template-columns:repeat(10,1fr);grid-template-rows:repeat(10,1fr);gap:1px;box-shadow:0 8px 24px rgba(0,0,0,0.4);}
+    .op-qr-cell{border-radius:1px;background:white;}.op-qr-cell.b{background:#111;}
+    .op-summary{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:20px;}
+    .op-summary-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:13px;}
+    .op-summary-row:last-child{border-bottom:none;padding-top:12px;}
+    .op-summary-row span:first-child{color:var(--muted);}
+    .op-summary-row span:last-child{font-weight:600;color:white;}
+    .op-summary-row.total span:last-child{color:var(--orange);font-weight:800;font-size:15px;}
+    .op-processing{text-align:center;padding:10px 0;}
+    .op-btc-spinner{position:relative;width:72px;height:72px;margin:0 auto 20px;}
+    .op-btc-spinner-ring{width:72px;height:72px;border:3px solid rgba(247,147,26,0.12);border-top-color:var(--orange);border-radius:50%;animation:op-spin 0.8s linear infinite;}
+    .op-btc-spinner-icon{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:28px;}
+    @keyframes op-spin{to{transform:rotate(360deg);}}
+    .op-proc-title{font-size:17px;font-weight:700;color:white;margin-bottom:6px;}
+    .op-proc-sub{font-size:13px;color:var(--muted);margin-bottom:24px;}
+    .op-proc-steps{display:flex;flex-direction:column;gap:8px;text-align:left;}
+    .op-proc-step{display:flex;align-items:center;gap:10px;font-size:13px;color:#4a5568;padding:8px 12px;border-radius:10px;transition:all 0.3s;}
+    .op-proc-step-dot{width:8px;height:8px;border-radius:50%;background:#252840;flex-shrink:0;transition:all 0.3s;}
+    .op-proc-step.active{color:white;background:rgba(247,147,26,0.07);}
+    .op-proc-step.active .op-proc-step-dot{background:var(--orange);box-shadow:0 0 8px rgba(247,147,26,0.5);animation:oppulse 1s ease infinite;}
+    .op-proc-step.done{color:#4a5568;}.op-proc-step.done .op-proc-step-dot{background:#10b981;}
+    .op-result{text-align:center;padding:8px 0 4px;}
+    .op-result-ring{width:72px;height:72px;border-radius:50%;margin:0 auto 18px;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;}
+    .op-result-ring.ok{background:rgba(16,185,129,0.12);border:2px solid rgba(16,185,129,0.35);color:#10b981;}
+    .op-result-ring.fail{background:rgba(239,68,68,0.1);border:2px solid rgba(239,68,68,0.3);color:#ef4444;}
+    .op-result-title{font-size:20px;font-weight:800;margin-bottom:8px;}
+    .op-result-title.ok{color:#10b981;}.op-result-title.fail{color:#ef4444;}
+    .op-result-sub{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.5;}
+    .op-conf-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.25);color:#10b981;font-size:12px;font-weight:700;padding:6px 14px;border-radius:20px;margin-bottom:16px;}
+    .op-txid{font-family:monospace;font-size:11px;color:#4a5568;word-break:break-all;padding:10px 12px;background:rgba(0,0,0,0.2);border-radius:8px;margin-bottom:16px;line-height:1.5;}
+    .escrow-success{text-align:center;padding:4px 0 4px;}
+    .escrow-icon{font-size:48px;margin-bottom:12px;}
+    .escrow-id{font-family:monospace;font-size:13px;color:#a78bfa;background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.2);border-radius:10px;padding:8px 14px;margin-bottom:16px;display:inline-block;}
+    .escrow-countdown{background:rgba(124,58,237,0.07);border:1px solid rgba(124,58,237,0.18);border-radius:12px;padding:14px 16px;margin-bottom:16px;}
+    .escrow-countdown-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:4px;}
+    .escrow-countdown-days{font-size:28px;font-weight:900;color:#a78bfa;margin-bottom:4px;}
+    .escrow-countdown-sub{font-size:12px;color:var(--muted);}
+    .escrow-timeline{display:flex;flex-direction:column;gap:12px;margin-bottom:16px;}
+    .escrow-tl-item{display:flex;gap:14px;align-items:flex-start;}
+    .escrow-tl-dot{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+    .escrow-tl-title{font-size:13px;font-weight:700;color:white;margin-bottom:2px;}
+    .escrow-tl-sub{font-size:11px;color:var(--muted);line-height:1.5;}
 
-    .op-header {
-      background: linear-gradient(160deg, #14100a 0%, #0a0c14 100%);
-      border-bottom: 1px solid #1e2235; padding: 22px 26px 20px; position: relative; overflow: hidden;
-    }
-    .op-header::before {
-      content: ''; position: absolute; top: -40px; right: -40px; width: 160px; height: 160px;
-      background: radial-gradient(circle, rgba(247,147,26,0.12) 0%, transparent 70%);
-      pointer-events: none;
-    }
-    .op-header-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-    .op-logo { display: flex; align-items: center; gap: 9px; font-weight: 800; font-size: 17px; letter-spacing: -0.3px; }
-    .op-logo-icon { width: 30px; height: 30px; background: linear-gradient(135deg, #f7931a, #d4780f); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; box-shadow: 0 4px 12px rgba(247,147,26,0.3); }
-    .op-logo-text { color: #f0f0f0; }
-    .op-logo-text span { color: var(--orange); }
-    .op-close { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #888; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: all 0.2s; }
-    .op-close:hover { background: rgba(255,255,255,0.12); color: white; transform: rotate(90deg); }
-    .op-merchant-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 3px; }
-    .op-merchant-name { font-size: 14px; font-weight: 600; color: #ccc; margin-bottom: 12px; }
-    .op-amount-row { display: flex; align-items: baseline; gap: 12px; }
-    .op-amount-eur { font-size: 36px; font-weight: 900; letter-spacing: -1.5px; color: white; }
-    .op-amount-btc { font-size: 13px; font-weight: 600; color: var(--orange); background: rgba(247,147,26,0.12); padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(247,147,26,0.22); }
-    .op-dots { display: flex; justify-content: center; gap: 6px; padding: 14px 0 2px; }
-    .op-dot { width: 6px; height: 6px; border-radius: 50%; background: #252840; transition: all 0.25s cubic-bezier(0.4,0,0.2,1); }
-    .op-dot.active { background: var(--orange); width: 24px; border-radius: 3px; }
-    .op-body { padding: 22px 24px 26px; }
-    .op-step { display: none; animation: stepIn 0.2s ease; }
-    .op-step.op-active { display: block; }
-    @keyframes stepIn { from { opacity: 0; transform: translateX(8px); } to { opacity: 1; transform: translateX(0); } }
-    .op-step-title { font-size: 16px; font-weight: 700; color: white; margin-bottom: 5px; }
-    .op-step-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
-    .op-methods { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
-    .op-method {
-      display: flex; align-items: center; gap: 14px; padding: 15px 18px; border-radius: 14px;
-      border: 1.5px solid var(--border); background: var(--card);
-      cursor: pointer; transition: all 0.18s; text-align: left; width: 100%; font-family: inherit;
-    }
-    .op-method:hover { border-color: rgba(247,147,26,0.5); background: rgba(247,147,26,0.05); transform: translateY(-1px); }
-    .op-method.selected { border-color: var(--orange); background: rgba(247,147,26,0.09); box-shadow: 0 0 0 3px rgba(247,147,26,0.1); }
-    .op-method-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 21px; flex-shrink: 0; }
-    .op-method-info { flex: 1; }
-    .op-method-name { font-size: 14px; font-weight: 700; color: white; margin-bottom: 2px; }
-    .op-method-desc { font-size: 12px; color: var(--muted); }
-    .op-method-badge { font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 20px; background: rgba(247,147,26,0.14); color: var(--orange); border: 1px solid rgba(247,147,26,0.28); white-space: nowrap; }
-    .op-wallet-screen { text-align: center; }
-    .op-wallet-icon { font-size: 52px; margin-bottom: 14px; }
-    /* ── iDEAL-style OPNet QR scan card ── */
-    .op-ideal-card { display:flex; flex-direction:column; align-items:center; gap:14px; padding:8px 0 4px; }
-    .op-ideal-qr-box { background:#fff; border-radius:18px; padding:14px; box-shadow:0 0 0 1px rgba(247,147,26,0.2), 0 8px 32px rgba(247,147,26,0.18); position:relative; }
-    .op-ideal-qr-box canvas, .op-ideal-qr-box img { display:block; border-radius:6px; }
-    .op-ideal-qr-logo { position:absolute; inset:50% auto auto 50%; transform:translate(-50%,-50%); width:32px; height:32px; background:linear-gradient(135deg,#f7931a,#d4780f); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:900; color:#fff; box-shadow:0 2px 8px rgba(247,147,26,0.5); border:3px solid #fff; pointer-events:none; }
-    .op-ideal-amount { display:flex; align-items:baseline; gap:8px; }
-    .op-ideal-btc { font-size:20px; font-weight:800; color:var(--orange); }
-    .op-ideal-fiat { font-size:13px; color:var(--muted); }
-    .op-ideal-status { display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; color:var(--sub); }
-    .op-ideal-pulse { width:9px; height:9px; background:var(--orange); border-radius:50%; animation:oppulse 1.4s ease-in-out infinite; flex-shrink:0; }
-    @keyframes oppulse { 0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.4;transform:scale(0.7);} }
-    .op-ideal-howto { background:rgba(0,0,0,0.25); border:1px solid #1e2235; border-radius:12px; padding:11px 14px; width:100%; display:grid; grid-template-columns:1fr 1fr; gap:5px 10px; }
-    .op-ideal-step { font-size:11px; color:var(--muted); display:flex; align-items:flex-start; gap:6px; line-height:1.4; }
-    .op-ideal-num { width:16px; height:16px; background:rgba(247,147,26,0.15); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:800; color:var(--orange); flex-shrink:0; margin-top:1px; }
-    .op-wallet-addr { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; margin-bottom: 14px; text-align: left; }
-    .op-wallet-addr-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 5px; }
-    .op-wallet-addr-value { font-family: monospace; font-size: 12px; color: var(--orange); word-break: break-all; line-height: 1.5; }
-    .op-wallet-balance { display: flex; justify-content: space-between; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; margin-bottom: 20px; }
-    .op-wallet-balance-label { font-size: 12px; color: var(--muted); margin-bottom: 2px; }
-    .op-wallet-balance-val { font-size: 16px; font-weight: 700; color: white; }
-    .op-wallet-balance-btc { font-size: 12px; color: var(--orange); }
-    .op-qr-wrap { display: flex; justify-content: center; margin-bottom: 16px; }
-    .op-qr { width: 160px; height: 160px; background: white; border-radius: 14px; padding: 12px; display: grid; grid-template-columns: repeat(10,1fr); grid-template-rows: repeat(10,1fr); gap: 1px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
-    .op-qr-cell { border-radius: 1px; background: white; }
-    .op-qr-cell.b { background: #111; }
-    .op-summary { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; margin-bottom: 20px; }
-    .op-summary-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 13px; }
-    .op-summary-row:last-child { border-bottom: none; padding-top: 12px; }
-    .op-summary-row span:first-child { color: var(--muted); }
-    .op-summary-row span:last-child { font-weight: 600; color: white; }
-    .op-summary-row.total span:last-child { color: var(--orange); font-weight: 800; font-size: 15px; }
-    .op-processing { text-align: center; padding: 10px 0; }
-    .op-btc-spinner { position: relative; width: 72px; height: 72px; margin: 0 auto 20px; }
-    .op-btc-spinner-ring { width: 72px; height: 72px; border: 3px solid rgba(247,147,26,0.12); border-top-color: var(--orange); border-radius: 50%; animation: op-spin 0.8s linear infinite; }
-    .op-btc-spinner-icon { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 28px; }
-    @keyframes op-spin { to { transform: rotate(360deg); } }
-    .op-proc-title { font-size: 17px; font-weight: 700; color: white; margin-bottom: 6px; }
-    .op-proc-sub { font-size: 13px; color: var(--muted); }
-    .op-proc-steps { margin-top: 22px; text-align: left; }
-    .op-proc-step { display: flex; align-items: center; gap: 10px; padding: 9px 0; font-size: 13px; color: var(--muted); }
-    .op-proc-step.done { color: var(--green); }
-    .op-proc-step.active { color: white; }
-    .op-proc-step-dot { width: 8px; height: 8px; border-radius: 50%; background: #252840; flex-shrink: 0; transition: background 0.3s; }
-    .op-proc-step.done .op-proc-step-dot { background: var(--green); }
-    .op-proc-step.active .op-proc-step-dot { background: var(--orange); animation: op-pulse 1s ease infinite; }
-    @keyframes op-pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.7)} }
-    .op-result { text-align: center; padding: 10px 0; }
-    .op-result-ring { width: 76px; height: 76px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 32px; }
-    .op-result-ring.ok { background: rgba(0,200,83,0.1); border: 2px solid rgba(0,200,83,0.25); color: var(--green); animation: popIn 0.4s cubic-bezier(0.34,1.6,0.64,1); }
-    .op-result-ring.fail { background: rgba(255,68,68,0.1); border: 2px solid rgba(255,68,68,0.25); color: var(--red); }
-    @keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-    .op-result-title { font-size: 20px; font-weight: 800; margin-bottom: 6px; letter-spacing: -0.5px; }
-    .op-result-title.ok { color: var(--green); }
-    .op-result-title.fail { color: var(--red); }
-    .op-result-sub { font-size: 13px; color: var(--muted); margin-bottom: 12px; }
-    .op-txid { font-size: 11px; font-family: monospace; color: var(--orange); background: rgba(247,147,26,0.07); border: 1px solid rgba(247,147,26,0.18); padding: 8px 14px; border-radius: 8px; display: inline-block; margin-bottom: 22px; word-break: break-all; }
-    .op-conf-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--green); background: rgba(0,200,83,0.07); border: 1px solid rgba(0,200,83,0.2); padding: 5px 14px; border-radius: 20px; margin-bottom: 22px; }
-    .op-btn { width: 100%; padding: 14px; border: none; border-radius: 12px; font-family: inherit; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.18s; display: flex; align-items: center; justify-content: center; gap: 8px; letter-spacing: -0.2px; }
-    .op-btn-orange { background: linear-gradient(135deg, #f7931a, #e07d0e); color: #000; }
-    .op-btn-orange:hover:not(:disabled) { background: linear-gradient(135deg, #ffaa33, #f7931a); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(247,147,26,0.4); }
-    .op-btn-orange:disabled { opacity: 0.35; cursor: not-allowed; }
-    .op-btn-ghost { background: transparent; color: #666; border: 1.5px solid var(--border); margin-top: 10px; }
-    .op-btn-ghost:hover { background: rgba(255,255,255,0.04); color: #aaa; border-color: #333; }
-    .op-btn-green { background: linear-gradient(135deg, #00c853, #00a040); color: #000; }
-    .op-btn-green:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,200,83,0.35); }
-    .op-btn-purple { background: linear-gradient(135deg, #7c3aed, #6d28d9); color: white; }
-    .op-btn-purple:hover:not(:disabled) { background: linear-gradient(135deg, #8b5cf6, #7c3aed); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(124,58,237,0.4); }
-    .op-btn-confirm-receipt { background: rgba(0,200,83,0.1); color: var(--green); border: 1.5px solid rgba(0,200,83,0.28); margin-bottom: 0; }
-    .op-btn-confirm-receipt:hover { background: rgba(0,200,83,0.18); transform: translateY(-1px); }
-    .op-security { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 11px; color: #333; margin-top: 14px; }
-    .op-security span { color: var(--green); }
-    .opcredit-badge { display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(59,130,246,0.1)); border: 1px solid rgba(139,92,246,0.35); border-radius: 20px; padding: 4px 12px; font-size: 10px; font-weight: 700; color: #a78bfa; letter-spacing: 0.3px; }
-    .op-method-icon.purple { background: rgba(139,92,246,0.12) !important; }
-    .op-method.opcredit:hover { border-color: #7c3aed !important; background: rgba(139,92,246,0.07) !important; }
-    .op-method.opcredit.selected { border-color: #7c3aed !important; background: rgba(139,92,246,0.1) !important; box-shadow: 0 0 0 3px rgba(139,92,246,0.1) !important; }
-    .escrow-timeline { display: flex; flex-direction: column; gap: 0; margin-bottom: 16px; }
-    .escrow-tl-item { display: flex; gap: 12px; align-items: flex-start; position: relative; }
-    .escrow-tl-item::before { content: ''; position: absolute; left: 11px; top: 26px; width: 2px; height: calc(100% + 4px); background: rgba(139,92,246,0.2); }
-    .escrow-tl-item:last-child::before { display: none; }
-    .escrow-tl-dot { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; margin-top: 2px; }
-    .escrow-tl-content { padding-bottom: 16px; flex: 1; }
-    .escrow-tl-title { font-size: 13px; font-weight: 700; color: #e2e8f0; margin-bottom: 2px; }
-    .escrow-tl-sub { font-size: 12px; color: #4a5568; line-height: 1.5; }
-    .escrow-success { text-align: center; padding: 8px 0; }
-    .escrow-icon { font-size: 52px; margin-bottom: 12px; }
-    .escrow-id { font-size: 11px; font-family: monospace; color: #a78bfa; background: rgba(139,92,246,0.08); border: 1px solid rgba(139,92,246,0.2); padding: 7px 14px; border-radius: 8px; display: inline-block; margin-bottom: 14px; word-break: break-all; }
-    .escrow-countdown { background: rgba(139,92,246,0.07); border: 1px solid rgba(139,92,246,0.2); border-radius: 12px; padding: 14px 16px; margin-bottom: 18px; }
-    .escrow-countdown-label { font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 4px; }
-    .escrow-countdown-days { font-size: 28px; font-weight: 900; color: #a78bfa; letter-spacing: -0.5px; }
-    .escrow-countdown-sub { font-size: 11px; color: #4a5568; margin-top: 2px; }
-    .oppay-btn {
-      display: inline-flex; align-items: center; gap: 9px;
-      padding: 12px 20px; background: linear-gradient(135deg, #f7931a, #e07d0e);
-      color: #000; border: none; border-radius: 12px;
-      font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700;
-      cursor: pointer; transition: all 0.18s;
-      box-shadow: 0 4px 16px rgba(247,147,26,0.3);
-    }
-    .oppay-btn:hover { background: linear-gradient(135deg, #ffb040, #f7931a); transform: translateY(-2px); box-shadow: 0 8px 28px rgba(247,147,26,0.45); }
-    .oppay-btn .btc-icon { font-size: 15px; }
+    /* ─── PAGE LAYOUT ──────────────────────────────────────────────────── */
 
-    /* ─── BACKGROUND ORBS ──────────────────────────────────────────────── */
-    .bg-orbs { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
-    .orb { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.4; animation: orbFloat 20s ease-in-out infinite; }
-    .orb1 { width: 500px; height: 500px; background: radial-gradient(circle, rgba(247,147,26,0.12) 0%, transparent 70%); top: -150px; left: -100px; animation-duration: 25s; }
-    .orb2 { width: 400px; height: 400px; background: radial-gradient(circle, rgba(124,58,237,0.1) 0%, transparent 70%); bottom: 10%; right: -100px; animation-duration: 20s; animation-delay: -8s; }
-    .orb3 { width: 300px; height: 300px; background: radial-gradient(circle, rgba(0,112,243,0.08) 0%, transparent 70%); top: 40%; left: 30%; animation-duration: 30s; animation-delay: -15s; }
-    @keyframes orbFloat { 0%,100% { transform: translate(0,0) scale(1); } 33% { transform: translate(30px,-20px) scale(1.05); } 66% { transform: translate(-20px,30px) scale(0.95); } }
+    /* Background effects */
+    body::before{content:'';position:fixed;top:0;left:0;right:0;height:100vh;pointer-events:none;z-index:0;
+      background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(247,147,26,0.07) 0%,transparent 60%),
+                 radial-gradient(ellipse 60% 40% at 80% 80%,rgba(124,58,237,0.04) 0%,transparent 50%);}
+    .container{max-width:1120px;margin:0 auto;position:relative;z-index:1;}
 
-    /* ─── NAVIGATION ───────────────────────────────────────────────────── */
-    .nav {
-      background: rgba(8,8,16,0.85); border-bottom: 1px solid rgba(255,255,255,0.06);
-      padding: 0 48px; height: 66px; display: flex; align-items: center; justify-content: space-between;
-      position: sticky; top: 0; z-index: 1000; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-      transition: background 0.3s;
+    /* ── NAV ── */
+    .nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;
+      padding:0 32px;height:64px;background:rgba(4,6,16,0.8);backdrop-filter:blur(20px);
+      -webkit-backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,0.05);
+      transition:border-color 0.3s;}
+    .nav.scrolled{border-bottom-color:rgba(247,147,26,0.12);}
+    .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:white;font-weight:900;font-size:20px;letter-spacing:-0.5px;}
+    .nav-logo-icon{width:34px;height:34px;background:linear-gradient(135deg,#f7931a,#d4780f);border-radius:9px;
+      display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;
+      box-shadow:0 4px 16px rgba(247,147,26,0.35);}
+    .nav-logo-text span{color:var(--orange);}
+    .nav-links{display:flex;gap:8px;list-style:none;align-items:center;}
+    .nav-links a{text-decoration:none;color:var(--sub);font-size:14px;font-weight:500;
+      padding:6px 12px;border-radius:8px;transition:all 0.15s;}
+    .nav-links a:hover{color:white;background:rgba(255,255,255,0.06);}
+    .nav-cta-pill{background:linear-gradient(135deg,rgba(247,147,26,0.12),rgba(247,147,26,0.06));
+      border:1px solid rgba(247,147,26,0.25);color:var(--orange)!important;font-weight:700!important;
+      border-radius:20px!important;padding:6px 16px!important;}
+    .nav-cta-pill:hover{background:rgba(247,147,26,0.2)!important;border-color:rgba(247,147,26,0.5)!important;}
+    .nav-badge{background:rgba(247,147,26,0.08);border:1px solid rgba(247,147,26,0.18);
+      color:var(--orange);font-size:11px;font-weight:700;padding:4px 11px;border-radius:20px;
+      letter-spacing:0.3px;white-space:nowrap;}
+    .nav-ham{display:none;flex-direction:column;justify-content:space-between;width:28px;height:20px;
+      background:none;border:none;cursor:pointer;padding:0;z-index:1100;}
+    .nav-ham span{display:block;width:100%;height:2px;background:var(--text);border-radius:2px;transition:all 0.25s ease;}
+    .nav-ham.open span:nth-child(1){transform:translateY(9px) rotate(45deg);}
+    .nav-ham.open span:nth-child(2){opacity:0;transform:scaleX(0);}
+    .nav-ham.open span:nth-child(3){transform:translateY(-9px) rotate(-45deg);}
+    .mob-nav{display:none;position:fixed;top:64px;left:0;right:0;
+      background:rgba(4,6,16,0.98);border-bottom:1px solid var(--border);
+      padding:20px 24px 28px;flex-direction:column;gap:4px;z-index:900;
+      backdrop-filter:blur(20px);}
+    .mob-nav.open{display:flex;animation:slideDown 0.2s ease;}
+    @keyframes slideDown{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
+    .mob-nav a{color:var(--text);text-decoration:none;font-size:15px;font-weight:500;
+      padding:13px 0;border-bottom:1px solid rgba(255,255,255,0.05);transition:color 0.15s;}
+    .mob-nav a:last-child{border-bottom:none;}
+    .mob-nav a:hover{color:var(--orange);}
+    .mob-nav-cta{color:var(--orange)!important;font-weight:700!important;}
+
+    /* ── HERO ── */
+    .hero{padding:100px 32px 90px;position:relative;z-index:1;}
+    .hero-inner{display:flex;align-items:center;justify-content:space-between;gap:64px;max-width:1120px;margin:0 auto;}
+    .hero-left{flex:1;max-width:580px;}
+    .hero-right{flex:0 0 auto;}
+    .hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(247,147,26,0.08);
+      border:1px solid rgba(247,147,26,0.2);padding:6px 14px;border-radius:20px;
+      font-size:12px;font-weight:700;color:var(--orange);letter-spacing:0.3px;margin-bottom:28px;}
+    .hero-badge-dot{width:6px;height:6px;border-radius:50%;background:var(--orange);animation:pulse 2s ease infinite;}
+    @keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(247,147,26,0.4);}50%{box-shadow:0 0 0 6px rgba(247,147,26,0);}}
+    .hero h1{font-size:62px;font-weight:900;line-height:1.05;letter-spacing:-2px;color:white;margin-bottom:24px;
+      animation:fadeUp 0.7s 0.1s ease both;}
+    .hero h1 .grad{background:linear-gradient(135deg,#f7931a 0%,#ffb347 50%,#f7931a 100%);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    .hero-sub{font-size:18px;color:var(--sub);line-height:1.7;max-width:460px;margin-bottom:40px;
+      animation:fadeUp 0.7s 0.2s ease both;}
+    .hero-btns{display:flex;gap:12px;flex-wrap:wrap;animation:fadeUp 0.7s 0.3s ease both;}
+    .btn-primary{padding:14px 28px;background:linear-gradient(135deg,#f7931a,#d4780f);color:#000;border:none;
+      border-radius:12px;font-family:inherit;font-size:15px;font-weight:800;cursor:pointer;
+      box-shadow:0 4px 20px rgba(247,147,26,0.35);transition:all 0.2s;letter-spacing:-0.2px;}
+    .btn-primary:hover{background:linear-gradient(135deg,#ffb040,#f7931a);transform:translateY(-2px);
+      box-shadow:0 8px 32px rgba(247,147,26,0.5);}
+    .btn-outline{padding:14px 28px;background:rgba(255,255,255,0.05);color:white;
+      border:1.5px solid rgba(255,255,255,0.12);border-radius:12px;font-family:inherit;
+      font-size:15px;font-weight:700;cursor:pointer;transition:all 0.2s;letter-spacing:-0.2px;}
+    .btn-outline:hover{background:rgba(255,255,255,0.09);border-color:rgba(255,255,255,0.25);transform:translateY(-2px);}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+
+    /* Hero stats */
+    .hero-stats{display:flex;gap:0;margin-top:56px;border:1px solid var(--border);
+      border-radius:16px;background:rgba(12,16,32,0.6);backdrop-filter:blur(12px);
+      overflow:hidden;animation:fadeUp 0.7s 0.4s ease both;max-width:480px;}
+    .hero-stat{flex:1;padding:18px 20px;text-align:center;border-right:1px solid var(--border);}
+    .hero-stat:last-child{border-right:none;}
+    .hero-stat-num{font-size:22px;font-weight:900;color:white;letter-spacing:-0.5px;}
+    .hero-stat-num span{color:var(--orange);}
+    .hero-stat-label{font-size:11px;color:var(--muted);margin-top:2px;font-weight:500;}
+
+    /* Hero mockup */
+    .hero-mock{position:relative;animation:floatIn 0.8s 0.3s ease both;}
+    @keyframes floatIn{from{opacity:0;transform:translateY(30px) rotateX(10deg);}to{opacity:1;transform:translateY(0) rotateX(0);}}
+    .hm-card{background:#0c1020;border:1px solid rgba(247,147,26,0.2);border-radius:24px;
+      width:320px;box-shadow:0 40px 80px rgba(0,0,0,0.6),0 0 0 1px rgba(255,255,255,0.04),
+      inset 0 1px 0 rgba(255,255,255,0.06);overflow:hidden;position:relative;}
+    .hm-card::before{content:'';position:absolute;top:0;left:0;right:0;height:200px;
+      background:radial-gradient(ellipse at 50% 0%,rgba(247,147,26,0.1) 0%,transparent 70%);pointer-events:none;}
+    .hm-header{padding:22px 22px 18px;background:linear-gradient(160deg,#120e08,#08091a);}
+    .hm-logo-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+    .hm-logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:15px;color:white;}
+    .hm-logo-icon{width:26px;height:26px;background:linear-gradient(135deg,#f7931a,#d4780f);border-radius:7px;
+      display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;}
+    .hm-close{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,0.08);
+      display:flex;align-items:center;justify-content:center;font-size:12px;color:#666;}
+    .hm-label{font-size:10px;color:#4a5568;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;}
+    .hm-merchant{font-size:13px;color:#8892a4;margin-bottom:10px;}
+    .hm-amount{font-size:32px;font-weight:900;color:white;letter-spacing:-1px;margin-bottom:3px;}
+    .hm-btc{font-size:12px;color:var(--orange);background:rgba(247,147,26,0.1);
+      display:inline-block;padding:3px 10px;border-radius:20px;border:1px solid rgba(247,147,26,0.2);}
+    .hm-dots{display:flex;gap:5px;justify-content:center;padding:12px 0;}
+    .hm-dot{width:5px;height:5px;border-radius:50%;background:#1c2238;}
+    .hm-dot.active{background:var(--orange);width:20px;border-radius:3px;}
+    .hm-body{padding:14px 20px 20px;}
+    .hm-section-label{font-size:10px;font-weight:700;color:#4a5568;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:10px;}
+    .hm-method{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;
+      border:1.5px solid;margin-bottom:8px;transition:all 0.18s;}
+    .hm-method.active{border-color:rgba(247,147,26,0.5);background:rgba(247,147,26,0.06);}
+    .hm-method.dim{border-color:#1a2030;background:rgba(255,255,255,0.02);opacity:0.5;}
+    .hm-m-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+    .hm-m-name{font-size:13px;font-weight:700;color:white;}
+    .hm-m-desc{font-size:11px;color:#4a5568;}
+    .hm-btn{display:block;width:100%;padding:13px;background:linear-gradient(135deg,#f7931a,#d4780f);
+      color:#000;border:none;border-radius:11px;font-family:inherit;font-size:14px;font-weight:800;
+      cursor:pointer;margin-top:12px;box-shadow:0 4px 16px rgba(247,147,26,0.3);}
+    /* Floating badge on mockup */
+    .hm-badge{position:absolute;top:-14px;right:-14px;background:linear-gradient(135deg,#10b981,#059669);
+      color:white;font-size:11px;font-weight:800;padding:6px 12px;border-radius:20px;
+      box-shadow:0 4px 16px rgba(16,185,129,0.4);animation:badgePop 0.5s 1s ease both;white-space:nowrap;}
+    @keyframes badgePop{from{opacity:0;transform:scale(0.5) rotate(-10deg);}to{opacity:1;transform:scale(1) rotate(0);}}
+
+    /* ── PLATFORMS ── */
+    .platforms{padding:28px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+      background:rgba(7,9,21,0.5);overflow:hidden;position:relative;z-index:1;}
+    .platforms-inner{display:flex;align-items:center;gap:24px;padding:0 32px;}
+    .platforms-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;
+      letter-spacing:0.8px;white-space:nowrap;flex-shrink:0;}
+    .platforms-track{display:flex;gap:0;overflow:hidden;flex:1;mask-image:linear-gradient(90deg,transparent,black 5%,black 95%,transparent);}
+    .platforms-scroll{display:flex;gap:8px;animation:scrollTrack 28s linear infinite;white-space:nowrap;}
+    @keyframes scrollTrack{0%{transform:translateX(0);}100%{transform:translateX(-50%);}}
+    .platform-chip{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;
+      background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:20px;
+      font-size:12px;color:var(--sub);white-space:nowrap;flex-shrink:0;}
+    .platform-chip:hover{border-color:rgba(247,147,26,0.2);color:var(--text);}
+
+    /* ── FEATURES ── */
+    .section{padding:96px 32px;position:relative;z-index:1;}
+    .sec-label{display:inline-block;font-size:11px;font-weight:700;text-transform:uppercase;
+      letter-spacing:1px;color:var(--orange);background:rgba(247,147,26,0.08);
+      border:1px solid rgba(247,147,26,0.2);padding:5px 14px;border-radius:20px;margin-bottom:20px;}
+    .sec-title{font-size:42px;font-weight:900;color:white;letter-spacing:-1.5px;line-height:1.1;margin-bottom:16px;}
+    .sec-sub{font-size:17px;color:var(--sub);line-height:1.7;max-width:560px;margin-bottom:56px;}
+    .features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+    .feat-card{background:var(--card);border:1px solid var(--border);border-radius:20px;
+      padding:28px 26px;position:relative;overflow:hidden;transition:all 0.25s;}
+    .feat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+      background:linear-gradient(90deg,transparent,rgba(247,147,26,0.2),transparent);}
+    .feat-card:hover{border-color:rgba(247,147,26,0.25);transform:translateY(-4px);
+      box-shadow:0 20px 40px rgba(0,0,0,0.4);}
+    .feat-icon{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;
+      justify-content:center;font-size:22px;margin-bottom:16px;flex-shrink:0;}
+    .feat-icon.orange{background:rgba(247,147,26,0.1);border:1px solid rgba(247,147,26,0.2);}
+    .feat-icon.blue{background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);}
+    .feat-icon.green{background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.2);}
+    .feat-icon.purple{background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.2);}
+    .feat-title{font-size:16px;font-weight:800;color:white;margin-bottom:8px;letter-spacing:-0.3px;}
+    .feat-text{font-size:14px;color:var(--sub);line-height:1.65;}
+
+    /* ── HOW IT WORKS ── */
+    .how-section{background:linear-gradient(180deg,var(--bg) 0%,rgba(7,9,21,0.8) 100%);}
+    .how-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0;position:relative;}
+    .how-grid::before{content:'';position:absolute;top:28px;left:calc(12.5% + 24px);right:calc(12.5% + 24px);
+      height:1px;background:linear-gradient(90deg,var(--orange),rgba(247,147,26,0.3),rgba(247,147,26,0.3),var(--orange));z-index:0;}
+    .how-card{padding:20px 24px;text-align:center;position:relative;z-index:1;}
+    .how-num{width:56px;height:56px;border-radius:50%;background:var(--card);border:2px solid rgba(247,147,26,0.4);
+      display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;
+      color:var(--orange);margin:0 auto 20px;position:relative;z-index:2;
+      box-shadow:0 0 0 6px rgba(247,147,26,0.06),0 0 24px rgba(247,147,26,0.15);}
+    .how-icon{font-size:28px;margin-bottom:14px;}
+    .how-title{font-size:15px;font-weight:800;color:white;margin-bottom:8px;letter-spacing:-0.2px;}
+    .how-text{font-size:13px;color:var(--sub);line-height:1.6;}
+
+    /* ── DEMO ── */
+    .demo-section{background:rgba(7,9,21,0.5);}
+    .cur-bar{display:flex;align-items:center;gap:10px;margin-bottom:24px;flex-wrap:wrap;}
+    .cur-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;}
+    .cur-btns{display:flex;gap:6px;flex-wrap:wrap;}
+    .cur-btn{padding:7px 14px;background:rgba(255,255,255,0.04);border:1px solid var(--border);
+      color:var(--sub);border-radius:20px;font-family:inherit;font-size:12px;font-weight:600;
+      cursor:pointer;transition:all 0.15s;}
+    .cur-btn:hover{border-color:rgba(247,147,26,0.3);color:var(--text);}
+    .cur-btn.cur-active{background:rgba(247,147,26,0.1);border-color:rgba(247,147,26,0.4);
+      color:var(--orange);font-weight:700;}
+    .btc-ticker{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);
+      margin-bottom:28px;padding:9px 16px;background:rgba(255,255,255,0.03);
+      border:1px solid var(--border);border-radius:20px;display:inline-flex;}
+    .shop-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px;}
+    .product{background:var(--card);border:1px solid var(--border);border-radius:20px;overflow:hidden;
+      transition:all 0.2s;}
+    .product:hover{border-color:rgba(247,147,26,0.2);transform:translateY(-3px);box-shadow:0 16px 40px rgba(0,0,0,0.4);}
+    .product-img{height:110px;display:flex;align-items:center;justify-content:center;font-size:40px;
+      background:linear-gradient(135deg,#0c1020,#131830);}
+    .product-body{padding:16px 16px 18px;}
+    .product-name{font-size:14px;font-weight:800;color:white;margin-bottom:4px;letter-spacing:-0.2px;}
+    .product-desc{font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.5;}
+    .product-foot{display:flex;align-items:flex-end;justify-content:space-between;gap:8px;}
+    .product-price{font-size:18px;font-weight:900;color:white;letter-spacing:-0.5px;}
+    .product-btc{font-size:11px;color:var(--orange);font-weight:600;margin-top:2px;}
+    .oppay-btn{display:flex;align-items:center;gap:6px;padding:9px 16px;
+      background:linear-gradient(135deg,#f7931a,#d4780f);color:#000;border:none;border-radius:10px;
+      font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap;
+      box-shadow:0 3px 12px rgba(247,147,26,0.3);transition:all 0.18s;flex-shrink:0;}
+    .oppay-btn:hover{background:linear-gradient(135deg,#ffb040,#f7931a);transform:translateY(-1px);
+      box-shadow:0 6px 20px rgba(247,147,26,0.45);}
+    .btc-icon{font-size:14px;font-weight:900;}
+    .log-panel{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+    .log-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;
+      border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02);}
+    .log-title{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:white;}
+    .log-live{width:7px;height:7px;border-radius:50%;background:var(--green);animation:oppulse 1.5s ease infinite;}
+    .log-clear{font-size:12px;color:var(--muted);background:none;border:none;cursor:pointer;
+      font-family:inherit;padding:4px 8px;border-radius:6px;transition:all 0.15s;}
+    .log-clear:hover{background:rgba(255,255,255,0.06);color:var(--text);}
+    .log-box{padding:12px 18px;min-height:80px;max-height:160px;overflow-y:auto;}
+    .log-empty{font-size:13px;color:var(--muted);padding:8px 0;}
+    .log-row{display:flex;gap:12px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:13px;}
+    .log-row:last-child{border-bottom:none;}
+    .log-t{color:var(--muted);flex-shrink:0;font-family:monospace;font-size:11px;padding-top:1px;}
+    .log-ok{color:var(--green);}
+    .log-fail{color:var(--red);}
+    .log-cancel{color:var(--muted);}
+
+    /* ── CODE ── */
+    .code-wrap{background:var(--card);border:1px solid var(--border);border-radius:20px;overflow:hidden;}
+    .ctabs-bar{display:flex;gap:0;border-bottom:1px solid var(--border);padding:0 6px;background:rgba(255,255,255,0.02);}
+    .ctab{padding:13px 20px;background:none;border:none;font-family:inherit;font-size:13px;
+      font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;
+      margin-bottom:-1px;transition:all 0.15s;}
+    .ctab:hover{color:var(--text);}
+    .ctab.active{color:var(--orange);border-bottom-color:var(--orange);}
+    .cblock{display:none;padding:28px 28px;font-family:'Cascadia Code','Fira Code',monospace;
+      font-size:13px;line-height:1.7;color:#e2e8f0;overflow-x:auto;}
+    .cblock.active{display:block;}
+    .cm{color:#4a5568;}.ct{color:#f7931a;}.ca{color:#a78bfa;}.cv{color:#10b981;}
+    .co{color:#3b82f6;}.cf{color:#f7931a;}.cn{color:#fbbf24;}.ck{color:#7c3aed;}.cc{color:#8892a4;}
+
+    /* ── PRICING ── */
+    .pricing-section{background:linear-gradient(135deg,rgba(247,147,26,0.03) 0%,rgba(124,58,237,0.02) 100%);}
+    .pricing-grid{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;margin-bottom:48px;}
+    .price-card{background:var(--card);border:1.5px solid var(--border);border-radius:24px;
+      padding:40px 36px;min-width:220px;flex:1;max-width:280px;text-align:center;
+      transition:all 0.2s;position:relative;}
+    .price-card:hover{transform:translateY(-4px);}
+    .price-card.featured{border-color:rgba(247,147,26,0.4);
+      box-shadow:0 0 0 1px rgba(247,147,26,0.1),0 20px 60px rgba(247,147,26,0.1);}
+    .price-badge{position:absolute;top:-13px;left:50%;transform:translateX(-50%);
+      background:var(--orange);color:#000;font-size:10px;font-weight:800;
+      padding:3px 14px;border-radius:20px;letter-spacing:0.05em;white-space:nowrap;}
+    .price-num{font-size:42px;font-weight:900;color:var(--orange);margin-bottom:6px;letter-spacing:-1px;}
+    .price-title{font-size:14px;font-weight:700;color:white;margin-bottom:8px;}
+    .price-desc{font-size:13px;color:var(--sub);line-height:1.6;}
+    .price-compare{background:rgba(247,147,26,0.05);border:1px solid rgba(247,147,26,0.15);
+      border-radius:16px;padding:22px 28px;display:inline-flex;align-items:center;gap:16px;
+      max-width:580px;text-align:left;}
+    .price-compare-icon{font-size:28px;flex-shrink:0;}
+    .price-compare-text{font-size:13px;color:var(--sub);line-height:1.7;}
+
+    /* ── CTA BANNER ── */
+    .cta-banner{padding:80px 32px;text-align:center;position:relative;overflow:hidden;z-index:1;}
+    .cta-banner::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+      width:800px;height:400px;
+      background:radial-gradient(ellipse,rgba(247,147,26,0.08) 0%,transparent 70%);
+      pointer-events:none;}
+    .cta-inner{max-width:620px;margin:0 auto;}
+    .cta-title{font-size:46px;font-weight:900;color:white;letter-spacing:-2px;line-height:1.1;margin-bottom:18px;}
+    .cta-sub{font-size:17px;color:var(--sub);margin-bottom:36px;line-height:1.7;}
+    .cta-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+
+    /* ── FOOTER ── */
+    footer{background:#030409;border-top:1px solid var(--border);padding:64px 32px 40px;position:relative;z-index:1;}
+    .footer-inner{max-width:1120px;margin:0 auto;display:flex;justify-content:space-between;
+      align-items:flex-start;gap:40px;flex-wrap:wrap;margin-bottom:48px;}
+    .footer-brand{max-width:280px;}
+    .footer-logo{display:flex;align-items:center;gap:10px;font-weight:900;font-size:20px;
+      letter-spacing:-0.5px;margin-bottom:14px;}
+    .footer-logo-icon{width:32px;height:32px;background:linear-gradient(135deg,#f7931a,#d4780f);
+      border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px;}
+    .footer-desc{font-size:13px;color:var(--muted);line-height:1.7;}
+    .footer-links{display:flex;gap:48px;}
+    .footer-col-title{font-size:11px;font-weight:700;color:white;text-transform:uppercase;
+      letter-spacing:0.6px;margin-bottom:16px;}
+    .footer-col a{display:block;font-size:13px;color:var(--muted);text-decoration:none;
+      margin-bottom:11px;transition:color 0.15s;}
+    .footer-col a:hover{color:var(--orange);}
+    .footer-bottom{max-width:1120px;margin:0 auto;padding-top:24px;border-top:1px solid var(--border);
+      display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;
+      font-size:12px;color:#252840;}
+    .footer-bottom a{color:var(--orange);text-decoration:none;}
+    .footer-tag{display:flex;align-items:center;gap:6px;}
+    .footer-tag-dot{width:5px;height:5px;border-radius:50%;background:rgba(247,147,26,0.4);}
+
+    /* ── REVEAL ANIMATIONS ── */
+    .reveal{opacity:0;transform:translateY(24px);transition:all 0.6s cubic-bezier(0.25,1,0.5,1);}
+    .reveal.visible{opacity:1;transform:translateY(0);}
+    .reveal-delay-1{transition-delay:0.1s;}
+    .reveal-delay-2{transition-delay:0.2s;}
+    .reveal-delay-3{transition-delay:0.3s;}
+
+    /* ── RESPONSIVE ── */
+    @media(max-width:1024px){
+      .hero-inner{flex-direction:column;text-align:center;}
+      .hero-left{max-width:100%;}
+      .hero-sub{margin:0 auto 40px;}
+      .hero-btns{justify-content:center;}
+      .hero-stats{margin:56px auto 0;}
+      .features-grid{grid-template-columns:repeat(2,1fr);}
+      .how-grid{grid-template-columns:repeat(2,1fr);}
+      .how-grid::before{display:none;}
+      .shop-grid{grid-template-columns:repeat(2,1fr);}
     }
-    .nav-logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 20px; letter-spacing: -0.5px; text-decoration: none; color: white; }
-    .nav-logo-icon { width: 34px; height: 34px; background: linear-gradient(135deg, #f7931a, #d4780f); border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 18px; box-shadow: 0 4px 12px rgba(247,147,26,0.35); }
-    .nav-links { display: flex; gap: 32px; list-style: none; align-items: center; }
-    .nav-links a { text-decoration: none; color: #6b7280; font-size: 14px; font-weight: 500; transition: color 0.15s; }
-    .nav-links a:hover { color: white; }
-    .nav-links .nav-cta { color: var(--orange) !important; font-weight: 700; }
-    .nav-badge { background: rgba(247,147,26,0.1); color: var(--orange); border: 1px solid rgba(247,147,26,0.2); font-size: 11px; font-weight: 700; padding: 5px 12px; border-radius: 20px; letter-spacing: 0.3px; }
-
-    /* ─── HERO ──────────────────────────────────────────────────────────── */
-    .hero { padding: 110px 48px 90px; text-align: center; position: relative; z-index: 1; }
-    .hero-badge {
-      display: inline-flex; align-items: center; gap: 8px;
-      background: rgba(247,147,26,0.08); border: 1px solid rgba(247,147,26,0.2);
-      border-radius: 24px; padding: 7px 18px; font-size: 12px; font-weight: 600; color: var(--orange);
-      margin-bottom: 28px; animation: fadeSlideDown 0.6s ease both;
-    }
-    .hero-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--orange); animation: op-pulse 2s ease infinite; }
-    .hero h1 {
-      font-size: clamp(44px, 7vw, 76px); font-weight: 900; letter-spacing: -3px; line-height: 1.02;
-      margin-bottom: 24px; animation: fadeSlideDown 0.6s 0.1s ease both;
-    }
-    .hero h1 .accent { color: var(--orange); }
-    .hero h1 .accent2 {
-      background: linear-gradient(135deg, #f7931a, #ffd04a);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-    }
-    .hero p { font-size: 18px; color: #6b7280; max-width: 520px; margin: 0 auto 42px; line-height: 1.7; animation: fadeSlideDown 0.6s 0.2s ease both; }
-    .hero-btns { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; animation: fadeSlideDown 0.6s 0.3s ease both; }
-    .hero-stats { display: flex; justify-content: center; gap: 48px; margin-top: 72px; animation: fadeSlideDown 0.6s 0.4s ease both; }
-    .hero-stat-num { font-size: 28px; font-weight: 900; letter-spacing: -1px; color: white; }
-    .hero-stat-label { font-size: 12px; color: var(--muted); margin-top: 2px; }
-    @keyframes fadeSlideDown { from { opacity: 0; transform: translateY(-16px); } to { opacity: 1; transform: translateY(0); } }
-
-    /* ─── BUTTONS ───────────────────────────────────────────────────────── */
-    .btn-primary { display: inline-flex; align-items: center; gap: 8px; padding: 15px 30px; background: linear-gradient(135deg, #f7931a, #e07d0e); color: #000; border: none; border-radius: 13px; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.2s; font-family: inherit; box-shadow: 0 4px 20px rgba(247,147,26,0.3); }
-    .btn-primary:hover { background: linear-gradient(135deg, #ffb040, #f7931a); transform: translateY(-3px); box-shadow: 0 12px 32px rgba(247,147,26,0.45); }
-    .btn-outline { display: inline-flex; align-items: center; gap: 8px; padding: 15px 30px; background: rgba(255,255,255,0.04); color: #888; border: 1.5px solid rgba(255,255,255,0.08); border-radius: 13px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: inherit; backdrop-filter: blur(8px); }
-    .btn-outline:hover { border-color: rgba(255,255,255,0.16); color: #ccc; background: rgba(255,255,255,0.07); }
-
-    /* ─── LAYOUT ────────────────────────────────────────────────────────── */
-    .container { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
-    .section { padding: 96px 24px; position: relative; z-index: 1; }
-    .sec-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--orange); margin-bottom: 12px; }
-    .sec-title { font-size: clamp(28px,4vw,42px); font-weight: 800; letter-spacing: -1.2px; margin-bottom: 14px; line-height: 1.15; }
-    .sec-sub { font-size: 16px; color: #6b7280; max-width: 480px; line-height: 1.7; margin-bottom: 52px; }
-    .divider { height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent); margin: 0; }
-
-    /* ─── SCROLL REVEAL ─────────────────────────────────────────────────── */
-    .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease, transform 0.6s ease; }
-    .reveal.visible { opacity: 1; transform: translateY(0); }
-
-    /* ─── ENHANCED ANIMATIONS ───────────────────────────────────────────── */
-    @keyframes shimmer {
-      0%   { background-position: -200% center; }
-      100% { background-position: 200% center; }
-    }
-    @keyframes floatY {
-      0%,100% { transform: translateY(0px) rotate(-1deg); }
-      50%      { transform: translateY(-18px) rotate(1deg); }
-    }
-    @keyframes glowPulse {
-      0%,100% { box-shadow: 0 0 20px rgba(247,147,26,0.1), 0 20px 60px rgba(0,0,0,0.5); }
-      50%      { box-shadow: 0 0 40px rgba(247,147,26,0.22), 0 20px 60px rgba(0,0,0,0.5); }
-    }
-    @keyframes borderGlow {
-      0%,100% { border-color: rgba(247,147,26,0.15); }
-      50%      { border-color: rgba(247,147,26,0.45); }
-    }
-    @keyframes gradientShift {
-      0%   { background-position: 0% 50%; }
-      50%  { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-    @keyframes tickerScroll {
-      0%   { transform: translateX(0); }
-      100% { transform: translateX(-50%); }
-    }
-
-    /* ─── ENHANCED REVEAL ──────────────────────────────────────────────── */
-    .reveal {
-      opacity: 0;
-      transform: translateY(30px);
-      filter: blur(4px);
-      transition: opacity 0.7s cubic-bezier(0.22,1,0.36,1),
-                  transform 0.7s cubic-bezier(0.22,1,0.36,1),
-                  filter 0.7s cubic-bezier(0.22,1,0.36,1);
-    }
-    .reveal.visible { opacity: 1; transform: translateY(0); filter: blur(0); }
-
-    /* ─── SHIMMER TEXT ─────────────────────────────────────────────────── */
-    .hero h1 .accent2 {
-      background: linear-gradient(135deg, #f7931a 0%, #ffd04a 30%, #f7931a 60%, #ff9a2a 100%);
-      background-size: 200% auto;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      animation: shimmer 3s linear infinite;
-    }
-
-    /* ─── HERO SPLIT LAYOUT ────────────────────────────────────────────── */
-    .hero { padding: 100px 48px 80px; position: relative; z-index: 1; }
-    .hero-inner { display: flex; align-items: center; justify-content: space-between; gap: 60px; max-width: 1120px; margin: 0 auto; }
-    .hero-left { flex: 1; max-width: 560px; text-align: left; }
-    .hero-right { flex: 0 0 auto; }
-    .hero-left .hero-badge { margin-bottom: 28px; }
-    .hero-left h1 { animation: fadeSlideDown 0.6s 0.1s ease both; }
-    .hero-left p { animation: fadeSlideDown 0.6s 0.2s ease both; margin: 0 0 42px; }
-    .hero-left .hero-btns { justify-content: flex-start; }
-    .hero-stats { max-width: 1120px; margin: 72px auto 0; display: flex; justify-content: flex-start; gap: 48px; animation: fadeSlideDown 0.6s 0.4s ease both; }
-    @media (max-width: 900px) {
-      .hero-inner { flex-direction: column; text-align: center; gap: 40px; }
-      .hero-left { max-width: 100%; text-align: center; }
-      .hero-left .hero-btns { justify-content: center; }
-      .hero-stats { justify-content: center; }
-    }
-
-    /* ─── FLOATING MOCK WIDGET ─────────────────────────────────────────── */
-    .hero-mock {
-      width: 340px;
-      background: #0f111a;
-      border: 1px solid rgba(247,147,26,0.25);
-      border-radius: 24px;
-      overflow: hidden;
-      box-shadow: 0 40px 100px rgba(0,0,0,0.7), 0 0 0 1px rgba(247,147,26,0.06);
-      animation: floatY 6s ease-in-out infinite, glowPulse 4s ease-in-out infinite, fadeSlideDown 0.8s 0.4s ease both;
-      flex-shrink: 0;
-    }
-    .hm-header { background: linear-gradient(160deg,#14100a,#0a0c14); padding: 18px 20px 16px; border-bottom: 1px solid #1e2235; }
-    .hm-logo-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-    .hm-logo { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 14px; }
-    .hm-logo-icon { width: 24px; height: 24px; background: linear-gradient(135deg,#f7931a,#d4780f); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 12px; }
-    .hm-close { width: 24px; height: 24px; background: rgba(255,255,255,0.06); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #555; }
-    .hm-merchant { font-size: 10px; color: #4a5568; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 2px; }
-    .hm-amount { font-size: 30px; font-weight: 900; letter-spacing: -1px; color: white; }
-    .hm-btc { font-size: 11px; color: var(--orange); background: rgba(247,147,26,0.1); padding: 3px 10px; border-radius: 20px; border: 1px solid rgba(247,147,26,0.2); display: inline-block; margin-top: 6px; }
-    .hm-dots { display: flex; justify-content: center; gap: 5px; padding: 10px 0 2px; }
-    .hm-dot { width: 5px; height: 5px; border-radius: 50%; background: #252840; }
-    .hm-dot.active { background: var(--orange); width: 20px; border-radius: 3px; }
-    .hm-body { padding: 18px 18px 20px; }
-    .hm-method {
-      display: flex; align-items: center; gap: 12px; padding: 12px 14px;
-      border-radius: 12px; border: 1.5px solid rgba(247,147,26,0.35);
-      background: rgba(247,147,26,0.06); margin-bottom: 8px; cursor: pointer;
-    }
-    .hm-method.dim { border-color: #1e2235; background: #12141f; }
-    .hm-m-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
-    .hm-m-name { font-size: 12px; font-weight: 700; color: white; }
-    .hm-m-desc { font-size: 10px; color: #4a5568; }
-    .hm-btn { width: 100%; padding: 12px; background: linear-gradient(135deg,#f7931a,#e07d0e); color: #000; border: none; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer; margin-top: 4px; }
-
-    /* ─── WORKS WITH BAR ───────────────────────────────────────────────── */
-    .platforms-bar { background: rgba(255,255,255,0.02); border-top: 1px solid rgba(255,255,255,0.04); border-bottom: 1px solid rgba(255,255,255,0.04); padding: 18px 0; overflow: hidden; position: relative; z-index: 1; }
-    .platforms-track { display: flex; gap: 0; width: max-content; animation: tickerScroll 25s linear infinite; }
-    .platforms-track:hover { animation-play-state: paused; }
-    .platform-item { display: flex; align-items: center; gap: 9px; padding: 0 32px; color: #4a5568; font-size: 13px; font-weight: 600; white-space: nowrap; transition: color 0.2s; }
-    .platform-item:hover { color: #8892a4; }
-    .platform-icon { font-size: 18px; }
-    .platforms-label { position: absolute; left: 24px; top: 50%; transform: translateY(-50%); font-size: 11px; font-weight: 700; color: #252840; text-transform: uppercase; letter-spacing: 0.6px; background: var(--bg); padding: 0 12px; z-index: 2; }
-
-    /* ─── ENHANCED CARDS ───────────────────────────────────────────────── */
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 28px;
-      transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
-      position: relative;
-      overflow: hidden;
-    }
-    .card::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border-radius: 18px;
-      background: radial-gradient(400px circle at var(--mouse-x,50%) var(--mouse-y,50%), rgba(247,147,26,0.04), transparent 60%);
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.3s;
-    }
-    .card:hover::after { opacity: 1; }
-    .card:hover {
-      border-color: rgba(247,147,26,0.35);
-      transform: translateY(-6px);
-      box-shadow: 0 24px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(247,147,26,0.08);
-    }
-    .card-icon { font-size: 32px; margin-bottom: 16px; display: block; }
-
-    /* ─── ENHANCED BACKGROUND ──────────────────────────────────────────── */
-    .bg-orbs .orb { filter: blur(100px); opacity: 0.5; }
-    .orb1 { animation-duration: 18s !important; }
-    .orb2 { animation-duration: 22s !important; }
-    .orb3 { animation-duration: 28s !important; }
-
-    /* ─── HOW-CARD CONNECTOR LINE ──────────────────────────────────────── */
-    .how-grid { position: relative; }
-    .how-card { position: relative; }
-    .how-card:not(:last-child)::after {
-      content: '→';
-      position: absolute;
-      right: -18px;
-      top: 38px;
-      color: rgba(247,147,26,0.3);
-      font-size: 20px;
-      font-weight: 900;
-      z-index: 2;
-    }
-    @media (max-width: 768px) { .how-card::after { display: none; } }
-
-    /* ─── SMOOTH NAV ───────────────────────────────────────────────────── */
-    .nav { transition: background 0.3s, backdrop-filter 0.3s; }
-    .nav.scrolled { background: rgba(6,7,14,0.97); }
-
-    /* ─── PRODUCT CARD ENHANCEMENTS ────────────────────────────────────── */
-    .product { transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s; }
-    .product:hover { transform: translateY(-6px); box-shadow: 0 24px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(247,147,26,0.1); }
-
-    /* ─── BTN GLOW PULSE ───────────────────────────────────────────────── */
-    .btn-primary { position: relative; overflow: hidden; }
-    .btn-primary::before {
-      content: '';
-      position: absolute;
-      inset: -2px;
-      background: linear-gradient(135deg, #f7931a, #ffd04a, #f7931a);
-      border-radius: 15px;
-      opacity: 0;
-      transition: opacity 0.3s;
-      z-index: -1;
-    }
-    .btn-primary:hover::before { opacity: 0.3; }
-    .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(247,147,26,0.5); }
-    .reveal-delay-1 { transition-delay: 0.1s; }
-    .reveal-delay-2 { transition-delay: 0.2s; }
-    .reveal-delay-3 { transition-delay: 0.3s; }
-
-    /* ─── WHY SECTION ───────────────────────────────────────────────────── */
-    .why-section { background: linear-gradient(180deg, var(--bg) 0%, #090b14 100%); }
-    .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px,1fr)); gap: 18px; }
-    .card {
-      background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 28px;
-      transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
-      position: relative; overflow: hidden;
-    }
-    .card::before { content: ''; position: absolute; inset: 0; border-radius: 18px; background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, transparent 50%); pointer-events: none; }
-    .card:hover { border-color: rgba(247,147,26,0.3); transform: translateY(-4px); box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 0 1px rgba(247,147,26,0.05); }
-    .card-icon { font-size: 30px; margin-bottom: 16px; display: block; }
-    .card-title { font-size: 15px; font-weight: 700; color: white; margin-bottom: 8px; }
-    .card-text { font-size: 13px; color: #6b7280; line-height: 1.65; }
-
-    /* ─── HOW IT WORKS ──────────────────────────────────────────────────── */
-    .how-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px,1fr)); gap: 20px; counter-reset: steps; }
-    .how-card {
-      background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 28px 24px;
-      position: relative; transition: all 0.25s;
-    }
-    .how-card:hover { border-color: rgba(247,147,26,0.25); transform: translateY(-3px); }
-    .how-num {
-      counter-increment: steps; content: counter(steps);
-      width: 30px; height: 30px; background: linear-gradient(135deg, #f7931a, #d4780f);
-      color: #000; border-radius: 10px; display: flex; align-items: center; justify-content: center;
-      font-size: 13px; font-weight: 800; margin-bottom: 18px;
-      box-shadow: 0 4px 12px rgba(247,147,26,0.3);
-    }
-    .how-icon { font-size: 28px; margin-bottom: 12px; }
-    .how-title { font-size: 14px; font-weight: 700; color: white; margin-bottom: 8px; }
-    .how-text { font-size: 13px; color: #6b7280; line-height: 1.65; }
-
-    /* ─── DEMO SHOP ─────────────────────────────────────────────────────── */
-    .demo-section { background: var(--surface); }
-    .shop-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px,1fr)); gap: 22px; margin-bottom: 40px; }
-    .product {
-      border: 1px solid var(--border); border-radius: 20px; overflow: hidden;
-      background: var(--card); transition: all 0.25s;
-    }
-    .product:hover { border-color: rgba(247,147,26,0.35); transform: translateY(-4px); box-shadow: 0 24px 60px rgba(0,0,0,0.5); }
-    .product-img { height: 180px; display: flex; align-items: center; justify-content: center; font-size: 76px; position: relative; overflow: hidden; }
-    .product-img::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.3) 100%); }
-    .product-body { padding: 20px 22px 22px; }
-    .product-name { font-size: 15px; font-weight: 700; color: white; margin-bottom: 5px; }
-    .product-desc { font-size: 13px; color: #6b7280; margin-bottom: 18px; line-height: 1.5; }
-    .product-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-    .product-price { font-size: 24px; font-weight: 900; letter-spacing: -0.5px; color: white; }
-    .product-btc { font-size: 11px; color: var(--orange); margin-top: 1px; }
-
-    /* ─── EVENT LOG ─────────────────────────────────────────────────────── */
-    .log-panel { background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 18px; padding: 22px; backdrop-filter: blur(10px); }
-    .log-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-    .log-title { font-weight: 700; font-size: 14px; color: white; display: flex; align-items: center; gap: 8px; }
-    .log-live { width: 8px; height: 8px; border-radius: 50%; background: var(--green); animation: op-pulse 2s ease infinite; }
-    .log-clear { font-size: 12px; color: var(--muted); background: none; border: 1px solid var(--border); border-radius: 8px; padding: 5px 14px; cursor: pointer; font-family: inherit; transition: all 0.15s; }
-    .log-clear:hover { border-color: #333; color: #aaa; }
-    .log-box { font-family: 'Cascadia Code','Fira Code','Consolas',monospace; font-size: 12.5px; min-height: 80px; max-height: 200px; overflow-y: auto; }
-    .log-empty { color: #2a2a2a; padding: 8px 0; }
-    .log-row { padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.03); display: flex; gap: 14px; align-items: flex-start; }
-    .log-row:last-child { border-bottom: none; }
-    .log-t { color: #2a3040; min-width: 80px; flex-shrink: 0; }
-    .log-ok { color: #3fb950; } .log-fail { color: #f85149; } .log-cancel { color: #d29922; }
-
-    /* ─── CODE SECTION ──────────────────────────────────────────────────── */
-    .code-wrap { background: #070b12; border: 1px solid #1a2535; border-radius: 18px; overflow: hidden; }
-    .code-tabs-bar { display: flex; background: #050910; border-bottom: 1px solid #1a2535; padding: 0 4px; }
-    .ctab { padding: 12px 22px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; font-family: inherit; background: transparent; color: #4a5568; transition: all 0.15s; border-bottom: 2px solid transparent; }
-    .ctab.active { color: var(--orange); border-bottom-color: var(--orange); }
-    .ctab:hover:not(.active) { color: #8892a4; }
-    .cblock { padding: 30px 36px; font-family: 'Cascadia Code','Fira Code','Consolas',monospace; font-size: 13px; line-height: 1.85; overflow-x: auto; color: #c9d1d9; display: none; }
-    .cblock.active { display: block; }
-    .cm { color: #4a5568; } .ct { color: #7ee787; } .ca { color: #79c0ff; } .cv { color: #a5d6ff; }
-    .cf { color: #d2a8ff; } .ck { color: #ff7b72; } .co { color: #ffa657; } .cn { color: #79c0ff; }
-
-    /* ─── FOOTER ────────────────────────────────────────────────────────── */
-    footer { background: #05060c; border-top: 1px solid var(--border); padding: 60px 24px 40px; }
-    .footer-inner { max-width: 1120px; margin: 0 auto; display: flex; justify-content: space-between; align-items: flex-start; gap: 40px; flex-wrap: wrap; }
-    .footer-brand { max-width: 260px; }
-    .footer-logo { display: flex; align-items: center; gap: 9px; font-weight: 800; font-size: 20px; letter-spacing: -0.5px; margin-bottom: 12px; }
-    .footer-logo-icon { width: 32px; height: 32px; background: linear-gradient(135deg, #f7931a, #d4780f); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 17px; }
-    .footer-desc { font-size: 13px; color: var(--muted); line-height: 1.65; }
-    .footer-links { display: flex; gap: 40px; }
-    .footer-col-title { font-size: 12px; font-weight: 700; color: white; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px; }
-    .footer-col a { display: block; font-size: 13px; color: var(--muted); text-decoration: none; margin-bottom: 10px; transition: color 0.15s; }
-    .footer-col a:hover { color: var(--orange); }
-    .footer-bottom { max-width: 1120px; margin: 40px auto 0; padding-top: 24px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; font-size: 12px; color: #252840; }
-    .footer-bottom a { color: var(--orange); text-decoration: none; }
-
-    /* ─── CURRENCY SELECTOR ─────────────────────────────────────────────── */
-    .cur-btn { padding: 6px 13px; border-radius: 20px; border: 1px solid var(--border); background: var(--card); color: var(--muted); font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.15s; }
-    .cur-btn:hover { border-color: rgba(247,147,26,0.4); color: white; }
-    .cur-btn.cur-active { background: rgba(247,147,26,0.12); border-color: rgba(247,147,26,0.35); color: var(--orange); }
-
-    /* ─── HAMBURGER + MOBILE NAV ─────────────────────────────────────────── */
-    .nav-ham { display: none; flex-direction: column; justify-content: space-between; width: 30px; height: 22px; background: none; border: none; cursor: pointer; padding: 0; z-index: 1100; }
-    .nav-ham span { display: block; width: 100%; height: 2px; background: var(--text); border-radius: 2px; transition: all 0.25s ease; }
-    .nav-ham.open span:nth-child(1) { transform: translateY(10px) rotate(45deg); }
-    .nav-ham.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
-    .nav-ham.open span:nth-child(3) { transform: translateY(-10px) rotate(-45deg); }
-    .mob-nav { display: none; position: fixed; top: 64px; left: 0; right: 0; background: rgba(7,8,16,0.98); border-bottom: 1px solid var(--border); padding: 20px 24px 28px; flex-direction: column; gap: 6px; z-index: 900; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
-    .mob-nav.open { display: flex; animation: slideDown 0.2s ease; }
-    @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-    .mob-nav a { color: var(--text); text-decoration: none; font-size: 15px; font-weight: 500; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); transition: color 0.15s; }
-    .mob-nav a:last-child { border-bottom: none; }
-    .mob-nav a:hover { color: var(--orange); }
-    .mob-nav-cta { color: var(--orange) !important; font-weight: 700 !important; }
-
-    @media (max-width: 768px) {
-      .nav { padding: 0 20px; } .nav-links { display: none; } .nav-ham { display: flex; }
-      .hero { padding: 70px 20px 60px; }
-      .section { padding: 64px 20px; }
-      .hero-stats { gap: 24px; flex-wrap: wrap; }
-      .footer-links { gap: 24px; }
-      .footer-inner { flex-direction: column; }
+    @media(max-width:768px){
+      .nav-links,.nav-badge{display:none;}
+      .nav-ham{display:flex;}
+      .hero{padding:70px 20px 60px;}
+      .hero h1{font-size:42px;}
+      .hero-stats{max-width:100%;}
+      .section{padding:64px 20px;}
+      .sec-title{font-size:32px;}
+      .features-grid,.how-grid,.shop-grid{grid-template-columns:1fr;}
+      .footer-links{gap:28px;}
+      .cta-title{font-size:34px;}
     }
   </style>
 </head>
 <body>
 
-<!-- Background orbs -->
-<div class="bg-orbs">
-  <div class="orb orb1"></div>
-  <div class="orb orb2"></div>
-  <div class="orb orb3"></div>
-</div>
-
 <!-- NAV -->
 <nav class="nav">
   <a class="nav-logo" href="#">
     <div class="nav-logo-icon">₿</div>
-    <span>Op<span style="color:var(--orange)">Pay</span></span>
+    <span class="nav-logo-text">Op<span>Pay</span></span>
   </a>
-  <ul class="nav-links" id="nav-links">
+  <ul class="nav-links">
     <li><a href="#how">How It Works</a></li>
     <li><a href="#demo">Demo</a></li>
     <li><a href="#pricing">Pricing</a></li>
-    <li><a href="business.html">For Business</a></li>
-    <li><a href="docs.html">Docs</a></li>
-    <li><a href="merchant.html" class="nav-cta">Merchant Dashboard →</a></li>
+    <li><a href="#code">Docs</a></li>
+    <li><a href="merchant.html" class="nav-cta-pill">Merchant Dashboard →</a></li>
   </ul>
-  <span class="nav-badge">Bitcoin · OPNet</span>
+  <span class="nav-badge">Bitcoin · OPNet L1</span>
   <button class="nav-ham" id="nav-ham" onclick="toggleMobNav()" aria-label="Menu">
     <span></span><span></span><span></span>
   </button>
 </nav>
-<!-- Mobile nav drawer -->
 <div class="mob-nav" id="mob-nav">
   <a href="#how" onclick="closeMobNav()">How It Works</a>
   <a href="#demo" onclick="closeMobNav()">Demo</a>
   <a href="#pricing" onclick="closeMobNav()">Pricing</a>
-  <a href="business.html">For Business</a>
-  <a href="docs.html">Docs</a>
+  <a href="#code" onclick="closeMobNav()">Docs</a>
   <a href="merchant.html" class="mob-nav-cta">Merchant Dashboard →</a>
 </div>
 
 <!-- HERO -->
 <section class="hero">
   <div class="hero-inner">
-    <!-- Left: text -->
     <div class="hero-left">
-      <div class="hero-badge" style="animation:fadeSlideDown 0.6s ease both;"><div class="dot"></div> Now live on OPNet Testnet · Bitcoin L1</div>
-      <h1>Accept <span class="accent2">Bitcoin</span><br/>on any website</h1>
-      <p style="font-size:18px;color:#6b7280;max-width:480px;line-height:1.7;animation:fadeSlideDown 0.6s 0.2s ease both;">Drop in one script tag. Works with Shopify, WooCommerce, React, plain HTML — any store, anywhere in the world. No bank, no KYC, no borders.</p>
-      <div class="hero-btns" style="animation:fadeSlideDown 0.6s 0.3s ease both;">
+      <div class="hero-badge">
+        <span class="hero-badge-dot"></span>
+        Live on OPNet Testnet · Bitcoin Layer 1
+      </div>
+      <h1>Accept <span class="grad">Bitcoin</span><br/>on any website</h1>
+      <p class="hero-sub">One script tag. No bank, no KYC, no borders. Works with Shopify, React, plain HTML — any store, anywhere in the world.</p>
+      <div class="hero-btns">
         <button class="btn-primary" onclick="document.getElementById('demo').scrollIntoView({behavior:'smooth'})">⚡ Try Live Demo</button>
         <button class="btn-outline" onclick="document.getElementById('code').scrollIntoView({behavior:'smooth'})">&lt;/&gt; See the Code</button>
       </div>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="hero-stat-num">1<span> line</span></div>
+          <div class="hero-stat-label">to embed</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-num"><span>0.1</span>%</div>
+          <div class="hero-stat-label">only fee</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-num">7</div>
+          <div class="hero-stat-label">currencies</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-num">L<span>1</span></div>
+          <div class="hero-stat-label">Bitcoin</div>
+        </div>
+      </div>
     </div>
-    <!-- Right: floating payment modal mockup -->
     <div class="hero-right">
       <div class="hero-mock">
-        <div class="hm-header">
-          <div class="hm-logo-row">
-            <div class="hm-logo"><div class="hm-logo-icon">₿</div> Op<span style="color:var(--orange)">Pay</span></div>
-            <div class="hm-close">✕</div>
+        <div class="hm-badge">✓ Payment confirmed!</div>
+        <div class="hm-card">
+          <div class="hm-header">
+            <div class="hm-logo-row">
+              <div class="hm-logo"><div class="hm-logo-icon">₿</div>Op<span style="color:var(--orange)">Pay</span></div>
+              <div class="hm-close">✕</div>
+            </div>
+            <div class="hm-label">Paying to</div>
+            <div class="hm-merchant">My Online Shop</div>
+            <div class="hm-amount">€ 89.99</div>
+            <div class="hm-btc">≈ ₿ 0.000894</div>
           </div>
-          <div class="hm-merchant">Paying to · My Shop</div>
-          <div class="hm-amount">€ 89.99</div>
-          <div class="hm-btc">≈ ₿ 0.000894</div>
-        </div>
-        <div class="hm-dots">
-          <div class="hm-dot active"></div>
-          <div class="hm-dot"></div>
-          <div class="hm-dot"></div>
-        </div>
-        <div class="hm-body">
-          <div style="font-size:11px;font-weight:700;color:#4a5568;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:10px;">Choose payment method</div>
-          <div class="hm-method">
-            <div class="hm-m-icon" style="background:rgba(247,147,26,0.12);">📱</div>
-            <div><div class="hm-m-name">OPNet Wallet App</div><div class="hm-m-desc">Scan QR — iDEAL style</div></div>
+          <div class="hm-dots">
+            <div class="hm-dot active"></div><div class="hm-dot"></div><div class="hm-dot"></div>
           </div>
-          <div class="hm-method dim">
-            <div class="hm-m-icon" style="background:rgba(255,255,255,0.04);">₿</div>
-            <div><div class="hm-m-name">Bitcoin Address</div><div class="hm-m-desc">Copy & pay from any wallet</div></div>
+          <div class="hm-body">
+            <div class="hm-section-label">Choose payment method</div>
+            <div class="hm-method active">
+              <div class="hm-m-icon" style="background:rgba(247,147,26,0.12)">📱</div>
+              <div><div class="hm-m-name">OPNet Wallet App</div><div class="hm-m-desc">Scan QR — iDEAL style</div></div>
+            </div>
+            <div class="hm-method dim">
+              <div class="hm-m-icon" style="background:rgba(255,255,255,0.04)">₿</div>
+              <div><div class="hm-m-name">Bitcoin Address</div><div class="hm-m-desc">Any BTC wallet</div></div>
+            </div>
+            <button class="hm-btn">Continue →</button>
           </div>
-          <div class="hm-method dim">
-            <div class="hm-m-icon" style="background:rgba(124,58,237,0.12);">🔒</div>
-            <div><div class="hm-m-name">OpCredit Escrow</div><div class="hm-m-desc">Buy now, confirm on delivery</div></div>
-          </div>
-          <button class="hm-btn">Continue →</button>
         </div>
       </div>
     </div>
   </div>
-  <div class="hero-stats">
-    <div>
-      <div class="hero-stat-num">1 line</div>
-      <div class="hero-stat-label">to embed</div>
-    </div>
-    <div style="width:1px;background:var(--border)"></div>
-    <div>
-      <div class="hero-stat-num">3 methods</div>
-      <div class="hero-stat-label">OPNet · BTC · OpCredit</div>
-    </div>
-    <div style="width:1px;background:var(--border)"></div>
-    <div>
-      <div class="hero-stat-num">7 currencies</div>
-      <div class="hero-stat-label">live BTC rates</div>
-    </div>
-    <div style="width:1px;background:var(--border)"></div>
-    <div>
-      <div class="hero-stat-num">0.1% fee</div>
-      <div class="hero-stat-label">only OpPay service fee</div>
-    </div>
-  </div>
 </section>
 
-<div class="divider"></div>
-
-<!-- PLATFORMS BAR -->
-<div class="platforms-bar">
-  <span class="platforms-label">Works with</span>
-  <div class="platforms-track" id="platforms-track">
-    <span class="platform-item"><span class="platform-icon">🛍️</span> Shopify</span>
-    <span class="platform-item"><span class="platform-icon">🔧</span> WooCommerce</span>
-    <span class="platform-item"><span class="platform-icon">⚛️</span> React / Next.js</span>
-    <span class="platform-item"><span class="platform-icon">🟢</span> Vue / Nuxt</span>
-    <span class="platform-item"><span class="platform-icon">🟠</span> Laravel</span>
-    <span class="platform-item"><span class="platform-icon">🔷</span> Angular</span>
-    <span class="platform-item"><span class="platform-icon">🏪</span> BigCommerce</span>
-    <span class="platform-item"><span class="platform-icon">🌐</span> Plain HTML</span>
-    <span class="platform-item"><span class="platform-icon">🖤</span> Squarespace</span>
-    <span class="platform-item"><span class="platform-icon">📦</span> Node.js</span>
-    <span class="platform-item"><span class="platform-icon">🐍</span> Django / Flask</span>
-    <span class="platform-item"><span class="platform-icon">💎</span> Ruby on Rails</span>
-    <!-- duplicate for seamless loop -->
-    <span class="platform-item"><span class="platform-icon">🛍️</span> Shopify</span>
-    <span class="platform-item"><span class="platform-icon">🔧</span> WooCommerce</span>
-    <span class="platform-item"><span class="platform-icon">⚛️</span> React / Next.js</span>
-    <span class="platform-item"><span class="platform-icon">🟢</span> Vue / Nuxt</span>
-    <span class="platform-item"><span class="platform-icon">🟠</span> Laravel</span>
-    <span class="platform-item"><span class="platform-icon">🔷</span> Angular</span>
-    <span class="platform-item"><span class="platform-icon">🏪</span> BigCommerce</span>
-    <span class="platform-item"><span class="platform-icon">🌐</span> Plain HTML</span>
-    <span class="platform-item"><span class="platform-icon">🖤</span> Squarespace</span>
-    <span class="platform-item"><span class="platform-icon">📦</span> Node.js</span>
-    <span class="platform-item"><span class="platform-icon">🐍</span> Django / Flask</span>
-    <span class="platform-item"><span class="platform-icon">💎</span> Ruby on Rails</span>
+<!-- PLATFORMS -->
+<div class="platforms">
+  <div class="platforms-inner">
+    <span class="platforms-label">Works with</span>
+    <div class="platforms-track">
+      <div class="platforms-scroll" id="platforms-scroll">
+        <span class="platform-chip">🛍️ Shopify</span>
+        <span class="platform-chip">🔧 WooCommerce</span>
+        <span class="platform-chip">⚛️ React / Next.js</span>
+        <span class="platform-chip">🟢 Vue / Nuxt</span>
+        <span class="platform-chip">🟠 Laravel</span>
+        <span class="platform-chip">🔷 Angular</span>
+        <span class="platform-chip">🏪 BigCommerce</span>
+        <span class="platform-chip">🌐 Plain HTML</span>
+        <span class="platform-chip">🖤 Squarespace</span>
+        <span class="platform-chip">📦 Node.js</span>
+        <span class="platform-chip">🐍 Django / Flask</span>
+        <span class="platform-chip">💎 Ruby on Rails</span>
+        <!-- duplicate for seamless loop -->
+        <span class="platform-chip">🛍️ Shopify</span>
+        <span class="platform-chip">🔧 WooCommerce</span>
+        <span class="platform-chip">⚛️ React / Next.js</span>
+        <span class="platform-chip">🟢 Vue / Nuxt</span>
+        <span class="platform-chip">🟠 Laravel</span>
+        <span class="platform-chip">🔷 Angular</span>
+        <span class="platform-chip">🏪 BigCommerce</span>
+        <span class="platform-chip">🌐 Plain HTML</span>
+        <span class="platform-chip">🖤 Squarespace</span>
+        <span class="platform-chip">📦 Node.js</span>
+        <span class="platform-chip">🐍 Django / Flask</span>
+        <span class="platform-chip">💎 Ruby on Rails</span>
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- WHY -->
-<section class="section why-section">
+<!-- FEATURES -->
+<section class="section">
   <div class="container">
     <div class="sec-label reveal">Why OpPay</div>
-    <div class="sec-title reveal reveal-delay-1">Bitcoin payments, made simple</div>
-    <div class="sec-sub reveal reveal-delay-2">No bank accounts. No IBAN. Just Bitcoin — fast, borderless, and unstoppable on Layer 1.</div>
-    <div class="grid-3">
-      <div class="card reveal"><span class="card-icon">🔗</span><div class="card-title">OPNet Wallet</div><div class="card-text">Connect your OPNet wallet in one click and sign the transaction — no copy-paste, no fuss.</div></div>
-      <div class="card reveal reveal-delay-1"><span class="card-icon">₿</span><div class="card-title">Native Bitcoin L1</div><div class="card-text">Payments settle on Bitcoin Layer 1. No wrapped tokens, no bridges — real BTC to the merchant.</div></div>
-      <div class="card reveal reveal-delay-2"><span class="card-icon">⚡</span><div class="card-title">Instant Callbacks</div><div class="card-text">onSuccess, onFailure, and onCancel events fire the moment the transaction confirms on-chain.</div></div>
-      <div class="card reveal"><span class="card-icon">🔌</span><div class="card-title">One Script Tag</div><div class="card-text">Embed on any website with a single &lt;script&gt; include. Works with React, Vue, plain HTML — anything.</div></div>
-      <div class="card reveal reveal-delay-1"><span class="card-icon">🔒</span><div class="card-title">OpCredit Escrow</div><div class="card-text">Anonymous buy-now-pay-later via BTC escrow. BTC locked in OPNet smart contract, released on delivery.</div></div>
-      <div class="card reveal reveal-delay-2"><span class="card-icon">🌍</span><div class="card-title">Borderless</div><div class="card-text">Accept payments from anyone in the world — no bank account, no KYC, no geographic restrictions.</div></div>
+    <h2 class="sec-title reveal reveal-delay-1">Bitcoin payments,<br/>made simple</h2>
+    <p class="sec-sub reveal reveal-delay-2">No bank accounts. No IBAN. Just Bitcoin — fast, borderless, and unstoppable on Layer 1.</p>
+    <div class="features-grid">
+      <div class="feat-card reveal">
+        <div class="feat-icon orange">🔗</div>
+        <div class="feat-title">OPNet Wallet</div>
+        <div class="feat-text">Connect your OPNet wallet in one click and sign the transaction — no copy-paste, no fuss.</div>
+      </div>
+      <div class="feat-card reveal reveal-delay-1">
+        <div class="feat-icon orange">₿</div>
+        <div class="feat-title">Native Bitcoin L1</div>
+        <div class="feat-text">Payments settle on Bitcoin Layer 1. No wrapped tokens, no bridges — real BTC to the merchant.</div>
+      </div>
+      <div class="feat-card reveal reveal-delay-2">
+        <div class="feat-icon green">⚡</div>
+        <div class="feat-title">Instant Callbacks</div>
+        <div class="feat-text">onSuccess, onFailure, and onCancel events fire the moment the transaction confirms on-chain.</div>
+      </div>
+      <div class="feat-card reveal">
+        <div class="feat-icon blue">🔌</div>
+        <div class="feat-title">One Script Tag</div>
+        <div class="feat-text">Embed on any website with a single &lt;script&gt; include. Works with React, Vue, plain HTML — anything.</div>
+      </div>
+      <div class="feat-card reveal reveal-delay-1">
+        <div class="feat-icon purple">📊</div>
+        <div class="feat-title">Live Dashboard</div>
+        <div class="feat-text">Real-time transaction monitoring, webhook delivery, and analytics — all in your merchant dashboard.</div>
+      </div>
+      <div class="feat-card reveal reveal-delay-2">
+        <div class="feat-icon green">🌍</div>
+        <div class="feat-title">Borderless</div>
+        <div class="feat-text">Accept payments from anyone in the world — no bank account, no KYC, no geographic restrictions.</div>
+      </div>
     </div>
   </div>
 </section>
 
-<div class="divider"></div>
-
 <!-- HOW IT WORKS -->
-<section class="section" id="how">
+<section class="section how-section" id="how">
   <div class="container">
     <div class="sec-label reveal">Flow</div>
-    <div class="sec-title reveal reveal-delay-1">How it works</div>
-    <div class="sec-sub reveal reveal-delay-2">A simple 4-step Bitcoin payment experience — just like a card payment but on-chain.</div>
+    <h2 class="sec-title reveal reveal-delay-1">How it works</h2>
+    <p class="sec-sub reveal reveal-delay-2">A clean 4-step Bitcoin payment experience — just like a card payment, but on-chain.</p>
     <div class="how-grid">
       <div class="how-card reveal">
-        <div class="how-num" style="display:flex;">1</div>
+        <div class="how-num">1</div>
         <div class="how-icon">🛒</div>
         <div class="how-title">Click Pay</div>
         <div class="how-text">The OpPay modal opens with the amount and merchant info shown in EUR and BTC.</div>
       </div>
       <div class="how-card reveal reveal-delay-1">
-        <div class="how-num" style="display:flex;">2</div>
+        <div class="how-num">2</div>
         <div class="how-icon">👛</div>
         <div class="how-title">Choose method</div>
-        <div class="how-text">Connect your OPNet wallet for instant sign-and-pay, or use OpCredit anonymous escrow.</div>
+        <div class="how-text">Connect your OPNet wallet for instant sign-and-pay, or use a Bitcoin address from any wallet.</div>
       </div>
       <div class="how-card reveal reveal-delay-2">
-        <div class="how-num" style="display:flex;">3</div>
+        <div class="how-num">3</div>
         <div class="how-icon">🔐</div>
         <div class="how-title">Authorize</div>
         <div class="how-text">Review the transaction details and authorize the Bitcoin payment from your wallet.</div>
       </div>
       <div class="how-card reveal reveal-delay-3">
-        <div class="how-num" style="display:flex;">4</div>
+        <div class="how-num">4</div>
         <div class="how-icon">✅</div>
         <div class="how-title">Confirmed</div>
         <div class="how-text">Transaction ID returned. Merchant's onSuccess callback fires. Payment complete.</div>
@@ -746,19 +667,16 @@
   </div>
 </section>
 
-<div class="divider"></div>
-
-<!-- DEMO SHOP -->
+<!-- DEMO -->
 <section class="section demo-section" id="demo">
   <div class="container">
     <div class="sec-label reveal">Live Demo</div>
-    <div class="sec-title reveal reveal-delay-1">Try it now</div>
-    <div class="sec-sub reveal reveal-delay-2">Click any Pay button below to go through the full Bitcoin payment flow.</div>
+    <h2 class="sec-title reveal reveal-delay-1">Try it now</h2>
+    <p class="sec-sub reveal reveal-delay-2">Click any Pay button below to go through the full Bitcoin payment flow.</p>
 
-    <!-- Currency selector -->
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:28px;flex-wrap:wrap;" class="reveal">
-      <span style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;">Currency:</span>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+    <div class="cur-bar reveal">
+      <span class="cur-label">Currency:</span>
+      <div class="cur-btns">
         <button class="cur-btn cur-active" data-cur="EUR" onclick="setCurrency('EUR')">🇪🇺 EUR</button>
         <button class="cur-btn" data-cur="USD" onclick="setCurrency('USD')">🇺🇸 USD</button>
         <button class="cur-btn" data-cur="GBP" onclick="setCurrency('GBP')">🇬🇧 GBP</button>
@@ -769,9 +687,8 @@
       </div>
     </div>
 
-    <!-- Live BTC price ticker -->
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;font-size:12px;color:var(--muted);" class="reveal">
-      <span id="live-btc-dot" style="display:inline-block;width:7px;height:7px;background:#4a5568;border-radius:50%;flex-shrink:0;transition:background 0.3s;"></span>
+    <div class="btc-ticker reveal">
+      <span id="live-btc-dot" style="width:7px;height:7px;border-radius:50%;background:#2a3450;flex-shrink:0;transition:background 0.3s;"></span>
       <span id="live-btc-ticker">Loading live BTC price...</span>
     </div>
 
@@ -792,7 +709,6 @@
           </div>
         </div>
       </div>
-
       <div class="product reveal reveal-delay-1">
         <div class="product-img" style="background:linear-gradient(135deg,#120d08,#1a1408);">👟</div>
         <div class="product-body">
@@ -809,7 +725,6 @@
           </div>
         </div>
       </div>
-
       <div class="product reveal reveal-delay-2">
         <div class="product-img" style="background:linear-gradient(135deg,#080d10,#081420);">🌐</div>
         <div class="product-body">
@@ -826,7 +741,6 @@
           </div>
         </div>
       </div>
-
       <div class="product reveal reveal-delay-3">
         <div class="product-img" style="background:linear-gradient(135deg,#0d0d14,#0a0f20);">⚡</div>
         <div class="product-body">
@@ -846,7 +760,6 @@
       </div>
     </div>
 
-    <!-- Event log -->
     <div class="log-panel reveal">
       <div class="log-header">
         <div class="log-title"><div class="log-live"></div> Payment Events</div>
@@ -859,16 +772,14 @@
   </div>
 </section>
 
-<div class="divider"></div>
-
 <!-- CODE -->
 <section class="section" id="code">
   <div class="container">
     <div class="sec-label reveal">Integration</div>
-    <div class="sec-title reveal reveal-delay-1">Add OpPay to your site</div>
-    <div class="sec-sub reveal reveal-delay-2">One script tag. Two lines of JavaScript. Works on any website or framework.</div>
+    <h2 class="sec-title reveal reveal-delay-1">Add OpPay to your site</h2>
+    <p class="sec-sub reveal reveal-delay-2">One script tag. Two lines of JavaScript. Works on any website or framework.</p>
     <div class="code-wrap reveal">
-      <div class="code-tabs-bar">
+      <div class="ctabs-bar">
         <button class="ctab active" onclick="showTab('html')">HTML</button>
         <button class="ctab" onclick="showTab('js')">JavaScript</button>
         <button class="ctab" onclick="showTab('react')">React</button>
@@ -876,7 +787,7 @@
       <div class="cblock active" id="tab-html"><span class="cm">&lt;!-- 1. Include in &lt;head&gt; --&gt;</span>
 <span class="ct">&lt;script</span> <span class="ca">src</span>=<span class="cv">"https://cdn.oppay.io/v1/pay.js"</span><span class="ct">&gt;&lt;/script&gt;</span>
 
-<span class="cm">&lt;!-- 2. Add a button with data attributes — zero JS required --&gt;</span>
+<span class="cm">&lt;!-- 2. Add a button — zero JS required --&gt;</span>
 <span class="ct">&lt;button</span>
   <span class="ca">data-oppay</span>
   <span class="ca">data-oppay-amount</span>=<span class="cv">"49.99"</span>
@@ -886,23 +797,19 @@
   ₿ Pay with Bitcoin
 <span class="ct">&lt;/button&gt;</span></div>
       <div class="cblock" id="tab-js"><span class="co">OpPay</span>.<span class="cf">open</span>({
-  <span class="ca">amount</span>:      <span class="cn">49.99</span>,          <span class="cm">// amount in chosen currency</span>
-  <span class="ca">btc</span>:         <span class="cn">0.000495</span>,       <span class="cm">// BTC equivalent</span>
-  <span class="ca">currency</span>:    <span class="cv">'USD'</span>,           <span class="cm">// EUR | USD | GBP | JPY | CHF | AUD | CAD</span>
+  <span class="ca">amount</span>:      <span class="cn">49.99</span>,
+  <span class="ca">btc</span>:         <span class="cn">0.000495</span>,
+  <span class="ca">currency</span>:    <span class="cv">'USD'</span>,
   <span class="ca">merchant</span>:    <span class="cv">'My Shop'</span>,
   <span class="ca">description</span>: <span class="cv">'Order #1234'</span>,
 
   <span class="ca">onSuccess</span>: (d) =&gt; {
     console.<span class="cf">log</span>(<span class="cv">'Paid!'</span>, d.<span class="ca">txId</span>, d.<span class="ca">method</span>);
-    <span class="cm">// d.method = 'opnet' | 'btcaddr' | 'opcredit'</span>
-    <span class="cm">// d.escrowId — set when method = 'opcredit'</span>
   },
   <span class="ca">onFailure</span>: (d) =&gt; {
-    <span class="cm">// d.reason: 'rejected' | 'escrow_failed' | 'returned' | 'cancelled'</span>
-    <span class="cm">// 'returned' = customer clicked Return Order (BTC refunded)</span>
     console.<span class="cf">log</span>(<span class="cv">'Failed:'</span>, d.<span class="ca">reason</span>);
   },
-  <span class="ca">onCancel</span>:  ()  =&gt; console.<span class="cf">log</span>(<span class="cv">'Cancelled'</span>),
+  <span class="ca">onCancel</span>: () =&gt; console.<span class="cf">log</span>(<span class="cv">'Cancelled'</span>),
 });</div>
       <div class="cblock" id="tab-react"><span class="ck">import</span> { <span class="co">useCallback</span> } <span class="ck">from</span> <span class="cv">'react'</span>;
 <span class="ck">import</span> <span class="cv">'oppay/pay.css'</span>;
@@ -926,38 +833,51 @@
   </div>
 </section>
 
-<!-- FREE / PRICING SECTION -->
-<section class="section" id="pricing" style="background:linear-gradient(135deg,rgba(247,147,26,0.04) 0%,rgba(247,147,26,0.01) 100%);">
+<!-- PRICING -->
+<section class="section pricing-section" id="pricing">
   <div class="container" style="text-align:center;">
     <div class="sec-label reveal">Pricing</div>
-    <div class="sec-title reveal reveal-delay-1">Totally free to use</div>
-    <div class="sec-sub reveal reveal-delay-2" style="max-width:560px;margin:0 auto 48px;">
-      OpPay charges <strong style="color:var(--orange);">no setup fees, no monthly costs, no per-transaction markup</strong>. The only thing we take is <strong style="color:var(--orange);">0.1%</strong> per confirmed payment — that's our platform service fee to keep the infrastructure running.
+    <h2 class="sec-title reveal reveal-delay-1">Totally free to use</h2>
+    <p class="sec-sub reveal reveal-delay-2" style="margin:0 auto 52px;">
+      No setup fees, no monthly costs, no markup. The only thing we take is <strong style="color:var(--orange)">0.1%</strong> per confirmed payment — our platform service fee to keep the infrastructure running.
+    </p>
+    <div class="pricing-grid reveal">
+      <div class="price-card">
+        <div class="price-num">€0</div>
+        <div class="price-title">Setup & Integration</div>
+        <div class="price-desc">No registration fee. Start accepting Bitcoin in minutes.</div>
+      </div>
+      <div class="price-card featured">
+        <div class="price-badge">ONLY COST</div>
+        <div class="price-num">0.1%</div>
+        <div class="price-title">Per Confirmed Transaction</div>
+        <div class="price-desc">Tiny platform service fee. On €100 that's just 10 cents.</div>
+      </div>
+      <div class="price-card">
+        <div class="price-num">€0</div>
+        <div class="price-title">Monthly / Yearly</div>
+        <div class="price-desc">No subscriptions. You only pay when you actually get paid.</div>
+      </div>
     </div>
-    <div style="display:flex;flex-wrap:wrap;gap:24px;justify-content:center;margin-bottom:48px;">
-      <div class="reveal" style="background:var(--card);border:1.5px solid var(--border);border-radius:20px;padding:36px 32px;min-width:220px;flex:1;max-width:280px;">
-        <div style="font-size:36px;font-weight:900;color:var(--orange);margin-bottom:6px;">€0</div>
-        <div style="font-size:14px;font-weight:700;color:white;margin-bottom:8px;">Setup & integration</div>
-        <div style="font-size:13px;color:var(--muted);">No registration fee. Start accepting Bitcoin in minutes.</div>
-      </div>
-      <div class="reveal reveal-delay-1" style="background:var(--card);border:1.5px solid rgba(247,147,26,0.35);border-radius:20px;padding:36px 32px;min-width:220px;flex:1;max-width:280px;position:relative;">
-        <div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--orange);color:black;font-size:10px;font-weight:800;padding:3px 12px;border-radius:20px;letter-spacing:0.05em;white-space:nowrap;">ONLY COST</div>
-        <div style="font-size:36px;font-weight:900;color:var(--orange);margin-bottom:6px;">0.1%</div>
-        <div style="font-size:14px;font-weight:700;color:white;margin-bottom:8px;">Per confirmed transaction</div>
-        <div style="font-size:13px;color:var(--muted);">Tiny platform service fee. On €100 that's just 10 cents.</div>
-      </div>
-      <div class="reveal reveal-delay-2" style="background:var(--card);border:1.5px solid var(--border);border-radius:20px;padding:36px 32px;min-width:220px;flex:1;max-width:280px;">
-        <div style="font-size:36px;font-weight:900;color:var(--orange);margin-bottom:6px;">€0</div>
-        <div style="font-size:14px;font-weight:700;color:white;margin-bottom:8px;">Monthly / yearly</div>
-        <div style="font-size:13px;color:var(--muted);">No subscriptions. You only pay when you actually get paid.</div>
+    <div class="price-compare reveal" style="margin:0 auto;">
+      <div class="price-compare-icon">₿</div>
+      <div class="price-compare-text">
+        <strong style="color:white;">Compare to traditional processors:</strong><br/>
+        Stripe charges ~2.9% + €0.30 per transaction. PayPal up to 3.49%.<br/>
+        With OpPay you pay <strong style="color:var(--orange)">0.1%</strong> — up to <strong style="color:var(--orange)">30× cheaper</strong>, and BTC goes directly to you.
       </div>
     </div>
-    <div class="reveal" style="background:rgba(247,147,26,0.06);border:1px solid rgba(247,147,26,0.2);border-radius:16px;padding:20px 28px;display:inline-flex;align-items:center;gap:14px;max-width:560px;">
-      <div style="font-size:24px;flex-shrink:0;">₿</div>
-      <div style="text-align:left;font-size:13px;color:var(--muted);line-height:1.6;">
-        <strong style="color:white;">Compare to traditional payment processors:</strong><br>
-        Stripe charges ~2.9% + €0.30 per transaction. PayPal up to 3.49%. With OpPay you pay <strong style="color:var(--orange);">0.1%</strong> — that's up to <strong style="color:var(--orange);">30× cheaper</strong>, and your customer's BTC goes directly to you.
-      </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-banner">
+  <div class="cta-inner">
+    <h2 class="cta-title reveal">Ready to accept<br/><span style="color:var(--orange)">Bitcoin?</span></h2>
+    <p class="cta-sub reveal reveal-delay-1">Create your merchant account in 30 seconds. Free forever, 0.1% per payment.</p>
+    <div class="cta-btns reveal reveal-delay-2">
+      <button class="btn-primary" onclick="window.location.href='merchant.html'">Create Free Account →</button>
+      <button class="btn-outline" onclick="document.getElementById('demo').scrollIntoView({behavior:'smooth'})">Try Demo First</button>
     </div>
   </div>
 </section>
@@ -990,7 +910,10 @@
   </div>
   <div class="footer-bottom">
     <span>© 2026 OpPay · Bitcoin Layer 1</span>
-    <span>⚠️ Demo only — no real BTC is transferred</span>
+    <div class="footer-tag">
+      <div class="footer-tag-dot"></div>
+      <span>Demo only — no real BTC is transferred</span>
+    </div>
   </div>
 </footer>
 
@@ -1265,7 +1188,7 @@ function showEscrowResult(ok,tx,escrowId){
   <div class="escrow-countdown-days">14 days</div>
   <div class="escrow-countdown-sub">on ${releaseDate} — or earlier when you confirm receipt</div>
 </div>
-<button class="op-btn op-btn-confirm-receipt" id="r-confirm-receipt" style="margin-bottom:8px;">✓ Confirm Received (release to merchant)</button>
+<button class="op-btn-confirm-receipt" id="r-confirm-receipt" style="margin-bottom:8px;">✓ Confirm Received (release to merchant)</button>
 <button id="r-return" style="width:100%;padding:12px;background:rgba(239,68,68,0.08);border:1.5px solid rgba(239,68,68,0.25);color:#f87171;border-radius:12px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.15s;margin-bottom:8px;" onmouseover="this.style.background='rgba(239,68,68,0.15)'" onmouseout="this.style.background='rgba(239,68,68,0.08)'">↩ Return Order (get BTC refund)</button>
 <button class="op-btn op-btn-ghost" id="r-done">← Back to shop</button>
 </div>`;
@@ -1283,8 +1206,6 @@ function showEscrowResult(ok,tx,escrowId){
   };
   const ret=document.getElementById('r-return');
   if(ret)ret.onclick=async()=>{
-    // Step 1: Tell server the customer wants to return — does NOT immediately refund.
-    // The merchant must physically receive the goods back and then confirm via their dashboard.
     ret.disabled=true;
     ret.textContent='⏳ Submitting return request...';
     const sessionId=opts.session_id||null;
@@ -1296,17 +1217,14 @@ function showEscrowResult(ok,tx,escrowId){
         if(!r.ok){ret.textContent='↩ Return Order (get BTC refund)';ret.disabled=false;alert(d.error||'Could not submit return');return;}
       }catch(e){ret.textContent='↩ Return Order (get BTC refund)';ret.disabled=false;return;}
     }
-    // Show pending state — merchant must confirm receipt before BTC is returned
     ret.textContent='⏳ Return requested — awaiting merchant confirmation';
     ret.style.color='#fbbf24';ret.style.borderColor='rgba(251,191,36,0.3)';ret.style.background='rgba(251,191,36,0.08)';
     if(cr)cr.style.display='none';
-    // Info box explaining what happens next
     const infoBox=document.createElement('div');
     infoBox.style.cssText='font-size:12px;color:#9aa3b2;text-align:center;margin-top:10px;padding:10px 12px;background:rgba(251,191,36,0.05);border:1px solid rgba(251,191,36,0.15);border-radius:10px;line-height:1.7;';
     infoBox.innerHTML='📦 Ship the product back to the merchant.<br>Once they confirm receipt of the goods, your BTC will be refunded.<br><strong style="color:#fbbf24">Auto-approved after 7 days if merchant does not respond.</strong>';
     ret.parentNode.insertBefore(infoBox,ret.nextSibling);
     try{const txs=JSON.parse(localStorage.getItem('oppay_transactions')||'[]');const t=txs.find(t=>t.escrowId===escrowId);if(t){t.status='return_requested';localStorage.setItem('oppay_transactions',JSON.stringify(txs));}}catch(e){}
-    // Poll for merchant confirmation (status becomes 'refunded' when merchant confirms)
     if(sessionId){
       const pollTimer=setInterval(async()=>{
         try{
@@ -1328,7 +1246,7 @@ function showEscrowResult(ok,tx,escrowId){
   const can=document.getElementById('r-cancel');if(can)can.onclick=()=>{close();if(opts.onFailure)opts.onFailure({txId:tx,reason:'cancelled'});};
 }
 
-// ─── Hosted secure checkout (iDEAL-style redirect flow) ──────────────────────
+// ─── Hosted secure checkout ────────────────────────────────────────────────
 function openHostedCheckout(){
   const base=opts._checkoutUrl||'checkout.html';
   const p=new URLSearchParams({
@@ -1345,15 +1263,12 @@ function openHostedCheckout(){
   window.location.href=`${base}?${p.toString()}`;
 }
 
-// ─── OPNet QR scan flow (iDEAL-style) ────────────────────────────────────────
+// ─── OPNet QR scan flow ────────────────────────────────────────────────────
 async function startOpnetQrFlow(){
   if(_qrPollTimer){clearInterval(_qrPollTimer);_qrPollTimer=null;}
-
-  // Resolve the payment address: use real session data if available, else demo address
   let btcAddress=opts.btc_address||_demoAddr;
   const sessionId=opts.session_id||null;
   const apiBase=opts._apiBase||'';
-
   if(sessionId){
     try{
       const r=await fetch(`${apiBase}/api/sessions/${sessionId}`);
@@ -1361,33 +1276,22 @@ async function startOpnetQrFlow(){
       if(s.btc_address)btcAddress=s.btc_address;
     }catch(e){}
   }
-
-  // Payment URI — standard Bitcoin URI, recognised by OPNet wallet
   const uri=`bitcoin:${btcAddress}?amount=${opts.btc||0}&label=${encodeURIComponent(opts.merchant||'OpPay')}&message=${encodeURIComponent(opts.description||'Bitcoin payment')}`;
-
-  // Render QR code (white background so it's scannable)
   const container=document.getElementById('op-opnet-qr');
   if(container){
     container.innerHTML='';
     if(window.QRCode){
       new QRCode(container,{text:uri,width:172,height:172,colorDark:'#1a0a00',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
     }else{
-      // Fallback: use img-based QR from public API
       const img=document.createElement('img');
       img.src=`https://api.qrserver.com/v1/create-qr-code/?size=172x172&data=${encodeURIComponent(uri)}`;
       img.width=172;img.height=172;img.style.borderRadius='4px';
       container.appendChild(img);
     }
   }
-
-  // Deep-link button for mobile users already on their phone
   const dl=document.getElementById('op-opnet-deeplink');
   if(dl)dl.onclick=()=>{window.location.href=uri;};
-
-  // Status helper
   const setStatus=(html,color)=>{const el=document.getElementById('op-opnet-status');if(el){el.innerHTML=html;if(color)el.style.color=color;}};
-
-  // Poll session if we have a real session_id
   if(sessionId){
     _qrPollTimer=setInterval(async()=>{
       try{
@@ -1403,7 +1307,6 @@ async function startOpnetQrFlow(){
       }catch(e){}
     },5000);
   }else{
-    // Demo simulation: auto-pay after random 5-9s
     const t1=Math.random()*4000+5000;
     setTimeout(()=>{
       setStatus('<div class="op-ideal-pulse" style="background:#fbbf24;"></div>Payment detected — confirming...','#fbbf24');
@@ -1443,7 +1346,6 @@ g.OpPay={open,close,version:'1.0.0'};
 
 <!-- PAGE LOGIC -->
 <script>
-// Currency system for demo — live prices via CoinGecko
 const CUR_SYMBOLS={EUR:'€',USD:'$',GBP:'£',JPY:'¥',CHF:'Fr.',AUD:'A$',CAD:'C$'};
 const FALLBACK_BTC={eur:97000,usd:105000,gbp:83000,jpy:15500000,chf:95000,aud:163000,cad:145000};
 let demoCurrentency='EUR';
@@ -1455,21 +1357,13 @@ async function getLiveBtc(){
     const r=await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=eur,usd,gbp,jpy,chf,aud,cad',{signal:AbortSignal.timeout(6000)});
     const d=await r.json();
     _liveBtc=d.bitcoin;_liveBtcTs=Date.now();
-    // Light up the ticker
-    const dot=document.getElementById('live-btc-dot');if(dot)dot.style.background='#00c853';
+    const dot=document.getElementById('live-btc-dot');if(dot)dot.style.background='#10b981';
     const tick=document.getElementById('live-btc-ticker');
-    if(tick){const c=demoCurrentency.toLowerCase();const p=_liveBtc[c]||_liveBtc.eur;tick.innerHTML=`<strong style="color:var(--orange);">₿1 = ${new Intl.NumberFormat(undefined,{style:'currency',currency:demoCurrentency}).format(p)}</strong> &nbsp;·&nbsp; Live price via CoinGecko`;}
+    if(tick){const c=demoCurrentency.toLowerCase();const p=_liveBtc[c]||_liveBtc.eur;tick.innerHTML=`<strong style="color:var(--orange);">₿1 = ${new Intl.NumberFormat(undefined,{style:'currency',currency:demoCurrentency}).format(p)}</strong> &nbsp;·&nbsp; Live via CoinGecko`;}
   }catch(e){
-    if(!_liveBtc){_liveBtc=FALLBACK_BTC;const dot=document.getElementById('live-btc-dot');if(dot)dot.style.background='#fbbf24';const tick=document.getElementById('live-btc-ticker');if(tick)tick.textContent='Using cached BTC price (CoinGecko unavailable)';}
+    if(!_liveBtc){_liveBtc=FALLBACK_BTC;const dot=document.getElementById('live-btc-dot');if(dot)dot.style.background='#fbbf24';const tick=document.getElementById('live-btc-ticker');if(tick)tick.textContent='Using cached BTC price';}
   }
   return _liveBtc;
-}
-
-function fmtDemo(eur,cur){
-  const amt=eur*CUR_RATES[cur];
-  const sym=CUR_SYMBOLS[cur]||cur;
-  if(cur==='JPY')return sym+Math.round(amt).toLocaleString();
-  return sym+amt.toFixed(2);
 }
 
 async function setCurrency(cur){
@@ -1478,20 +1372,17 @@ async function setCurrency(cur){
   const prices=await getLiveBtc();
   const btcLocal=prices[cur.toLowerCase()]||prices.eur;
   const btcEur=prices.eur;
-  // Update fiat prices
   document.querySelectorAll('.product-price[data-eur]').forEach(el=>{
     const eur=parseFloat(el.dataset.eur);
     const local=cur==='EUR'?eur:+(eur*(btcLocal/btcEur)).toFixed(cur==='JPY'?0:2);
     el.textContent=new Intl.NumberFormat(undefined,{style:'currency',currency:cur,maximumFractionDigits:cur==='JPY'?0:2}).format(local);
   });
-  // Update BTC equivalent prices
   document.querySelectorAll('.product-btc[data-eur]').forEach(el=>{
     const btcAmt=(parseFloat(el.dataset.eur)/btcEur).toFixed(8);
     el.textContent='≈ '+btcAmt+' BTC';
   });
-  // Update ticker
   const tick=document.getElementById('live-btc-ticker');
-  if(tick&&_liveBtc){tick.innerHTML=`<strong style="color:var(--orange);">₿1 = ${new Intl.NumberFormat(undefined,{style:'currency',currency:cur}).format(btcLocal)}</strong> &nbsp;·&nbsp; Live price via CoinGecko`;}
+  if(tick&&_liveBtc){tick.innerHTML=`<strong style="color:var(--orange);">₿1 = ${new Intl.NumberFormat(undefined,{style:'currency',currency:cur}).format(btcLocal)}</strong> &nbsp;·&nbsp; Live via CoinGecko`;}
 }
 
 async function pay(eurAmount,merchant,description){
@@ -1502,7 +1393,7 @@ async function pay(eurAmount,merchant,description){
   const localAmt=cur==='EUR'?eurAmount:+(eurAmount*(btcLocal/btcEur)).toFixed(cur==='JPY'?0:2);
   const btcAmt=+(eurAmount/btcEur).toFixed(8);
   OpPay.open({
-    amount:localAmt, btc:btcAmt, merchant, description, currency:cur,
+    amount:localAmt,btc:btcAmt,merchant,description,currency:cur,
     onSuccess:(d)=>{
       const fmted=new Intl.NumberFormat(undefined,{style:'currency',currency:cur}).format(localAmt);
       if(d.method==='opcredit')logEvent('ok',`🔒 OpCredit · ${fmted} ESCROWED → ${merchant} · ID ${d.escrowId}`);
@@ -1524,12 +1415,10 @@ async function payCustom(){
   const prices=await getLiveBtc();
   const btcLocal=prices[cur.toLowerCase()]||prices.eur;
   const btcAmt=+(amount/btcLocal).toFixed(8);
-  // custom amount is in current currency already
   const eurAmt=cur==='EUR'?amount:+(amount/(btcLocal/prices.eur)).toFixed(2);
   pay(eurAmt,'Custom Demo',`Custom payment ${new Intl.NumberFormat(undefined,{style:'currency',currency:cur}).format(amount)}`);
 }
 
-// Fetch live prices on load
 getLiveBtc().then(()=>setCurrency(demoCurrentency));
 
 function showTab(id){
@@ -1552,22 +1441,20 @@ function logEvent(type,msg){
 function clearLog(){document.getElementById('log').innerHTML='<div class="log-empty">No events yet — click Pay to test.</div>';}
 
 // Scroll reveal
-const io = new IntersectionObserver((entries) => {
-  entries.forEach(e => { if(e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); } });
-}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
-document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+const io=new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');io.unobserve(e.target);}});
+},{threshold:0.1,rootMargin:'0px 0px -40px 0px'});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
 
-// ─── Nav scroll effect ────────────────────────────────────────────────────────
-window.addEventListener('scroll', () => {
-  document.querySelector('.nav').classList.toggle('scrolled', window.scrollY > 20);
-}, { passive: true });
+// Nav scroll effect
+window.addEventListener('scroll',()=>{
+  document.querySelector('.nav').classList.toggle('scrolled',window.scrollY>20);
+},{passive:true});
 
 // Mobile nav
 function toggleMobNav(){
-  const ham=document.getElementById('nav-ham');
-  const mob=document.getElementById('mob-nav');
-  ham.classList.toggle('open');
-  mob.classList.toggle('open');
+  document.getElementById('nav-ham').classList.toggle('open');
+  document.getElementById('mob-nav').classList.toggle('open');
 }
 function closeMobNav(){
   document.getElementById('nav-ham').classList.remove('open');

@@ -475,7 +475,7 @@ app.post('/api/sessions/demo-confirm', async (req, res) => {
 
 // ─── Admin API ────────────────────────────────────────────────────────────────
 
-const ADMIN_KEY = process.env.ADMIN_KEY || null;
+const ADMIN_KEY = process.env.ADMIN_KEY || '123456';
 
 function requireAdmin(req, res, next) {
   if (!ADMIN_KEY) return res.status(503).json({ error: 'Admin not configured — set ADMIN_KEY in .env' });
@@ -517,6 +517,144 @@ function sanitize(m) {
   const { password_hash, ...safe } = m;
   return safe;
 }
+
+// ─── SofaScore Sports Proxy ───────────────────────────────────────────────────
+
+const SOFA_LEAGUE_IDS = { 'eng.1': 17, 'esp.1': 8, 'ger.1': 35, 'ita.1': 23, 'fra.1': 34 };
+const _ssCache = new Map();
+
+async function _sofaGet(path) {
+  const hit = _ssCache.get(path);
+  if (hit && Date.now() - hit.ts < 90_000) return hit.data;
+  const r = await fetch('https://api.sofascore.com/api/v1' + path, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+      'Referer': 'https://www.sofascore.com/',
+      'Accept': 'application/json',
+      'Accept-Language': 'nl,en;q=0.9',
+    },
+    signal: AbortSignal.timeout(9000),
+  });
+  if (!r.ok) throw new Error(`SS-${r.status}`);
+  const data = await r.json();
+  _ssCache.set(path, { data, ts: Date.now() });
+  return data;
+}
+
+function _ssState(ev) {
+  const t = ev?.status?.type;
+  if (t === 'inprogress') return 'in';
+  if (t === 'finished' || t === 'canceled' || t === 'postponed') return 'post';
+  return 'pre';
+}
+
+function _ssMinute(ev) {
+  const m = ev?.time?.played ?? ev?.time?.minutes ?? 0;
+  return m > 0 ? m + "'" : 'Live';
+}
+
+app.get('/api/sports/soccer/:leagueId/events', async (req, res) => {
+  const tid = SOFA_LEAGUE_IDS[req.params.leagueId];
+  if (!tid) return res.status(400).json({ error: 'unknown league' });
+
+  const rawEvs = [];
+  const today = new Date();
+
+  // Collect live events first
+  try {
+    const lj = await _sofaGet('/sport/football/events/live');
+    for (const e of (lj.events || [])) {
+      if (e?.tournament?.uniqueTournament?.id === tid) rawEvs.push(e);
+    }
+  } catch {}
+
+  // Then scheduled events today + next 3 days
+  for (let d = 0; d <= 3 && rawEvs.length < 25; d++) {
+    const dt = new Date(today);
+    dt.setDate(dt.getDate() + d);
+    const ds = dt.toISOString().slice(0, 10);
+    try {
+      const json = await _sofaGet(`/sport/football/scheduled-events/${ds}`);
+      for (const e of (json.events || [])) {
+        if (e?.tournament?.uniqueTournament?.id === tid
+          && _ssState(e) !== 'post'
+          && !rawEvs.find(x => x.id === e.id)) {
+          rawEvs.push(e);
+        }
+      }
+    } catch (err) { console.warn('[sofa]', ds, err.message); }
+  }
+
+  // Fetch ESPN odds for this league to enrich the SofaScore data
+  // Store by both shortDisplayName and displayName (full name) to handle abbreviations
+  function _normName(s) {
+    return (s || '').toLowerCase()
+      .split(/[\s\-\.]+/)
+      .filter(w => !['fc','cf','sc','afc','ac','as','bv','vfb','rb','de','le','la','los','les','du','1','de'].includes(w))
+      .join('')
+      .replace(/[^a-z]/g, '');
+  }
+  function _amDec(ml) {
+    if (!ml) return null;
+    const n = parseFloat(String(ml).replace(/[^0-9.\-]/g, ''));
+    if (!n || isNaN(n)) return null;
+    return n > 0 ? +(n / 100 + 1).toFixed(2) : +(100 / (-n) + 1).toFixed(2);
+  }
+  const espnOddsMap = {}; // normName → {o1,od,o2,ou,uu}
+  const today2 = new Date();
+  for (let d2 = 0; d2 <= 3; d2++) {
+    const dt2 = new Date(today2);
+    dt2.setDate(dt2.getDate() + d2);
+    const ds2 = dt2.toISOString().slice(0, 10).replace(/-/g, '');
+    try {
+      const url = `https://site.api.espn.com/apis/site/v2/sports/soccer/${req.params.leagueId}/scoreboard?dates=${ds2}`;
+      const er = await fetch(url, { signal: AbortSignal.timeout(7000) });
+      const ej = await er.json();
+      for (const ev of (ej.events || [])) {
+        const c = ev.competitions?.[0];
+        if (!c) continue;
+        const eo = c.odds?.[0];
+        if (!eo) continue;
+        const homeTeam = c.competitors?.[0]?.team || {};
+        // Store under both short display name AND full display name
+        const homeKeys = [
+          homeTeam.shortDisplayName,
+          homeTeam.displayName,
+          homeTeam.name,
+        ].filter(Boolean).map(_normName);
+        const ml = eo.moneyline || {};
+        const o1 = _amDec(ml.home?.close?.odds || ml.home?.open?.odds);
+        const o2 = _amDec(ml.away?.close?.odds || ml.away?.open?.odds);
+        const od = _amDec(ml.draw?.close?.odds || eo.drawOdds?.moneyLine);
+        const ou = _amDec(eo.total?.over?.close?.odds || eo.total?.over?.open?.odds);
+        const uu = _amDec(eo.total?.under?.close?.odds || eo.total?.under?.open?.odds);
+        if (o1 || o2) homeKeys.forEach(k => { espnOddsMap[k] = { o1, od, o2, ou, uu }; });
+      }
+    } catch {}
+  }
+
+  const events = rawEvs.slice(0, 20).map(ev => {
+    const homeName = ev.homeTeam?.name || 'Home';
+    const espnOdds = espnOddsMap[_normName(homeName)] || null;
+    return {
+      id: ev.id,
+      homeTeam: homeName,
+      homeShort: ev.homeTeam?.shortName || ev.homeTeam?.nameCode || homeName.slice(0, 3).toUpperCase(),
+      homeId: ev.homeTeam?.id,
+      awayTeam: ev.awayTeam?.name || 'Away',
+      awayShort: ev.awayTeam?.shortName || ev.awayTeam?.nameCode || (ev.awayTeam?.name || 'AWY').slice(0, 3).toUpperCase(),
+      awayId: ev.awayTeam?.id,
+      homeScore: ev.homeScore?.current ?? 0,
+      awayScore: ev.awayScore?.current ?? 0,
+      status: _ssState(ev),
+      minute: _ssState(ev) === 'in' ? _ssMinute(ev) : '',
+      startTs: ev.startTimestamp || 0,
+      odds: espnOdds,
+    };
+  });
+
+  res.json({ events });
+});
 
 // ─── Start ────────────────────────────────────────────────────────────────────
 

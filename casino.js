@@ -2943,8 +2943,19 @@ function loadLeague(id){
   var evl=document.getElementById('evl');if(!evl)return;
   var lg=SOCCER_LEAGUES.filter(function(l){return l.id===id;})[0]||SOCCER_LEAGUES[0];
   evl.innerHTML='<div class="spload">⚡ Loading '+lg.name+'…</div>';
-  /* Try today, then tomorrow, then yesterday to always find matches */
-  var offsets=[0,1,2,3]; /* today + next 3 days, never past */
+  /* Try SofaScore proxy (real live data) first, fall back to ESPN */
+  fetch('/api/sports/soccer/'+id+'/events')
+    .then(function(r){if(!r.ok)throw 0;return r.json();})
+    .then(function(d){
+      var evs=d.events||[];
+      if(!evs.length)throw 0;
+      renderSofaEvents(evs,lg,id);
+    })
+    .catch(function(){loadLeagueESPN(id,lg);});
+}
+function loadLeagueESPN(id,lg){
+  var evl=document.getElementById('evl');if(!evl)return;
+  var offsets=[0,1,2,3];
   function tryOffset(i){
     if(i>=offsets.length){renderFallback();return;}
     fetch('https://site.api.espn.com/apis/site/v2/sports/soccer/'+id+'/scoreboard?dates='+nearestDateParam(offsets[i]))
@@ -2953,7 +2964,7 @@ function loadLeague(id){
         var evs=(d.events||[]).filter(function(e){
           if(!e.competitions||!e.competitions[0])return false;
           var state=(e.competitions[0].status&&e.competitions[0].status.type&&e.competitions[0].status.type.state)||'pre';
-          return state!=='post'; /* only live + upcoming */
+          return state!=='post';
         });
         if(evs.length>0){
           liveEvs=evs;
@@ -2967,6 +2978,69 @@ function loadLeague(id){
       .catch(function(){tryOffset(i+1);});
   }
   tryOffset(0);
+}
+function renderSofaEvents(evs,lg,id){
+  var evl=document.getElementById('evl');if(!evl)return;
+  var cards='';
+  evs.forEach(function(ev){
+    var eid='ev-'+ev.id;
+    var n1=ev.homeShort||ev.homeTeam;
+    var n2=ev.awayShort||ev.awayTeam;
+    var s1=ev.homeScore;var s2=ev.awayScore;
+    var live=ev.status==='in';
+    var state=ev.status;
+    var min=ev.minute||'';
+    var kickoff=ev.startTs?new Date(ev.startTs*1000).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',hour12:false}):'';
+    var l1=ev.homeId?'https://api.sofascore.com/api/v1/team/'+ev.homeId+'/image':'';
+    var l2=ev.awayId?'https://api.sofascore.com/api/v1/team/'+ev.awayId+'/image':'';
+    var seed=String(ev.id);
+    var o1=ev.odds&&ev.odds.o1?(+ev.odds.o1).toFixed(2):(1.4+seededRand(seed,1)*1.8).toFixed(2);
+    var o2=ev.odds&&ev.odds.o2?(+ev.odds.o2).toFixed(2):(1.5+seededRand(seed,2)*2.0).toFixed(2);
+    var od=ev.odds&&ev.odds.od?(+ev.odds.od).toFixed(2):(2.8+seededRand(seed,3)*1.4).toFixed(2);
+    var ou=(1.55+seededRand(seed,4)*0.55).toFixed(2);
+    var uu=(1.80+seededRand(seed,5)*0.55).toFixed(2);
+    var mn=ev.homeTeam+' v '+ev.awayTeam;
+    var c1=l1?'transparent':tcol(n1),c2=l2?'transparent':tcol(n2);
+    var timeMid,liveTag='';
+    if(live){
+      timeMid='<div class="evtm live">'+(min||'Live')+'</div>';
+      liveTag='<span class="ltag">● LIVE</span>';
+    } else {
+      /* Show day label if match is not today */
+      var today=new Date(),matchDay=ev.startTs?new Date(ev.startTs*1000):null;
+      var dayLabel='';
+      if(matchDay){
+        var isToday2=matchDay.toDateString()===today.toDateString();
+        if(!isToday2){var days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];dayLabel=days[matchDay.getDay()]+' ';}
+      }
+      timeMid='<div class="evtm pre">'+dayLabel+(kickoff||'--:--')+'</div>';
+    }
+    function ob(team,odds,bt,label){
+      return '<div class="ob" data-mid="'+eid+'" data-bt="'+bt+'" onclick="addSlip(this,\''+eid+'\',\''+team+'\','+odds+',\''+bt+'\',\''+mn+'\',\''+ev.id+'\',\'soccer\',\''+id+'\')"><div class="ol">'+label+'</div><div class="ov">'+odds+'</div></div>';
+    }
+    cards+='<div class="ev" id="'+eid+'">'
+      +'<div class="evh">'+liveTag+'<span class="evlg">'+lg.name+'</span></div>'
+      +'<div class="evmatch">'
+        +'<div class="evcol">'
+          +'<div class="etrow2"><div class="etcrest" style="background:'+c1+'">'+mkCrest(l1,n1)+'</div><span class="etname">'+n1+'</span></div>'
+          +'<div class="etrow2"><div class="etcrest" style="background:'+c2+'">'+mkCrest(l2,n2)+'</div><span class="etname">'+n2+'</span></div>'
+        +'</div>'
+        +'<div class="evct">'+timeMid
+          +'<div class="evsc">'+(state==='pre'?'<span class="evvs">vs</span>':'<span class="evscn">'+s1+'</span><span style="color:var(--mut);font-size:14px">-</span><span class="evscn">'+s2+'</span>')+'</div>'
+        +'</div>'
+      +'</div>'
+      +'<div class="evdiv"></div>'
+      +'<div class="evos">'
+      +ob(n1,o1,'1','1')
+      +ob('Draw',od,'X','X')
+      +ob(n2,o2,'2','2')
+      +'<div class="ovsep"></div>'
+      +ob('Over 2.5',ou,'O2.5','O 2.5')
+      +ob('Under 2.5',uu,'U2.5','U 2.5')
+      +'</div></div>';
+  });
+  evl.innerHTML=cards||'<div class="spload">No matches today</div>';
+  restoreSlipHighlights();
 }
 function loadSport(sport){
   curSport=sport;var evl=document.getElementById('evl');if(!evl)return;
