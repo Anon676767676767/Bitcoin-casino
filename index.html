@@ -1,12 +1,16 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>BitOPNet Casino</title><style>
+<title>BitOPNet Casino</title>
+<link rel="icon" type="image/svg+xml" href="logo.svg">
+<style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--bg:#0a0b0f;--sb:#0e0f1a;--card:#131420;--c2:#181927;--hl:#1e1f30;--or:#f7931a;--or2:#e8830a;--yel:#fbbf24;--grn:#10b981;--red:#ef4444;--cyn:#06b6d4;--txt:#e5e7eb;--mut:#6b7280;--bdr:#1e1f30}
 html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--txt);overflow:hidden}
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--bdr);border-radius:2px}
 /* TOP */
 #top{height:52px;background:var(--sb);border-bottom:1px solid var(--bdr);display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;z-index:100}
-.logo{font-size:20px;font-weight:800;background:linear-gradient(135deg,#f7931a,#fbbf24);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-right:4px;white-space:nowrap}
+.logo{display:flex;align-items:center;gap:8px;margin-right:4px;white-space:nowrap;text-decoration:none;cursor:default}
+.logo img{width:32px;height:32px;flex-shrink:0}
+.logo-text{font-size:18px;font-weight:900;background:linear-gradient(135deg,#fbbf24,#f7931a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:.5px}
 .nt{padding:6px 12px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;color:var(--mut);border:none;background:none;transition:.15s}
 .nt:hover,.nt.on{background:rgba(247,147,26,.15);color:var(--or)}
 .pxs{display:flex;gap:14px;font-size:12px;flex:1;justify-content:flex-end}
@@ -523,7 +527,7 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
 </style></head><body>
 
 <div id="top">
-  <div class="logo">₿ BitOPNet</div>
+  <div class="logo"><img src="logo.svg" alt="logo"><span class="logo-text">BitOPNet</span></div>
   <button class="nt on" id="nt-casino" onclick="pgNav('casino')">🎰 Casino</button>
   <button class="nt" id="nt-sports" onclick="pgNav('sports')">⚽ Sports</button>
   <button class="nt" id="nt-mybets" onclick="pgNav('mybets')">📋 My Bets</button>

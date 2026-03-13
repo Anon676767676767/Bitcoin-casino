@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <radialGradient id="chipBg" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#1e1230"/>
+      <stop offset="100%" stop-color="#0a0b0f"/>
+    </radialGradient>
+    <linearGradient id="goldRing" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="40%" stop-color="#f7931a"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+    <linearGradient id="btcGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#f7931a"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Outer gold ring -->
+  <circle cx="60" cy="60" r="58" fill="url(#goldRing)"/>
+
+  <!-- Chip notches around the edge (casino style) -->
+  <g fill="#0a0b0f">
+    <rect x="56" y="2" width="8" height="10" rx="1"/>
+    <rect x="56" y="108" width="8" height="10" rx="1"/>
+    <rect x="2" y="56" width="10" height="8" rx="1"/>
+    <rect x="108" y="56" width="10" height="8" rx="1"/>
+    <!-- diagonal notches -->
+    <rect x="18" y="9" width="8" height="10" rx="1" transform="rotate(45 22 14)"/>
+    <rect x="94" y="9" width="8" height="10" rx="1" transform="rotate(-45 98 14)"/>
+    <rect x="18" y="101" width="8" height="10" rx="1" transform="rotate(-45 22 106)"/>
+    <rect x="94" y="101" width="8" height="10" rx="1" transform="rotate(45 98 106)"/>
+  </g>
+
+  <!-- Inner dark circle -->
+  <circle cx="60" cy="60" r="46" fill="url(#chipBg)"/>
+
+  <!-- Inner gold ring (thin) -->
+  <circle cx="60" cy="60" r="46" fill="none" stroke="url(#goldRing)" stroke-width="2"/>
+
+  <!-- Inner decorative ring -->
+  <circle cx="60" cy="60" r="40" fill="none" stroke="rgba(247,147,26,0.25)" stroke-width="1" stroke-dasharray="4 3"/>
+
+  <!-- Stars / suits decoration -->
+  <text x="60" y="24" text-anchor="middle" font-size="7" fill="rgba(247,147,26,0.6)" font-family="serif">♠ ♥ ♦ ♣</text>
+
+  <!-- Bitcoin ₿ symbol -->
+  <text x="60" y="72" text-anchor="middle" font-size="42" font-weight="900"
+        fill="url(#btcGrad)" font-family="Arial,sans-serif" filter="url(#glow)">₿</text>
+
+  <!-- Bottom text -->
+  <text x="60" y="95" text-anchor="middle" font-size="8" font-weight="800"
+        fill="#f7931a" font-family="Arial,sans-serif" letter-spacing="2">BITOPNET</text>
+
+  <!-- Shine overlay -->
+  <ellipse cx="50" cy="38" rx="22" ry="12" fill="rgba(255,255,255,0.06)"/>
+</svg>
