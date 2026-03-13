@@ -53,7 +53,7 @@
 
   <!-- Bottom text -->
   <text x="60" y="95" text-anchor="middle" font-size="8" font-weight="800"
-        fill="#f7931a" font-family="Arial,sans-serif" letter-spacing="2">BITOPNET</text>
+        fill="#f7931a" font-family="Arial,sans-serif" letter-spacing="2">BTCASINO</text>
 
   <!-- Shine overlay -->
   <ellipse cx="50" cy="38" rx="22" ry="12" fill="rgba(255,255,255,0.06)"/>

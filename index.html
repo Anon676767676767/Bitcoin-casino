@@ -1,5 +1,5 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>BitOPNet Casino</title>
+<title>BTCasino</title>
 <link rel="icon" type="image/svg+xml" href="logo.svg">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -527,7 +527,7 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
 </style></head><body>
 
 <div id="top">
-  <div class="logo"><img src="logo.svg" alt="logo"><span class="logo-text">BitOPNet</span></div>
+  <div class="logo"><img src="logo.svg" alt="logo"><span class="logo-text">BTCasino</span></div>
   <button class="nt on" id="nt-casino" onclick="pgNav('casino')">🎰 Casino</button>
   <button class="nt" id="nt-sports" onclick="pgNav('sports')">⚽ Sports</button>
   <button class="nt" id="nt-mybets" onclick="pgNav('mybets')">📋 My Bets</button>
@@ -569,7 +569,7 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
   <div style="margin:12px 12px 4px;background:linear-gradient(135deg,rgba(247,147,26,.12),rgba(124,58,237,.1));border:1px solid rgba(247,147,26,.2);border-radius:14px;padding:16px 18px;display:flex;align-items:center;gap:14px">
     <div style="font-size:38px;line-height:1">🎰</div>
     <div style="flex:1">
-      <div style="font-size:17px;font-weight:900;background:linear-gradient(90deg,#f7931a,#fbbf24);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:3px">BitOPNet Casino</div>
+      <div style="font-size:17px;font-weight:900;background:linear-gradient(90deg,#f7931a,#fbbf24);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:3px">BTCasino</div>
       <div style="font-size:11px;color:var(--mut)">Provably fair · Instant payouts · On-chain Bitcoin</div>
     </div>
     <div style="text-align:right;flex-shrink:0">
@@ -1032,7 +1032,7 @@ function payWithOpPay() {
     amount:   eur,
     currency: 'EUR',
     btc:      btc.toFixed(8),
-    merchant: 'BitOPNet Casino',
+    merchant: 'BTCasino',
     desc:     'Casino Deposit \u2014 ' + sat.toLocaleString() + ' sat',
     sat:        sat,
     return_url: location.href.split('#')[0].split('?')[0],
